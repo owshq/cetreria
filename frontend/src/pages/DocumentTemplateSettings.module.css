@@ -1,0 +1,59 @@
+.intro {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+  max-width: 42rem;
+}
+
+.fieldHint {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.logoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.logoPreviewFrame {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: min(100%, 280px);
+  min-height: 72px;
+  padding: 0.75rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 8px;
+  background: var(--color-bg-page);
+}
+
+.logoPreviewImage {
+  display: block;
+  max-width: 100%;
+  max-height: 64px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.logoActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hiddenFileInput {
+  display: none;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}

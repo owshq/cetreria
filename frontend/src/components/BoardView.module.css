@@ -1,0 +1,42 @@
+.board {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  padding: 0.25rem 0 1rem 1rem;
+  min-height: 24rem;
+}
+
+.columnWrapper {
+  flex: 0 0 min(18rem, 80vw);
+  min-height: 0;
+}
+
+.columnCard {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  max-height: 32rem;
+}
+
+.columnBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.emptyBoard {
+  padding: 2rem 1rem;
+}
+
+.clickableItem {
+  cursor: pointer;
+}
+
+.clickableItem:hover,
+.clickableItem:focus-visible {
+  background: var(--color-bg-muted);
+  color: var(--color-text-primary);
+}

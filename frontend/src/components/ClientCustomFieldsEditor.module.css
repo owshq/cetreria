@@ -1,0 +1,77 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--stroke-gray);
+}
+
+.sectionEmbedded {
+  padding-top: 0;
+  border-top: none;
+}
+
+.hintEmbedded {
+  margin-top: 0;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.addBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+  padding: 0.4375rem 0.75rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+  background: var(--color-bg-surface);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.addBtn:hover {
+  background: var(--color-bg-muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.removeBtn {
+  margin-bottom: 0.125rem;
+  color: var(--color-text-muted);
+}
+
+.removeBtn:hover {
+  color: var(--color-danger, #dc2626);
+}

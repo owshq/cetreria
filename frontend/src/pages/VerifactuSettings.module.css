@@ -1,0 +1,38 @@
+.disabledNotice {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--stroke-gray);
+  background: var(--color-bg-muted);
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.productionWarning {
+  grid-column: 1 / -1;
+  margin-top: 0.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-warning-border);
+  background: var(--color-warning-bg);
+}
+
+.productionWarningTitle {
+  margin: 0 0 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-warning-text);
+}
+
+.productionWarningText,
+.productionWarningHint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-warning-text);
+}
+
+.productionWarningHint {
+  margin-top: 0.5rem;
+}

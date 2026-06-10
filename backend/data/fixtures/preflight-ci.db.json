@@ -1,0 +1,207 @@
+{
+  "users": [
+    {
+      "id": "b1000001-0000-4000-8000-000000000001",
+      "name": "Admin",
+      "email": "admin@faunayhalconeros.com",
+      "role": "admin",
+      "password": "$2b$04$WiJYnPbvW4UtOPcIoSRh5uSS1PcUard77mQW4M3.Pjf1JINBXKLtu"
+    }
+  ],
+  "workspaces": [
+    {
+      "id": "a0000001-0000-4000-8000-000000000001",
+      "name": "Fixture CI",
+      "slug": "fixture-ci",
+      "createdAt": "2026-01-01",
+      "defaultClientGroupSeeded": true
+    }
+  ],
+  "workspace_members": [
+    {
+      "id": "a1000002-0000-4000-8000-000000000002",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "b1000001-0000-4000-8000-000000000001",
+      "role": "owner",
+      "joinedAt": "2026-01-01"
+    }
+  ],
+  "clients": [
+    {
+      "id": "c2000001-0000-4000-8000-000000000001",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "groupId": "a1000001-0000-4000-8000-000000000001",
+      "name": "Contacto CI",
+      "email": "contacto-ci@example.test",
+      "phone": "",
+      "address": "",
+      "city": "",
+      "postalCode": "",
+      "country": "",
+      "state": "",
+      "website": "",
+      "technicalInfo": "",
+      "observations": [],
+      "status": "active",
+      "createdAt": "2026-01-01"
+    }
+  ],
+  "activities": [
+    {
+      "id": "d3000001-0000-4000-8000-000000000001",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "clientId": "c2000001-0000-4000-8000-000000000001",
+      "userId": "b1000001-0000-4000-8000-000000000001",
+      "date": "2026-04-05",
+      "type": "at-1",
+      "description": "Actividad de prueba CI",
+      "hours": 1,
+      "attachments": [],
+      "createdAt": "2026-04-05T10:00:00"
+    }
+  ],
+  "events": [
+    {
+      "id": "e4000001-0000-4000-8000-000000000001",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "title": "Mantenimiento - Contacto CI",
+      "description": "Evento de prueba CI",
+      "date": "2026-04-10",
+      "startTime": "09:00",
+      "endTime": "10:00",
+      "assignedTo": [
+        "b1000001-0000-4000-8000-000000000001"
+      ],
+      "createdBy": "b1000001-0000-4000-8000-000000000001",
+      "clientId": "c2000001-0000-4000-8000-000000000001",
+      "activityId": "d3000001-0000-4000-8000-000000000001",
+      "history": [
+        {
+          "action": "Creado",
+          "user": "Admin",
+          "timestamp": "2026-04-01T10:00:00"
+        }
+      ]
+    }
+  ],
+  "documents": [
+    {
+      "id": "f5000001-0000-4000-8000-000000000001",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "type": "invoice",
+      "number": "F-CI-001",
+      "clientId": "c2000001-0000-4000-8000-000000000001",
+      "activityId": "d3000001-0000-4000-8000-000000000001",
+      "date": "2026-04-05",
+      "items": [
+        {
+          "name": "Servicio",
+          "description": "",
+          "quantity": 1,
+          "price": 100
+        }
+      ],
+      "total": 100,
+      "status": "draft",
+      "createdAt": "2026-04-05"
+    }
+  ],
+  "reports": [],
+  "activity_types": [
+    {
+      "id": "at-1",
+      "name": "Mantenimiento",
+      "icon": "wrench",
+      "color": "#2563eb",
+      "createsDeliveryNote": true,
+      "workspaceId": "a0000001-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "at-2",
+      "name": "Instalación",
+      "icon": "package",
+      "color": "#059669",
+      "createsDeliveryNote": true,
+      "workspaceId": "a0000001-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "at-3",
+      "name": "Reparación",
+      "icon": "hammer",
+      "color": "#dc2626",
+      "createsDeliveryNote": true,
+      "workspaceId": "a0000001-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "at-4",
+      "name": "Inspección",
+      "icon": "clipboard-check",
+      "color": "#d97706",
+      "createsDeliveryNote": true,
+      "workspaceId": "a0000001-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "at-5",
+      "name": "Consultoría",
+      "icon": "briefcase",
+      "color": "#7c3aed",
+      "createsDeliveryNote": true,
+      "workspaceId": "a0000001-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "at-6",
+      "name": "Formación",
+      "icon": "graduation-cap",
+      "color": "#0891b2",
+      "createsDeliveryNote": false,
+      "workspaceId": "a0000001-0000-4000-8000-000000000001"
+    },
+    {
+      "id": "at-7",
+      "name": "Otro",
+      "icon": "other",
+      "color": "#525252",
+      "createsDeliveryNote": true,
+      "workspaceId": "a0000001-0000-4000-8000-000000000001"
+    }
+  ],
+  "client_groups": [
+    {
+      "id": "a1000001-0000-4000-8000-000000000001",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "name": "Clientes",
+      "isDefault": true,
+      "createdAt": "2026-01-01"
+    }
+  ],
+  "document_type_groups": [
+    {
+      "id": "02cf10fc-b0ba-4b03-a0a9-58cdaaeba0f8",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "documentType": "invoice",
+      "name": "Facturas",
+      "isPublic": false,
+      "createdAt": "2026-06-10T08:09:37.502Z"
+    },
+    {
+      "id": "dd30e32a-4354-46af-b494-926487aeac7b",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "documentType": "delivery-note",
+      "name": "Albaranes",
+      "isPublic": true,
+      "createdAt": "2026-06-10T08:09:37.502Z"
+    }
+  ],
+  "invoice_concept_settings": [],
+  "workspace_billing_settings": [],
+  "workspace_schedule_settings": [],
+  "workspace_feature_settings": [],
+  "workspace_appearance_settings": [],
+  "notifications": [],
+  "saved_table_views_pages": [],
+  "saved_table_views_user_pages": [],
+  "table_view_state_user_pages": [],
+  "user_interaction_pages": [],
+  "user_schedules": [],
+  "workspace_schedule_holidays": []
+}

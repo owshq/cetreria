@@ -1,0 +1,75 @@
+.pageHeaderRow {
+  composes: pageHeaderRow from '../styles/shared.module.css';
+  margin-top: 22px;
+  margin-bottom: 22px;
+}
+
+.headerSecondaryNavToggle {
+  flex-shrink: 0;
+}
+
+.headerTitleGroup {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.headerTitleRelative {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-text-faint);
+  white-space: nowrap;
+}
+
+.headerTitleMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.headerAuthor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.headerAuthorAvatar {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 0.5625rem;
+}
+
+.headerAuthorName {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-subtle);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.headerMetaSep {
+  color: var(--color-text-faint);
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.headerMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.headerStatus {
+  cursor: default;
+}
+
+.headerStatusBtn {
+  cursor: pointer;
+}

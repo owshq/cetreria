@@ -1,0 +1,265 @@
+.sectionTitle {
+  margin: 0;
+  padding: 0 0 0.375rem;
+  font-family: var(--font-heading);
+  font-size: var(--page-section-title-size);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: -0.015em;
+  line-height: 1.35;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sectionHeading .sectionTitle {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 0;
+}
+
+.searchToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.searchToggleBtn:hover,
+.searchToggleBtn[aria-expanded='true'] {
+  background: var(--color-bg-muted);
+  color: var(--color-text-muted);
+}
+
+.searchToggleBtn:focus-visible {
+  outline: 1px solid var(--color-text-muted);
+  outline-offset: 1px;
+}
+
+.sectionSearch {
+  padding: 0;
+}
+
+.cardShell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.cardBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.toolbarEmbedded {
+  padding: 0 0 0.5rem;
+}
+
+.conceptsEmpty {
+  padding: 0.75rem 0 0;
+  margin: 0;
+}
+
+.conceptsEmptyCard {
+  padding: 1rem 1.5rem;
+  margin: 0;
+}
+
+.conceptList {
+  composes: listPanel from '../styles/shared.module.css';
+}
+
+.conceptItem {
+  composes: listPanelItem from '../styles/shared.module.css';
+}
+
+.conceptItem:hover,
+.conceptItem:focus-visible {
+  background: var(--color-bg-muted);
+  color: var(--color-text-primary);
+}
+
+.conceptItemBtn {
+  cursor: pointer;
+}
+
+.conceptEmojiWrap {
+  flex-shrink: 0;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0 0.5rem;
+}
+
+.detailBackBtn,
+.sectionBackBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.detailBackBtn:hover,
+.detailBackBtn:focus-visible,
+.sectionBackBtn:hover,
+.sectionBackBtn:focus-visible {
+  background: var(--color-bg-muted);
+  color: var(--color-text-muted);
+}
+
+.detailTitle {
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conceptShare {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.375rem;
+}
+
+.conceptColorDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.emptyState {
+  padding: 0.75rem 0 0;
+}
+
+.emptyStateCard {
+  padding: 1rem 1.5rem;
+}
+
+.emptyStateCardBody {
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 1023px) {
+  .cardShell {
+    height: auto;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .cardBody {
+    overflow-x: hidden;
+    overflow-y: visible;
+    flex: none;
+    min-height: auto;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+.cardFill {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.cardFill .conceptList {
+  flex: 1;
+  min-height: 0;
+}
+
+.panel {
+  margin-top: -0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-surface-border);
+}
+
+.panel .sectionTitle {
+  padding: 0 0 0.375rem;
+}
+
+.panel .toolbarEmbedded {
+  padding: 0 0 0.75rem;
+}
+
+.panel .emptyState,
+.panel .conceptsEmpty {
+  padding-top: 0.75rem;
+}
+
+.summary {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-surface-border);
+}
+
+.summary .sectionTitle {
+  padding: 0 0 0.375rem;
+}
+
+.summary .toolbarEmbedded {
+  padding: 0 0 0.75rem;
+}
+
+.summary .emptyState,
+.summary .conceptsEmpty {
+  padding-top: 0.75rem;
+}
+
+.cardShellCollapsible {
+  position: relative;
+  overflow: visible;
+  padding-bottom: 1rem;
+}
+
+.chartToggleRow {
+  composes: toggleRow from './ChartSectionToggle.module.css';
+}
+
+.chartToggleBtn {
+  composes: toggleBtn from './ChartSectionToggle.module.css';
+}
+
+.chartToggleChevron {
+  composes: toggleChevron from './ChartSectionToggle.module.css';
+}
+
+.chartToggleChevronOpen {
+  composes: toggleChevronOpen from './ChartSectionToggle.module.css';
+}

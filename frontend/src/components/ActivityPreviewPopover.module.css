@@ -1,0 +1,35 @@
+.popover {
+  position: fixed;
+  z-index: 100;
+  width: clamp(11.5rem, 17.5rem, min(20rem, calc(100vw - 1rem)));
+  padding: 0.75rem 0.875rem;
+  background: var(--color-bg-modal);
+  border: 1px solid var(--color-surface-border);
+  border-radius: 0.625rem;
+  box-shadow: var(--shadow-sm), var(--shadow-dropdown);
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .popover {
+    animation: previewIn 0.12s ease;
+  }
+}
+
+@keyframes previewIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popover {
+    animation: none;
+  }
+}

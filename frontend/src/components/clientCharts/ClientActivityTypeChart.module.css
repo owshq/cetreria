@@ -1,0 +1,215 @@
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.chartSeparated {
+  padding-top: 1rem;
+  border-top: 1px solid var(--stroke-gray-subtle);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3125rem 0.5rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 9999px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-subtle);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.tab:hover {
+  border-color: var(--stroke-gray-medium);
+  color: var(--color-text-secondary);
+}
+
+.tabActive {
+  background: var(--app-accent);
+  border-color: var(--app-accent);
+  color: var(--color-text-inverse);
+}
+
+.tabActive:hover {
+  background: var(--app-accent-hover);
+  border-color: var(--app-accent-hover);
+  color: var(--color-text-inverse);
+}
+
+.panel {
+  min-height: 10rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.panelEmpty {
+  align-items: center;
+  justify-content: center;
+}
+
+.chartSurface {
+  width: 100%;
+}
+
+.chartSurface :global(.recharts-surface) {
+  overflow: visible;
+}
+
+.barTopLabel,
+.barEndLabel,
+.barDetailLabel {
+  pointer-events: none;
+}
+
+.barTopLabel :global(tspan),
+.barEndLabel :global(tspan) {
+  fill: var(--color-text-secondary);
+  font-size: 10px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.barDetailLabel :global(tspan) {
+  fill: var(--color-text-secondary);
+  font-size: 10px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.tooltip {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.625rem;
+  background: color-mix(in srgb, var(--color-bg-surface) 96%, transparent);
+  box-shadow:
+    var(--shadow-sm), var(--shadow-dropdown);
+  backdrop-filter: blur(8px);
+}
+
+.tooltipDot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.tooltipBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.tooltipTitle {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.tooltipMeta {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  line-height: 1.2;
+}
+
+.tooltipValue {
+  font-size: 0.75rem;
+  color: var(--color-text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.donutLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.donutChartWrap {
+  position: relative;
+  height: 168px;
+}
+
+.donutCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.donutCenterValue {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.donutCenterLabel {
+  margin-top: 0.125rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.legendItem {
+  display: grid;
+  grid-template-columns: 0.625rem 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legendSwatch {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+}
+
+.legendText {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legendMeta {
+  font-size: 0.6875rem;
+  color: var(--color-text-subtle);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

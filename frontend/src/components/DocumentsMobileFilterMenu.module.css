@@ -1,0 +1,138 @@
+.menu {
+  position: fixed;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  min-width: 14rem;
+  max-width: min(calc(100vw - 1rem), 20rem);
+  max-height: min(70vh, 28rem);
+  padding: 0.375rem;
+  background: var(--color-bg-modal);
+  border: 1px solid var(--color-surface-border);
+  border-radius: 0.625rem;
+  box-shadow:
+    var(--shadow-sm), var(--shadow-dropdown);
+  overflow: hidden;
+}
+
+.sectionHeader {
+  padding: 0.375rem 0.75rem 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.separator {
+  height: 1px;
+  margin: 0.25rem 0.375rem;
+  background: var(--color-surface-border);
+  flex-shrink: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  margin: 0;
+  border: none;
+  border-radius: 0.4375rem;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.item:hover:not(:disabled) {
+  background: var(--color-bg-muted);
+}
+
+.item:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.itemSelected {
+  font-weight: 600;
+  background: var(--color-bg-muted);
+}
+
+.itemCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--stroke-gray-medium);
+  flex-shrink: 0;
+  color: transparent;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.itemCheckActive {
+  border-color: var(--app-accent);
+  background: var(--app-accent);
+  color: #fff;
+}
+
+.itemLeadingIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.itemLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.searchWrap {
+  flex-shrink: 0;
+  padding: 0.25rem 0.375rem 0.375rem;
+}
+
+.searchField {
+  width: 100%;
+  min-width: 0;
+}
+
+.clientsList {
+  composes: scrollArea from '../styles/scrollbars.module.css';
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 11rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.clientsEmpty {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.staticSection {
+  flex-shrink: 0;
+}

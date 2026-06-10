@@ -1,0 +1,2858 @@
+.activitiesPage {
+  display: flex;
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--color-bg-settings-main);
+}
+
+.activitiesNav {
+  composes: secondarySidebar from '../styles/shared.module.css';
+  --layout-secondary-sidebar-padding-bottom: 0;
+}
+
+.activitiesNavCollapsed {
+  composes: secondarySidebarCollapsed from '../styles/shared.module.css';
+}
+
+.activitiesNavFiltersOpen {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.activitiesNavFiltersOpen > aside {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.activitiesNavHeader {
+  composes: secondarySidebarNavHeader from '../styles/shared.module.css';
+  margin-bottom: var(--layout-secondary-sidebar-header-gap);
+}
+
+.activitiesNavToggle {
+  composes: secondarySidebarNavHeaderToggle from '../styles/shared.module.css';
+}
+
+.activitiesNavTitle {
+  composes: secondarySidebarNavHeaderTitle from '../styles/shared.module.css';
+}
+
+.activitiesNavMainViewToggle {
+  flex-shrink: 0;
+  width: 100%;
+  margin-bottom: var(--layout-secondary-sidebar-title-content-gap);
+  padding-inline: var(--layout-secondary-sidebar-inline-padding);
+}
+
+.activitiesNavAvailabilityFooter {
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+.activitiesNavAvailabilityLegend {
+  width: 100%;
+  justify-content: center;
+}
+
+.activitiesNavMainViewToggle .viewToggle {
+  display: flex;
+  width: 100%;
+  max-width: none;
+}
+
+.activitiesNavMainViewToggle .viewPill {
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
+}
+
+.activitiesNavEmptyState {
+  padding: 0.75rem var(--layout-secondary-sidebar-inline-padding);
+}
+
+.secondaryNavExpandBtn {
+  flex-shrink: 0;
+}
+
+.activitiesContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--color-bg-settings-main);
+}
+
+.activitiesContentLoading {
+  composes: activitiesContent;
+  padding: 2rem;
+  overflow: auto;
+}
+
+.schedulesPanelWrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0.5rem 0 0;
+}
+
+.calendarBodySchedules {
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.headingActionsSchedules {
+  flex-wrap: wrap;
+  row-gap: 0.5rem;
+}
+
+.scheduleToolbarToggles {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.375rem;
+  max-width: 100%;
+}
+
+.scheduleToolbarDivider {
+  width: 1px;
+  height: 1.25rem;
+  background: var(--stroke-gray-medium);
+  flex-shrink: 0;
+}
+
+.scheduleToolbarLegendGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-left: auto;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.scheduleToolbarLegend {
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+.calendarDayShiftFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 0.125rem;
+}
+
+.calendarDayShiftBadges {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.calendarDayShiftHours {
+  display: inline-flex;
+  align-items: baseline;
+  flex-shrink: 0;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.calendarDayShiftHoursSigned {
+  color: var(--color-text-primary);
+}
+
+.calendarDayShiftHoursSep {
+  margin: 0 0.0625rem;
+  color: var(--color-text-faint);
+  font-weight: 600;
+}
+
+.calendarDayShiftHoursAssigned {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.calendarDayShiftHoursUnit {
+  margin-left: 0.0625rem;
+  color: var(--color-text-faint);
+  font-weight: 600;
+}
+
+.dayCellAvailabilityMode {
+  cursor: pointer;
+}
+
+.dayCellAvailabilitySaving {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.dayCellShiftLocked {
+  cursor: default;
+}
+
+.dayCellShiftLocked.dayCellAvailabilityMode {
+  cursor: not-allowed;
+}
+
+.yearDayShiftFooter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.0625rem;
+  margin-top: auto;
+  width: 100%;
+}
+
+.yearDayShiftRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+}
+
+.yearDayShift {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.yearDayShiftAssigned {
+  min-width: 0.875rem;
+  height: 0.875rem;
+  padding: 0 0.125rem;
+  border-radius: 0.125rem;
+  color: #fff;
+}
+
+.yearDayShiftHours {
+  font-size: 0.5rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-text-muted);
+}
+
+.yearDayAvailabilityMode {
+  cursor: pointer;
+}
+
+.availabilityError {
+  margin: 0;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.75rem;
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+}
+
+:global([data-theme='dark']) .availabilityError {
+  color: #fecaca;
+  background: rgba(153, 27, 27, 0.25);
+  border-color: rgba(254, 202, 202, 0.35);
+}
+
+.scheduleToolbarLegendRow {
+  display: none;
+}
+
+.scheduleUserSelectRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0 0 0.25rem;
+}
+
+.scheduleUserSelectLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 767px) {
+  .calendarBodyWithPinnedGap {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .activitiesPage {
+    flex-direction: column;
+  }
+
+  .activitiesNav.activitiesNav {
+    display: none;
+  }
+
+  .activitiesNavToggle,
+  .secondaryNavExpandBtn {
+    display: none;
+  }
+
+  .activitiesContentLoading {
+    padding: 1rem;
+  }
+}
+
+.calendarSection {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  --color-calendar-surface: var(--color-bg-surface);
+  background: transparent;
+}
+
+:global([data-theme='dark']) .calendarSection {
+  --color-calendar-surface: var(--color-bg-surface);
+}
+
+.calendarMainShell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: var(--color-calendar-surface);
+  border-radius: 0.625rem;
+  border: 1px solid var(--stroke-gray);
+  box-shadow: none;
+}
+
+.calendarSection .calendarMainShell {
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.625rem;
+  background: var(--color-calendar-surface);
+  padding: 0.75rem;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.calendarToolbarRow {
+  width: 100%;
+  min-width: 0;
+}
+
+.calendarToolbarMainRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.calendarViewToggleRow {
+  display: none;
+}
+
+.periodTitleNavRow {
+  display: none;
+}
+
+.periodTitleNav {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.periodTitleNav :global([class*='pageSectionTitle']) {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.calendarContentShell {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.calendarToolbarStack {
+  flex-shrink: 0;
+}
+
+
+.calendarBodyStack {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.calendarBodyPeriodBar {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0.75rem 1rem 0.5rem;
+  background: var(--color-bg-settings-main);
+}
+
+.calendarBody {
+  padding-top: 0;
+}
+
+.calendarBodyFill {
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-bottom: 0;
+  container-type: size;
+  container-name: calendar-scroll;
+}
+
+.calendarViewWrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  padding: 0 1.25rem 0;
+  box-sizing: border-box;
+}
+
+.calendarBodyFill > .calendarViewWrap {
+  flex: 0 0 auto;
+}
+
+.calendarScrollStack {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  width: 100%;
+  gap: 2.5rem;
+  padding-block: 0 1rem;
+}
+
+.calendarPeriodSection {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  gap: 0.75rem;
+  box-sizing: border-box;
+  scroll-margin-block: 0.25rem;
+  padding-bottom: 2.5rem;
+}
+
+.calendarPeriodHeader {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0.5rem 0.125rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+  text-transform: capitalize;
+  letter-spacing: normal;
+}
+
+@supports (height: 100cqb) {
+  .calendarBodyFill .calendarPeriodSection {
+    min-height: 100cqb;
+  }
+}
+
+@supports not (height: 100cqb) {
+  .calendarBodyFill .calendarPeriodSection {
+    min-height: 70vh;
+  }
+}
+
+.calendarBodyFill .calendarPeriodSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.calendarBodyFill .calendarPeriodSection .calendarMainShell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendarBodyFill .calendarPeriodSection .monthCalendar {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: auto repeat(6, minmax(0, 1fr));
+}
+
+.calendarBodyFill .calendarPeriodSection .weekCalendar {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.calendarBodyFill .calendarPeriodSection .dayCalendar {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.calendarBodyFill .calendarPeriodSection .dayCalendar .weekColumn {
+  flex: 1;
+  min-height: 0;
+}
+
+.calendarBodyFill > .calendarViewWrap:has(.dayCalendar),
+.calendarBodyFill > .calendarViewWrap:has(.monthCalendar) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendarBodyFill .calendarViewWrap:has(.dayCalendar) .calendarSection,
+.calendarBodyFill .calendarViewWrap:has(.monthCalendar) .calendarSection {
+  flex: 1;
+  min-height: 0;
+}
+
+.calendarBodyFill .calendarContentShell:has(.dayCalendar),
+.calendarBodyFill .calendarContentShell:has(.monthCalendar) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendarBodyFill .calendarContentShell:has(.dayCalendar) .calendarMainShell,
+.calendarBodyFill .calendarContentShell:has(.monthCalendar) .calendarMainShell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendarBodyFill .calendarContentShell:has(.dayCalendar) .dayCalendar {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.calendarBodyFill .calendarContentShell:has(.monthCalendar) .monthCalendar {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: auto repeat(6, minmax(0, 1fr));
+}
+
+.activitiesTableBody {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Tabla a ancho completo: sin padding lateral del contenedor compartido ni del calendario */
+.activitiesContent .calendarBody.activitiesTableBody {
+  padding: 0;
+}
+
+.activitiesNavScrollBody {
+  composes: secondarySidebarScrollBody from '../styles/shared.module.css';
+  overflow-x: hidden;
+}
+
+.activitiesNavSections {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.activitiesNavGapFooter {
+  flex-shrink: 0;
+  margin-top: 0;
+  border-top: none;
+}
+
+.activitiesNavGapFooter.activitiesNavGapFooter {
+  border-top: none;
+}
+
+.activitiesNavGapExpanded {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.activitiesNavGapExpanded.activitiesNavGapExpanded {
+  padding: 0;
+}
+
+.activitiesNavGapFooterExpanded {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 0;
+  padding: 0;
+  border-top: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.activitiesNavGapFooterExpanded.activitiesNavGapFooterExpanded {
+  border-top: none;
+  width: 100%;
+  max-width: 100%;
+  margin-inline: 0;
+  margin-top: 0;
+  padding: 0.625rem var(--layout-secondary-sidebar-inline-padding)
+    var(--layout-secondary-sidebar-inline-padding);
+  flex: 1 1 auto;
+  min-height: 0;
+  align-self: stretch;
+}
+
+.periodTitleNavBody {
+  flex: 0 1 auto;
+  width: 100%;
+  max-width: 100%;
+  justify-content: center;
+}
+
+.periodTitleNavBody :global([class*='pageSectionTitle']) {
+  flex: 1 1 auto;
+  font-size: 0.9375rem;
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.shiftsToolbarSubtitle {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.periodTitleNavToolbar {
+  flex: 1;
+  min-width: 0;
+}
+
+.periodTitleNavToolbar :global([class*='pageSectionTitle']) {
+  text-transform: capitalize;
+}
+
+.periodTitleNavTable {
+  flex-shrink: 0;
+  min-width: 0;
+  flex: 1;
+}
+
+.periodTitleNavTable :global([class*='pageSectionTitle']) {
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+
+.activitiesContent .calendarTableToolbar {
+  padding: 1rem 1rem 0.75rem;
+}
+
+.calendarLoading {
+  padding: 2rem 0;
+}
+
+.viewToggle {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--stroke-gray-medium);
+  border-radius: 999px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--color-bg-surface);
+  -webkit-overflow-scrolling: touch;
+}
+
+.addActivityBtn {
+  flex-shrink: 0;
+}
+
+.activityShiftField {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.activityShiftField select {
+  flex: 1;
+  min-width: 0;
+}
+
+.activityScheduleSecondRow {
+  margin-top: 0.25rem;
+}
+
+.activityHoursComputed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin: 0;
+  min-height: 2.5rem;
+  padding: 0.5rem 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-primary);
+  line-height: 1.4;
+}
+
+.activityHoursHint {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.assigneeShiftSlot {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.assigneeSlotBlock {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--stroke-gray-medium);
+}
+
+.assigneeSlotHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.assigneeSlotName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.assigneeSlotGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .assigneeSlotGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.assigneeSlotHours {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.assigneeSlotHours strong {
+  color: var(--color-text-primary);
+}
+
+.activityViewAssigneeDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.activityViewShiftList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activityViewShiftRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.activityViewShiftName {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.activityViewShiftMissing {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-warning, #d97706);
+}
+
+.headingActions {
+  flex-shrink: 0;
+}
+
+.calendarNavMobile {
+  display: none;
+}
+
+.calendarNavMobileActions {
+  display: none;
+}
+
+/* Marcador para overrides responsive; estilos en shared.navMobileOptionsBtn */
+.calendarNavMobileIconBtn {
+  flex-shrink: 0;
+}
+
+.calendarToolbarMobileOptionsBtn {
+  flex-shrink: 0;
+  width: 2.625rem;
+  min-width: 2.625rem;
+  height: 2.625rem;
+}
+
+.viewToggle::-webkit-scrollbar {
+  height: var(--scrollbar-size);
+}
+
+.viewPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.5rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, background 0.15s;
+}
+
+.viewPillLabelShort {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .viewPill {
+    flex: 1;
+    min-width: 0;
+    padding: 0.25rem 0.4rem;
+  }
+
+  .viewPillLabel {
+    display: none;
+  }
+
+  .viewPillLabelShort {
+    display: inline;
+  }
+
+  .calendarTableToolbar {
+    padding-block: 0.75rem 0.375rem;
+    padding-inline: 0;
+  }
+
+  .calendarToolbarRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .calendarToolbarMainRow {
+    gap: 0.375rem;
+  }
+
+  .periodTitleNavRow {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .periodTitleNavRow .periodTitleNav {
+    width: 100%;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .periodTitleNavRow .periodTitleNavTable,
+  .periodTitleNavRow .periodTitleNavToolbar {
+    flex: 1;
+    width: 100%;
+    max-width: none;
+  }
+
+  .periodTitleNav :global([class*='pageSectionTitle']) {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .calendarViewToggleRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .calendarViewToggleRow .viewToggle {
+    flex: 1;
+    width: 100%;
+    max-width: none;
+    justify-content: stretch;
+  }
+
+  .calendarViewToggleRow .scheduleToolbarToggles {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .calendarViewToggleRow .scheduleToolbarToggles .viewToggle {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .calendarViewToggleRow .scheduleToolbarDivider {
+  display: none;
+}
+
+  .scheduleToolbarLegendRow {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    padding-top: 0.25rem;
+  }
+
+  .scheduleToolbarLegendMobile {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .calendarNavMobile {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.875rem 1rem calc(0.875rem + env(safe-area-inset-bottom, 0px));
+    margin: 0;
+    background: var(--color-bg-settings-main);
+    overflow: hidden;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition:
+      transform 0.22s ease,
+      opacity 0.18s ease;
+  }
+
+  .calendarNavMobileHidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(100%);
+  }
+
+  .calendarNavMobileActions {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .calendarNavMobile .calendarNavMobileIconBtn {
+    width: 2.625rem;
+    min-width: 2.625rem;
+    height: auto;
+    align-self: stretch;
+  }
+
+  .calendarNavMobileFooterPrimary {
+    composes: clientsNavMobileFooterPrimary from './Clients.module.css';
+  }
+
+  .calendarNavMobileAvailabilityBtn {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .calendarViewWrap {
+    padding-inline: 1rem;
+    padding-block: 0.25rem calc(1rem + 4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .calendarBodyFill {
+    padding-bottom: calc(1rem + 4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .calendarBodySchedules {
+    padding-block: 0.25rem calc(1rem + 4.5rem + env(safe-area-inset-bottom, 0px));
+    padding-inline: 0;
+  }
+}
+
+.viewPill:hover:not(.viewPillActive) {
+  color: var(--color-text-secondary);
+}
+
+.viewPill:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.viewPillActive {
+  font-weight: 700;
+  background: var(--app-accent);
+  color: #fff;
+}
+
+.viewPillActive:hover,
+.viewPillActive:focus-visible {
+  background: var(--app-accent);
+  color: #fff;
+}
+
+.yearCalendar {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media (min-width: 640px) {
+  .yearCalendar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .yearCalendar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .yearCalendar {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.yearMonth {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.625rem;
+  background: var(--color-calendar-surface);
+}
+
+.yearMonthTitle {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-align: left;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.yearMonthTitle:hover {
+  color: var(--color-text-secondary);
+}
+
+.yearMonthWeekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.125rem;
+}
+
+.yearWeekday {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--color-text-faint);
+}
+
+.yearMonthGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.125rem;
+}
+
+.yearDay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.125rem;
+  min-height: 2rem;
+  padding: 0.125rem 0;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.yearDay:hover {
+  background: var(--color-bg-muted);
+}
+
+.yearDayOtherMonth {
+  opacity: 0.35;
+}
+
+.yearDayToday .yearDayNumber {
+  background: var(--color-bg-inverse);
+  color: var(--color-text-inverse);
+}
+
+.yearDayNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-radius: 9999px;
+}
+
+.yearDayDots {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  min-height: 0.375rem;
+  max-width: 100%;
+}
+
+.yearDot {
+  width: 0.3125rem;
+  height: 0.3125rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.yearDotMore {
+  font-size: 0.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-text-faint);
+}
+
+.monthCalendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: auto repeat(6, minmax(0, 1fr));
+  flex: 1;
+  min-height: 0;
+}
+
+.weekCalendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+}
+
+.dayCalendar {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.weekColumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.weekDayCell {
+  flex: 1;
+  min-height: 0;
+}
+
+.calendarSection .calendarMainShell:has(.monthCalendar),
+.calendarSection .calendarMainShell:has(> .weekCalendar:not(.dayCalendar)) {
+  border: none;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* Mes / semana / día: estilo alineado con la vista de año */
+.calendarSection .monthCalendar {
+  gap: 0.375rem;
+  column-gap: 0.375rem;
+  row-gap: 0.375rem;
+  padding: 0;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+.calendarSection .weekCalendar,
+.calendarSection .dayCalendar {
+  column-gap: 0.5rem;
+  row-gap: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+.calendarSection .dayCalendar {
+  column-gap: 0;
+}
+
+.calendarSection .weekCalendar .weekColumn {
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.625rem;
+  background: var(--color-calendar-surface);
+  padding: 0.5rem 0.375rem;
+  gap: 0.375rem;
+}
+
+.calendarSection .dayCalendar .weekColumn {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  gap: 0.125rem;
+}
+
+.calendarSection .weekday {
+  padding: 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: normal;
+  text-transform: capitalize;
+  color: var(--color-text-primary);
+  background: transparent;
+  border: none;
+  min-width: 0;
+}
+
+.calendarSection .weekCalendar .weekday,
+.calendarSection .dayCalendar .weekday {
+  flex-shrink: 0;
+  padding: 0 0 0.375rem;
+}
+
+.calendarSection .weekCalendar .weekCalendarWeekday,
+.calendarSection .dayCalendar .dayCalendarWeekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0 0 0.375rem;
+  box-sizing: border-box;
+}
+
+.calendarSection .weekCalendar .weekCalendarWeekdayLabel,
+.calendarSection .dayCalendar .dayCalendarWeekdayLabel {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: capitalize;
+  color: var(--color-text-primary);
+}
+
+.calendarSection .weekCalendar .weekCalendarWeekdayNumber,
+.calendarSection .dayCalendar .dayCalendarWeekdayNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.1875rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-text-secondary);
+  background: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.calendarSection .weekCalendar .weekCalendarWeekdayNumber.todayNumber,
+.calendarSection .dayCalendar .dayCalendarWeekdayNumber.todayNumber,
+.calendarSection .dayCell .dayNumber.todayNumber {
+  background: var(--color-bg-inverse);
+  color: var(--color-text-inverse);
+}
+
+.calendarSection .weekCalendar .weekColumn:has(.dayCellInteractive:hover) .weekCalendarWeekdayNumber:not(.todayNumber) {
+  background: var(--color-bg-emphasis);
+  color: var(--color-text-primary);
+}
+
+.calendarSection .weekCalendar .weekColumn:has(.dayCellInteractive:hover) .weekCalendarWeekdayNumber.todayNumber {
+  background: var(--color-bg-inverse);
+  color: var(--color-text-inverse);
+}
+
+.calendarSection .weekCalendar .dayCell .dayLabel {
+  display: none;
+}
+
+.calendarSection .dayCell {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 0.375rem 0.25rem 0.25rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.375rem;
+  background: var(--color-calendar-surface);
+  gap: 0.125rem;
+  overflow: hidden;
+}
+
+.calendarSection .monthCalendar .dayCell {
+  min-height: 5.5rem;
+}
+
+.calendarSection .weekCalendar .dayCell {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  padding: 0.125rem 0;
+  align-items: flex-start;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.calendarSection .dayCellOtherMonth {
+  background: var(--color-calendar-surface);
+  opacity: 0.35;
+}
+
+.calendarSection .dayCell .dayLabel {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.125rem;
+  font-size: inherit;
+}
+
+.calendarSection .dayCell .dayNumber {
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.calendarSection .dayCellInteractive:hover .dayNumber:not(.todayNumber) {
+  background: var(--color-bg-emphasis);
+  color: var(--color-text-primary);
+}
+
+.calendarSection .dayCellInteractive:hover .dayNumber.todayNumber {
+  background: var(--color-bg-inverse);
+  color: var(--color-text-inverse);
+}
+
+.calendarSection .dayCellInteractive:hover .dayLabelMuted .dayNumber:not(.todayNumber) {
+  color: var(--color-text-primary);
+}
+
+.calendarSection .dayCell .events {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  padding: 0 0.0625rem;
+  gap: 0.125rem;
+  overflow: auto;
+}
+
+.calendarSection .monthCalendar .eventTime {
+  display: none;
+}
+
+.calendarSection .eventBtn {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.125rem 0.3125rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1.25;
+  border-radius: 0.1875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendarSection .dayCalendar .dayViewCell {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  padding: 0.25rem 0.125rem;
+  align-items: flex-start;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.calendarSection .dayCalendar .dayViewCell .events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+}
+
+.calendarSection .weekCalendar .dayCell .events {
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+}
+
+.calendarSection .weekCalendar .eventBtn,
+.calendarSection .dayCalendar .eventBtn {
+  padding: 0.25rem 0.375rem;
+  font-size: 0.6875rem;
+  border-radius: 0.25rem;
+  white-space: normal;
+}
+
+.calendarSection .weekCalendar .eventTime,
+.calendarSection .dayCalendar .eventTime {
+  display: flex;
+}
+
+.weekday {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  border-right: 1px solid var(--stroke-gray);
+  border-bottom: 1px solid var(--stroke-gray);
+  min-width: 0;
+}
+
+.weekday:nth-child(7n) {
+  border-right: none;
+}
+
+.listView {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0;
+}
+
+.dayCell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 7.5rem;
+  padding: 0.5rem;
+  border-right: 1px solid var(--stroke-gray);
+  border-bottom: 1px solid var(--stroke-gray);
+  overflow: hidden;
+}
+
+.dayCellInteractive {
+  cursor: pointer;
+}
+
+.dayCellInteractive.dayCellOtherMonth:hover {
+  background: var(--color-bg-subtle);
+}
+
+.dayCellLastCol {
+  border-right: none;
+}
+
+.dayCellOtherMonth {
+  background: var(--color-bg-subtle);
+}
+
+.dayCellList {
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: var(--color-calendar-surface);
+}
+
+.dayCellList.dayCellInteractive:hover {
+  border-color: var(--stroke-gray-medium);
+  background: var(--color-bg-subtle);
+}
+
+.dayLabel {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-secondary);
+}
+
+.dayLabelToday {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.dayLabelMuted {
+  color: var(--color-text-faint);
+}
+
+.todayNumber {
+  background: var(--color-bg-inverse);
+  color: var(--color-text-inverse);
+}
+
+.dayNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 0.375rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dayCellInteractive:hover .dayNumber:not(.todayNumber) {
+  background: var(--color-bg-emphasis);
+  color: var(--color-text-primary);
+}
+
+.dayCellInteractive:hover .dayLabelMuted .dayNumber:not(.todayNumber) {
+  color: var(--color-text-primary);
+}
+
+.events {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow: auto;
+}
+
+.eventBtn {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  min-width: 100%;
+  width: max-content;
+  max-width: none;
+  text-align: left;
+  padding: 0.5rem;
+  color: var(--type-color, var(--color-text-secondary));
+  background: color-mix(in srgb, var(--type-color, var(--color-text-subtle)) 14%, transparent);
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.eventBtn:hover {
+  background: color-mix(in srgb, var(--type-color, var(--color-text-subtle)) 22%, transparent);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pageHeaderActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modalTitleGroup {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.activityPastAgo {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-faint);
+  white-space: nowrap;
+}
+
+.modalHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.typeIconWrap {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+.selectedTypeIcon {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.typeCompactIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.noTypeHint {
+  font-size: 0.8125rem;
+  color: var(--color-text-subtle);
+  margin: 0 0 0.5rem;
+  font-style: italic;
+}
+
+.eventTime {
+  color: var(--stroke-gray-strong);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.historyItem {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.readOnlyHint {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--stroke-gray);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.assigneeListCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.assigneeList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.assigneeListEmpty {
+  padding: 1rem;
+}
+
+.assigneeListAdminBar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--color-chrome-border);
+  background: var(--color-bg-muted);
+}
+
+.assigneeListItem {
+  border-bottom: 1px solid var(--color-chrome-border);
+}
+
+.assigneeListItem:last-child {
+  border-bottom: none;
+}
+
+.assigneeListItemSigned {
+  background: color-mix(in srgb, #2e7d32 5%, var(--color-bg-surface));
+}
+
+.assigneeListRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(5.5rem, auto);
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 0.875rem 1rem;
+}
+
+.assigneeListPrimary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.assigneeListAvatar {
+  flex-shrink: 0;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  font-size: 0.6875rem;
+}
+
+.assigneeListMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.assigneeListName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.assigneeListSchedule {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  line-height: 1.35;
+}
+
+.assigneeListScheduleMuted {
+  color: var(--color-text-muted);
+}
+
+.assigneeListScheduleEdit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.assigneeListTimeInputs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.assigneeListTimeInput {
+  width: 5.75rem;
+  min-height: 1.75rem;
+  padding: 0.15rem 0.35rem;
+  font-size: 0.75rem;
+}
+
+.assigneeSaveSlotBtn {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--color-chrome-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  line-height: 1.3;
+}
+
+.assigneeSaveSlotBtn:hover:not(:disabled) {
+  background: var(--color-bg-muted);
+}
+
+.assigneeSaveSlotBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.assigneeListHours {
+  display: flex;
+  align-items: stretch;
+  gap: 0.375rem;
+  flex-shrink: 0;
+}
+
+.assigneeListHoursPlaceholder {
+  display: block;
+  width: 0;
+}
+
+.assigneeHourStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  min-width: 3.1rem;
+  padding: 0.3rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-muted);
+}
+
+.assigneeHourStatLabel {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  line-height: 1;
+}
+
+.assigneeHourStatValue {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.assigneeHourStatSigned .assigneeHourStatValue {
+  color: var(--color-success, #2e7d32);
+}
+
+.assigneeHourStatPending .assigneeHourStatValue {
+  color: var(--color-warning, #e65100);
+}
+
+.assigneeHourStatAwaiting .assigneeHourStatValue {
+  color: var(--color-text-muted);
+}
+
+.assigneeListActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  min-width: 5.5rem;
+}
+
+.assigneeCancelSignatureBtn {
+  border: none;
+  background: transparent;
+  padding: 0.25rem 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.assigneeCancelSignatureBtn:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.assigneeCancelSignatureBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.assigneeSignatureStrip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1rem 0.625rem;
+  margin-top: -0.25rem;
+}
+
+.assigneeSignatureThumb {
+  width: 4.5rem;
+  height: 1.75rem;
+  object-fit: contain;
+  object-position: left center;
+  opacity: 0.9;
+}
+
+.assigneeSignatureStripMeta {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.assigneeListFootnote {
+  margin: 0;
+  padding: 0 1rem 0.75rem;
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+}
+
+.assigneeSignPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem 0.875rem;
+  border-top: 1px dashed var(--color-chrome-border);
+  background: color-mix(in srgb, var(--color-bg-muted) 55%, transparent);
+}
+
+.assigneeSignPanelNoBorderTop {
+  border-top: none;
+}
+
+.assigneeSignPanel button {
+  width: 100%;
+  justify-content: center;
+}
+
+.assigneeRealHoursField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.assigneeRealHoursInputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  align-items: flex-end;
+}
+
+.assigneeRealHoursInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.assigneeRealHoursInputLabel {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  line-height: 1.2;
+}
+
+.assigneeRealHoursInputGroup input {
+  max-width: 5rem;
+}
+
+.assigneeSignAction button {
+  width: 100%;
+  justify-content: center;
+}
+
+.assigneeSignHint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.assigneeSignHintMuted {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--color-text-muted);
+}
+
+.signPromptBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.signPromptBlock .activityViewEmpty {
+  margin: 0;
+}
+
+.signPromptBlock button {
+  width: 100%;
+  justify-content: center;
+}
+
+.activityViewSaveError {
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
+
+.readOnlyAssignee {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.625rem 0.25rem 0.25rem;
+  border-radius: 9999px;
+  background: var(--color-bg-muted);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+
+.readOnlyAssigneeAvatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  font-size: 0.6875rem;
+}
+
+.assigneeAvatar {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.5625rem;
+  border: 2px solid var(--color-bg-surface);
+}
+
+.activityView {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.activityViewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.activityViewField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.activityViewBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activityViewLabel {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.activityViewValue {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  line-height: 1.4;
+}
+
+.activityViewScheduleValue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.activityViewScheduleWarning {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-warning, #d97706);
+  line-height: 1.35;
+  text-align: right;
+}
+
+.activityViewClientButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 9999px;
+  background: var(--color-bg-muted);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.activityViewClientButton:hover {
+  background: var(--color-bg-subtle);
+  border-color: var(--color-border-strong, var(--stroke-gray));
+}
+
+.activityViewClientInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  min-width: 0;
+}
+
+.activityViewClientName {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.activityViewClientEmail {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activityViewDescription {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.activityViewEmpty {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-faint);
+}
+
+.activityViewDocEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  min-height: 10rem;
+}
+
+.activityViewDocEmpty .activityViewEmpty {
+  max-width: 18rem;
+}
+
+.activityViewDocEmpty button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.activityViewDocSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.activityViewDraftDeliveryNoteMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.activityDocMismatchBanner {
+  padding: 0.75rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--color-warning, #d97706) 28%, var(--stroke-gray));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-warning, #d97706) 12%, var(--color-bg-muted));
+}
+
+.activityDocMismatchBannerText {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.activityViewDocActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.activityViewDocSummary button,
+.activityViewDocActions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  align-self: flex-start;
+}
+
+.activityWorkReportPanel {
+  gap: 1.25rem;
+}
+
+.activityWorkReportNotice {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+}
+
+.activityWorkReportFormHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.activityWorkReportFormHeading {
+  flex: 1;
+  min-width: 0;
+}
+
+.activityWorkReportFormTitle {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.activityWorkReportFormSubtitle {
+  margin: 0.125rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+}
+
+.activityWorkReportAvatar {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.75rem;
+}
+
+.activityWorkReportStatus {
+  flex-shrink: 0;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  border-radius: 999px;
+}
+
+.activityWorkReportStatusPending {
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-text-muted) 12%, transparent);
+}
+
+.activityWorkReportStatusDraft {
+  color: #b45309;
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+}
+
+.activityWorkReportStatusSubmitted {
+  color: #2e7d32;
+  background: color-mix(in srgb, #2e7d32 12%, transparent);
+}
+
+.activityWorkReportHoursCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activityWorkReportFieldLabel {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.activityWorkReportHoursRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.activityWorkReportHoursUnit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.activityWorkReportHoursUnitLabel {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.activityWorkReportHoursInput {
+  width: 4.25rem;
+  text-align: center;
+}
+
+.activityWorkReportHoursSep {
+  padding-bottom: 0.55rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  line-height: 1;
+}
+
+.activityWorkReportHint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.activityWorkReportOptional {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.activityWorkReportSentBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.875rem 1rem;
+  background: color-mix(in srgb, #2e7d32 6%, var(--color-bg-surface));
+  border: 1px solid color-mix(in srgb, #2e7d32 20%, transparent);
+  border-radius: 0.5rem;
+}
+
+.activityWorkReportSentTitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.activityWorkReportSentMeta {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.activityWorkReportTeam {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activityWorkReportTeamBelowAction {
+  margin-top: 0.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--stroke-gray);
+}
+
+.activityWorkReportTeamTitle {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.activityWorkReportTeamList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.activityWorkReportTeamItem {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+}
+
+.activityWorkReportTeamAvatar {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.625rem;
+}
+
+.activityWorkReportTeamMeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.activityWorkReportTeamName {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.activityWorkReportTeamNotes {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  line-height: 1.35;
+}
+
+.activityWorkReportExtraItemsDesc {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.activityWorkReportExtraItemsEmpty {
+  margin: 0;
+  padding: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  background: var(--color-bg-subtle);
+  border: 1px dashed var(--stroke-gray);
+  border-radius: 0.5rem;
+}
+
+.activityWorkReportExtraItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--stroke-gray);
+}
+
+.activityWorkReportExtraItemsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.activityWorkReportExtraItemsTitle {
+  margin: 0 0 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.activityWorkReportExtraItemsSave {
+  width: 100%;
+  margin-top: 0;
+}
+
+.activityWorkReportPreview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--stroke-gray);
+}
+
+.activityWorkReportPreviewHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.activityWorkReportPreviewActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.activityWorkReportPreviewActions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.activityViewWorkReportDocuments {
+  margin-top: 1.25rem;
+  padding: 0 1rem 1rem;
+  border-top: 1px solid var(--stroke-gray);
+}
+
+.activityViewWorkReportDocumentsTitle {
+  margin: 1rem 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.activityViewDeliveryNoteCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+  background: var(--color-bg-subtle);
+}
+
+.activityViewDocLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activityViewDocDone {
+  align-self: flex-start;
+}
+
+.activityViewDocSync {
+  margin: 0;
+}
+
+.activityViewList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activityViewListItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+  background: var(--color-bg-subtle);
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+}
+
+.activityViewDocButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.activityViewDocButton:hover {
+  color: var(--color-text-secondary);
+}
+
+.activityViewListMeta {
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.activityViewHistory {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.typeGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.typeOption {
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  margin: 0;
+  border: none;
+  border-radius: 0.4375rem;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.typeOption:hover {
+  background: var(--color-bg-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typeOption,
+  .typeOption:hover {
+    transition: none;
+  }
+}
+
+.typeIcon {
+  color: var(--color-text-primary);
+  flex-shrink: 0;
+}
+
+.typeLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-align: left;
+  color: var(--color-text-secondary);
+  line-height: 1.2;
+}
+
+.typeOptionAdd {
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  margin: 0;
+  border: none;
+  border-radius: 0.4375rem;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text-subtle);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.typeOptionAdd:hover {
+  background: var(--color-bg-muted);
+  color: var(--color-text-muted);
+}
+
+.typeAddIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: var(--color-bg-muted);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.typeCompactAddIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: var(--color-bg-muted);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.activityModal {
+  width: 100%;
+}
+
+.formSections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--page-section-stack-gap);
+}
+
+.sectionCardBody {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.typePickerBody {
+  padding: 0.375rem 0.5rem 1rem;
+}
+
+.typePickerForm {
+  gap: 0.875rem;
+}
+
+.selectedTypeBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--color-bg-active);
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+}
+
+.selectedTypeInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.changeTypeBtn {
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0.25rem;
+}
+
+.changeTypeBtn:hover {
+  color: var(--color-text-primary);
+}
+
+.typeGridCompact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.typeOptionCompact {
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  margin: 0;
+  border: none;
+  border-radius: 0.4375rem;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  transition: background 0.15s ease;
+}
+
+.typeOptionCompact:hover {
+  background: var(--color-bg-muted);
+}
+
+.typeOptionActive {
+  background: color-mix(in srgb, var(--type-color, var(--color-bg-subtle)) 12%, var(--color-bg-muted));
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.typeOptionCompactAdd {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  margin: 0;
+  border: none;
+  border-radius: 0.4375rem;
+  background: transparent;
+  color: var(--color-text-subtle);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.typeOptionCompactAdd:hover {
+  background: var(--color-bg-muted);
+  color: var(--color-text-muted);
+}
+
+.activitySignatureBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: stretch;
+  width: 100%;
+}
+
+.activitySignatureBlock button {
+  align-self: flex-start;
+}
+
+.activitySignatureImage {
+  max-width: 12rem;
+  max-height: 4rem;
+  object-fit: contain;
+}
+
+.activitySignatureMeta {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}

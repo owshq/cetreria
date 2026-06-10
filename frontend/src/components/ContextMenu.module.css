@@ -1,0 +1,128 @@
+.menu {
+  position: fixed;
+  z-index: 100;
+  min-width: 10rem;
+  padding: 0.375rem;
+  background: var(--color-bg-modal);
+  border: 1px solid var(--color-surface-border);
+  border-radius: 0.625rem;
+  box-shadow:
+    var(--shadow-sm), var(--shadow-dropdown);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  margin: 0;
+  border: none;
+  border-radius: 0.4375rem;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.item:hover:not(:disabled) {
+  background: var(--color-bg-muted);
+}
+
+.item:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.itemSelected {
+  font-weight: 600;
+  background: var(--color-bg-muted);
+}
+
+.itemDanger {
+  color: var(--color-danger);
+}
+
+.itemDanger:hover:not(:disabled) {
+  background: var(--color-danger-bg);
+}
+
+.itemIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.itemDanger .itemIcon {
+  color: var(--color-danger);
+}
+
+.itemLabel {
+  min-width: 0;
+}
+
+.menuBadges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.375rem;
+  padding: 0.5rem;
+  min-width: 8.5rem;
+}
+
+.itemBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: auto;
+  margin: 0;
+  border: none;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  transition: opacity 0.12s ease, box-shadow 0.12s ease;
+}
+
+.itemBadge:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.itemBadge:disabled {
+  cursor: default;
+}
+
+.itemBadgeSelected {
+  box-shadow: 0 0 0 2px var(--app-accent-soft);
+}
+
+.header {
+  padding: 0.375rem 0.75rem 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.separator {
+  height: 1px;
+  margin: 0.25rem 0.375rem;
+  background: var(--color-surface-border);
+}
+
+.menuScrollable {
+  max-height: min(70vh, 24rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

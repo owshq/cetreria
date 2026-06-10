@@ -1,0 +1,25 @@
+.sidebar {
+  composes: secondarySidebar from '../styles/shared.module.css';
+  --layout-secondary-sidebar-padding-bottom: 0;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.header {
+  composes: secondarySidebarNavHeader from '../styles/shared.module.css';
+}
+
+.headerToggle {
+  composes: secondarySidebarNavHeaderToggle from '../styles/shared.module.css';
+}
+
+.title {
+  composes: secondarySidebarNavHeaderTitle from '../styles/shared.module.css';
+}

@@ -1,0 +1,235 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.templatePicker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.templateOption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+  background: var(--color-bg-surface);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.templateOption:hover {
+  border-color: var(--stroke-gray-medium);
+  background: var(--color-bg-muted);
+}
+
+.templateOptionActive {
+  border-color: var(--template-accent, #2563eb);
+  background: color-mix(in srgb, var(--template-accent, #2563eb) 12%, var(--color-bg-surface));
+  box-shadow: 0 0 0 1px var(--template-accent, #2563eb);
+}
+
+.templatePreview {
+  position: relative;
+  width: 100%;
+  min-height: 4.75rem;
+  aspect-ratio: 210 / 297;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  border: 1px solid var(--stroke-gray);
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+}
+
+.templatePreviewCanvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+.customTemplatePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+  background: var(--color-bg-muted);
+}
+
+.customTemplateHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.customTemplateHint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-subtle);
+  line-height: 1.4;
+}
+
+.customTemplateHint code,
+.placeholderList code {
+  font-size: 0.6875rem;
+}
+
+.htmlEditor {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  min-height: 16rem;
+}
+
+.saveNamedRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.saveNameInput {
+  flex: 1 1 12rem;
+  min-width: 0;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.375rem;
+  background: var(--color-bg-surface);
+  font-size: 0.8125rem;
+}
+
+.saveNamedRow button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.savedTemplatesSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.savedTemplatesTitle {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.savedTemplatesList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.savedTemplateItem {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.savedTemplateSelect {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.375rem;
+  background: var(--color-bg-surface);
+  text-align: left;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.savedTemplateSelect:hover {
+  border-color: var(--stroke-gray-medium);
+  background: var(--color-bg-muted);
+}
+
+.savedTemplateSelectActive {
+  border-color: var(--template-accent, #2563eb);
+  background: color-mix(in srgb, var(--template-accent, #2563eb) 10%, var(--color-bg-surface));
+}
+
+.savedTemplateDelete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.375rem;
+  background: var(--color-bg-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.savedTemplateDelete:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: color-mix(in srgb, #dc2626 8%, var(--color-bg-surface));
+}
+
+.placeholderList {
+  font-size: 0.75rem;
+  color: var(--color-text-subtle);
+}
+
+.placeholderList summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.placeholderList ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  columns: 2;
+  gap: 1rem;
+}
+
+.placeholderList li {
+  break-inside: avoid;
+  margin-bottom: 0.2rem;
+}
+
+.templateOptionLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+.templateOptionDesc {
+  font-size: 0.6875rem;
+  color: var(--color-text-subtle);
+  line-height: 1.35;
+  text-align: center;
+}
+
+.templateColorField {
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 720px) {
+  .templatePicker {
+    grid-template-columns: 1fr;
+  }
+
+  .placeholderList ul {
+    columns: 1;
+  }
+}

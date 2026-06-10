@@ -1,0 +1,270 @@
+.shell {
+  display: flex;
+  align-items: center;
+  gap: 0.5625rem;
+  width: 100%;
+  min-height: 2.125rem;
+  padding: 0 0.875rem;
+  border: 1px solid var(--color-field-border);
+  border-radius: var(--radius-field);
+  background-color: var(--color-field-fill);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.shell:hover:not(.shellDisabled):not(:focus-within) {
+  border-color: var(--color-field-border-hover);
+  background-color: var(--color-field-fill-hover);
+}
+
+.shell:focus-within {
+  border-color: var(--color-field-border-focus);
+  background-color: var(--color-field-fill-focus);
+  box-shadow: 0 0 0 3px var(--color-field-ring-focus);
+}
+
+.shellDisabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.shellIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-field-icon);
+  stroke-width: 2;
+  opacity: 0.9;
+  pointer-events: none;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.shell:focus-within .shellIcon {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.control {
+  width: 100%;
+  min-height: 2.125rem;
+  padding: 0.5625rem 0.75rem;
+  border: 1px solid var(--color-field-border);
+  border-radius: var(--radius-field);
+  background-color: var(--color-field-fill);
+  color: var(--color-text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.control:hover:not(:disabled):not(:focus) {
+  border-color: var(--color-field-border-hover);
+  background-color: var(--color-field-fill-hover);
+}
+
+.control:focus {
+  outline: none;
+  border-color: var(--color-field-border-focus);
+  background-color: var(--color-field-fill-focus);
+  box-shadow: 0 0 0 3px var(--color-field-ring-focus);
+}
+
+.control::placeholder {
+  color: var(--color-field-placeholder);
+  font-weight: 400;
+  opacity: 1;
+}
+
+.control:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.searchControl {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.5rem 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-family: var(--font-search);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.searchControl:focus {
+  outline: none;
+}
+
+.searchControl::placeholder {
+  font-family: var(--font-search);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: var(--color-search-placeholder);
+  opacity: 1;
+}
+
+.searchControl:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.searchControl::-webkit-search-cancel-button,
+.searchControl::-webkit-search-decoration {
+  display: none;
+}
+
+.shellControl {
+  composes: searchControl;
+  font-family: var(--font-body);
+  letter-spacing: -0.015em;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.shellControl:focus {
+  outline: none;
+}
+
+.shellControl::placeholder {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  color: var(--color-field-placeholder);
+  opacity: 1;
+}
+
+.shellControl:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.textareaControl {
+  composes: control;
+  resize: vertical;
+  min-height: 5rem;
+}
+
+.selectControl {
+  composes: control;
+  appearance: none;
+  padding-right: 2rem;
+  background-color: var(--color-field-fill);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.625rem center;
+  background-size: 1rem;
+  cursor: pointer;
+}
+
+.passwordShell {
+  composes: shell;
+  position: relative;
+}
+
+.passwordControl {
+  composes: shellControl;
+  padding-right: 0.25rem;
+}
+
+.passwordToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-faint);
+  opacity: 0.45;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.passwordToggle:hover {
+  opacity: 0.75;
+  color: var(--color-text-subtle);
+  background: transparent;
+}
+
+.passwordToggle:focus-visible {
+  outline: none;
+  opacity: 0.85;
+  color: var(--color-text-subtle);
+}
+
+.controlLarge {
+  min-height: 2.5rem;
+  padding: 0.6875rem 0.875rem;
+  font-size: 1rem;
+}
+
+.shellOpen {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: transparent;
+}
+
+.searchShell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0 0.9375rem;
+  border: 1px solid var(--color-search-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-search-fill);
+  box-shadow: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.searchShell:hover:not(:focus-within) {
+  border-color: var(--color-search-border-hover);
+}
+
+.searchShell:focus-within {
+  border-color: var(--color-search-border-focus);
+  background-color: var(--color-search-fill-focus);
+}
+
+.searchIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-search-icon);
+  stroke-width: 2.25;
+  opacity: 1;
+  pointer-events: none;
+  transition: color 0.15s ease;
+}
+
+.searchShell:focus-within .searchIcon {
+  color: var(--color-search-icon);
+}

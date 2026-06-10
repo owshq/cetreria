@@ -1,0 +1,70 @@
+.wrap {
+  composes: settingsSections from '../styles/shared.module.css';
+}
+
+.avatarSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatarActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.avatarBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.passwordSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sectionHint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-subtle);
+}
+
+.sectionFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-danger);
+}
+
+.success {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-success);
+}
+
+@media (max-width: 640px) {
+  .avatarSection {
+    align-items: flex-start;
+  }
+}

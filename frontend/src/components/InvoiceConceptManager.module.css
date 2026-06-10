@@ -1,0 +1,53 @@
+.embeddedLayout {
+  overflow: visible;
+  flex: none;
+}
+
+.conceptEmojiBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.editPanel {
+  margin-bottom: 1rem;
+  padding: 0.875rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+  background: var(--color-bg-subtle);
+}
+
+.editPanelTitle {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.editPanelActions {
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--stroke-gray);
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 480px) {
+  .metaRow {
+    grid-template-columns: minmax(7rem, 9rem) auto;
+    align-items: end;
+    gap: 1rem;
+  }
+}
+
+.conceptPrice {
+  font-size: 0.8125rem;
+  color: var(--text-muted, #6b7280);
+}

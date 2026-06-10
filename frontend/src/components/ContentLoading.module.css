@@ -1,0 +1,40 @@
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 100%;
+  width: 100%;
+}
+
+.logoWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform;
+  animation: contentLoadingPulse 2.4s ease-in-out infinite;
+}
+
+.logo {
+  --logo-box-max: 4.5rem;
+}
+
+@keyframes contentLoadingPulse {
+  0%,
+  100% {
+    transform: scale(0.88);
+    opacity: 0.82;
+  }
+
+  50% {
+    transform: scale(1.22);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logoWrap {
+    animation: none;
+    opacity: 1;
+  }
+}

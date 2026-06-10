@@ -1,0 +1,224 @@
+.root {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.rootOpen .trigger {
+  border-color: var(--color-field-border-focus);
+  background: var(--color-field-fill-focus);
+  box-shadow: 0 0 0 3px var(--color-field-ring-focus);
+}
+
+.rootDisabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.trigger {
+  composes: control from '../styles/forms.module.css';
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.4375rem 0.6875rem;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.trigger:hover:not(:disabled) {
+  border-color: var(--color-field-border-hover);
+  background: var(--color-field-fill-hover);
+}
+
+.trigger:focus-visible {
+  outline: none;
+  border-color: var(--color-field-border-focus);
+  background: var(--color-field-fill-focus);
+  box-shadow: 0 0 0 3px var(--color-field-ring-focus);
+}
+
+.triggerLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.triggerText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.rootEmojiTrigger {
+  width: auto;
+  min-width: 0;
+}
+
+.triggerEmojiOnly {
+  justify-content: center;
+  gap: 0.375rem;
+  width: auto;
+  min-width: 2.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.triggerEmojiOnly .triggerLabel {
+  flex: 0;
+  justify-content: center;
+}
+
+.triggerCompact {
+  min-height: 2rem;
+  padding: 0.3125rem 0.5625rem;
+  font-size: 0.8125rem;
+  gap: 0.375rem;
+}
+
+.optionCompact {
+  padding: 0.5rem 0.625rem;
+  font-size: 0.8125rem;
+}
+
+.optionWithEmoji {
+  justify-content: flex-start;
+  min-height: 2.5rem;
+}
+
+.rootEmojiTrigger .dropdown {
+  left: auto;
+  right: 0;
+  min-width: 12.5rem;
+}
+
+.symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 0.25rem;
+  border-radius: 0.3125rem;
+  background: var(--color-bg-muted);
+  font-family: ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-text-primary);
+  flex-shrink: 0;
+}
+
+.triggerSymbolOnly {
+  justify-content: center;
+  gap: 0.25rem;
+  width: auto;
+  min-width: 2.75rem;
+  padding: 0.375rem 0.5rem;
+}
+
+.triggerSymbolOnly .triggerLabel {
+  flex: 0;
+  justify-content: center;
+}
+
+.optionWithSymbol .symbol {
+  background: var(--color-bg-subtle);
+}
+
+.optionSelected .symbol,
+.optionHighlighted .symbol {
+  background: var(--color-bg-emphasis);
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--color-text-faint);
+  transition: transform 0.2s ease;
+  margin-left: 0.125rem;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 0.375rem);
+  z-index: 20;
+  margin: 0;
+  padding: 0.375rem;
+  list-style: none;
+  max-height: 14rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.625rem;
+  box-shadow:
+    var(--shadow-sm), var(--shadow-dropdown);
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.dropdownTop {
+  top: auto;
+  bottom: calc(100% + 0.375rem);
+}
+
+.dropdownPortal {
+  position: fixed;
+  right: auto;
+  z-index: var(--z-dropdown-portal);
+}
+
+.dropdownSymbol {
+  min-width: 11rem;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: none;
+  border-radius: 0.4375rem;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.3;
+  box-sizing: border-box;
+}
+
+.option:hover,
+.optionHighlighted {
+  background: var(--color-bg-muted);
+  color: var(--color-text-primary);
+}
+
+.optionSelected {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}

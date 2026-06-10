@@ -1,0 +1,22 @@
+.panel {
+  padding-top: 0.5rem;
+  border-top: none;
+}
+
+.panelControlsBelow {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 0.625rem 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.panelControlsBelow > * {
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.chartBody {
+  min-height: 0;
+}

@@ -1,0 +1,11 @@
+.activitiesNavCompactTriggerLabel {
+  composes: documentsNavCompactTriggerLabel from '../pages/Documents.module.css';
+}
+
+.activitiesToolbarFilterBtn {
+  composes: documentsToolbarFilterBtn from '../pages/Documents.module.css';
+}
+
+.activitiesToolbarFilterBtnActive {
+  composes: documentsToolbarFilterBtnActive from '../pages/Documents.module.css';
+}

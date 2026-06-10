@@ -1,0 +1,190 @@
+.managerModal {
+  max-width: 36rem;
+}
+
+@media (max-width: 767px) {
+  .managerModal {
+    max-width: none;
+  }
+}
+
+.typeList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.typeList:empty {
+  margin-bottom: 0;
+}
+
+.typeListEmbedded {
+  composes: listPanel from '../styles/shared.module.css';
+  margin-bottom: 0;
+}
+
+.typeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+  background: var(--color-bg-surface);
+}
+
+.typeRowEmbedded {
+  composes: listPanelItem from '../styles/shared.module.css';
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+}
+
+.typeRowEmbedded:hover {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.typeRowActive {
+  border-color: var(--app-accent);
+  background: var(--color-bg-subtle);
+}
+
+.typeRowActiveEmbedded {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-primary);
+}
+
+.typePreview {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.typeInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.typeName {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+}
+
+.typeMeta {
+  font-size: 0.75rem;
+  color: var(--color-text-subtle);
+}
+
+.typeActions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.iconGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.375rem;
+}
+
+@media (min-width: 480px) {
+  .iconGrid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+}
+
+.iconOption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: 2px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+  background: var(--color-bg-surface);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  padding: 0;
+}
+
+.iconOption:hover {
+  border-color: var(--stroke-gray-strong);
+  background: var(--color-bg-subtle);
+}
+
+.iconOptionActive {
+  border-color: var(--app-accent);
+  background: var(--color-bg-subtle);
+  color: var(--app-accent);
+}
+
+.addBtn {
+  width: 100%;
+  justify-content: center;
+}
+
+.footerActionBtn {
+  flex: 1;
+  justify-content: center;
+}
+
+.managerLayout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.embeddedScroll {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.embeddedFooter {
+  padding: 0.75rem 0 0;
+  background: transparent;
+}
+
+.embeddedTitle {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.error {
+  color: var(--color-danger-hover);
+  font-size: 0.875rem;
+  margin: 0 0 0.75rem;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.checkboxLabel input {
+  margin-top: 0.125rem;
+}
+
+.checkboxHint {
+  margin: 0.375rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}

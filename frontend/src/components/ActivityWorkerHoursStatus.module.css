@@ -1,0 +1,117 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+}
+
+.hoursRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.hoursLabel {
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+}
+
+.hoursValue {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.hoursValueSigned {
+  color: var(--color-success, #2e7d32);
+}
+
+.hoursValuePending {
+  color: var(--color-warning, #e65100);
+}
+
+.pendingHint {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--color-warning, #e65100);
+}
+
+.signedHint {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  width: 100%;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.badgeSigned {
+  background: color-mix(in srgb, #2e7d32 18%, transparent);
+  color: #1b5e20;
+}
+
+.badgePending {
+  background: color-mix(in srgb, #e65100 16%, transparent);
+  color: #bf360c;
+}
+
+.badgeScheduled {
+  background: color-mix(in srgb, var(--color-text-muted) 14%, transparent);
+  color: var(--color-text-secondary);
+}
+
+.signBtn {
+  border: none;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-text-primary);
+  color: var(--color-bg-surface);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.signBtn:hover {
+  opacity: 0.9;
+}
+
+.signBtnLarge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+  padding: 0.35rem 0.65rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-text-primary);
+  color: var(--color-bg-surface);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.signBtnLarge:hover {
+  opacity: 0.92;
+}

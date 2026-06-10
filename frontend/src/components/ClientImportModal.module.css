@@ -1,0 +1,181 @@
+.dropzoneActive {
+  border-color: var(--app-accent);
+  background: var(--color-bg-subtle);
+}
+
+.fileName {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.columnBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.columnBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid var(--stroke-gray);
+  background: var(--color-bg-subtle);
+  color: var(--color-text-muted);
+}
+
+.columnBadgeDetected {
+  border-color: var(--color-success-border);
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.columnBadgeMissing {
+  border-color: var(--stroke-gray);
+  background: var(--color-bg-subtle);
+  color: var(--color-text-faint);
+}
+
+.duplicateAlert {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-warning-border);
+  background: var(--color-warning-bg);
+}
+
+.duplicateAlertTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-warning-text);
+  margin-bottom: 0.75rem;
+}
+
+.strategyOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.strategyOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--stroke-gray);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.strategyOption:hover {
+  border-color: var(--stroke-gray-medium);
+  background: var(--color-bg-subtle);
+}
+
+.strategyOptionSelected {
+  border-color: var(--app-accent);
+  background: var(--color-bg-subtle);
+}
+
+.strategyLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.strategyHint {
+  font-size: 0.75rem;
+  color: var(--color-text-subtle);
+  margin-top: 0.125rem;
+}
+
+.previewTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.previewTable th,
+.previewTable td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--stroke-gray);
+}
+
+.previewTable th {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-subtle);
+}
+
+.previewTable td {
+  color: var(--color-text-muted);
+}
+
+.previewScroll {
+  max-height: 12rem;
+  overflow: auto;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+}
+
+.emptyValue {
+  color: var(--color-text-faint);
+  font-style: italic;
+}
+
+.resultSummary {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-success-border);
+  background: var(--color-success-bg);
+  font-size: 0.875rem;
+  color: var(--color-success-text);
+}
+
+.errorMessage {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-danger-border);
+  background: var(--color-danger-bg);
+  font-size: 0.875rem;
+  color: var(--color-danger-hover);
+  margin-bottom: 1rem;
+}
+
+.sampleHint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.sampleDownload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+  background: var(--color-bg-subtle);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.sampleDownload:hover {
+  border-color: var(--app-accent);
+  background: var(--color-bg-subtle);
+}

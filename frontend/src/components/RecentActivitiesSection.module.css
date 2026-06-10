@@ -1,0 +1,206 @@
+.sectionTitleActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  min-height: 1.5rem;
+}
+
+.headerChartToggles {
+  padding: 0;
+}
+
+.chartControlsBelow {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 0.5rem 1rem 0.75rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chartControlsBelow > * {
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.sectionDownloadBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sectionDownloadBtn:hover:not(:disabled) {
+  background: var(--color-bg-muted);
+  color: var(--color-text-muted);
+}
+
+.sectionDownloadBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sectionDownloadBtn:focus-visible {
+  outline: 1px solid var(--color-text-muted);
+  outline-offset: 1px;
+}
+
+.searchToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.searchToggleBtn:hover,
+.searchToggleBtn[aria-expanded='true'] {
+  background: var(--color-bg-muted);
+  color: var(--color-text-muted);
+}
+
+.searchToggleBtn:focus-visible {
+  outline: 1px solid var(--color-text-muted);
+  outline-offset: 1px;
+}
+
+.sectionSearch {
+  padding: 0;
+}
+
+.cardShell {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+}
+
+.cardBody {
+  flex: none;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+.emptyStateCardBody {
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 1023px) {
+  .cardShell {
+    height: auto;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .cardBody {
+    overflow-x: hidden;
+    overflow-y: visible;
+    flex: none;
+    min-height: auto;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+.typeDescriptionRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.descriptionInRow {
+  composes: listPanelItemMessage from '../styles/shared.module.css';
+  width: 100%;
+  min-width: 0;
+}
+
+.assigneeAvatars {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding-top: 0.125rem;
+}
+
+.assigneeAvatarWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.assigneeAvatars .assigneeAvatarWrap + .assigneeAvatarWrap {
+  margin-left: -0.5rem;
+}
+
+.assigneeAvatar {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.5625rem;
+  border: 2px solid var(--color-bg-surface);
+}
+
+.assigneeShiftMark {
+  position: absolute;
+  right: -0.0625rem;
+  bottom: -0.0625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0.75rem;
+  height: 0.75rem;
+  padding: 0 0.125rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-bg-surface);
+  color: #fff;
+  font-size: 0.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.cardShellCollapsible {
+  position: relative;
+  overflow: visible;
+  padding-bottom: 1rem;
+}
+
+.chartToggleRow {
+  composes: toggleRow from './ChartSectionToggle.module.css';
+}
+
+.chartToggleBtn {
+  composes: toggleBtn from './ChartSectionToggle.module.css';
+}
+
+.chartToggleChevron {
+  composes: toggleChevron from './ChartSectionToggle.module.css';
+}
+
+.chartToggleChevronOpen {
+  composes: toggleChevronOpen from './ChartSectionToggle.module.css';
+}

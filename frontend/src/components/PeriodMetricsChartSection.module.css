@@ -1,0 +1,64 @@
+.statBoxStatic {
+  cursor: default;
+}
+
+.metricsStripTwo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+  width: 100%;
+}
+
+/* Dos m�tricas (contacto / informes): ancho completo en 2 columnas */
+.periodMetricsStrip {
+  composes: metricsStripTwo;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.periodDashboardCardBody {
+  width: 100%;
+  min-width: 0;
+}
+
+.periodChartsPanel {
+  width: 100%;
+  min-width: 0;
+  padding-inline: 11px;
+  padding-bottom: 0.75rem;
+  margin: 0;
+  border-top: none;
+}
+
+.chartViewToggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.chartViewBtn {
+  padding: 0.3125rem 0.625rem;
+  border: 1px solid var(--color-surface-border);
+  border-radius: 999px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-subtle);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.chartViewBtn:hover {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-primary);
+}
+
+.chartViewBtnActive {
+  border-color: var(--color-text-primary);
+  background: var(--color-bg-muted);
+  color: var(--color-text-primary);
+}

@@ -1,0 +1,157 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-height: 0;
+  gap: var(--layout-secondary-sidebar-title-content-gap);
+}
+
+.search {
+  flex-shrink: 0;
+}
+
+.searchField {
+  width: 100%;
+  min-width: 0;
+}
+
+.list {
+  composes: secondarySidebarList from '../styles/shared.module.css';
+  container-type: inline-size;
+  container-name: activity-sidebar-list;
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  gap: 0.125rem;
+  padding: 0;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0.4375rem 0.625rem;
+  border-radius: 0;
+  color: var(--color-settings-nav-text);
+}
+
+@container activity-sidebar-list (min-width: 11.5rem) {
+  .item {
+    padding: 0.5rem 0.875rem;
+  }
+}
+
+@container activity-sidebar-list (min-width: 13.5rem) {
+  .item {
+    padding: 0.5rem 1rem;
+  }
+}
+
+.itemMain {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.compact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  min-width: 0;
+}
+
+.compactClientRow {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.compactTypeDot {
+  flex-shrink: 0;
+}
+
+.compactClient,
+.compactSummary,
+.compactMeta {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compactClient {
+  flex: 1 1 auto;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.compactSummary {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--color-settings-nav-text);
+}
+
+.compactMeta {
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--color-settings-nav-text-muted, var(--color-text-muted));
+}
+
+.item:hover .itemMain:not(:disabled) {
+  color: var(--color-settings-nav-text-hover);
+}
+
+.itemMain:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: -2px;
+}
+
+.item:hover {
+  background: var(--color-bg-settings-nav-hover);
+}
+
+.itemActive:hover {
+  background: var(--app-accent-soft);
+}
+
+.itemActive {
+  color: var(--color-settings-nav-text-active);
+  font-weight: 500;
+}
+
+.itemActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.375rem;
+  bottom: 0.375rem;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--app-accent);
+}
+
+.empty {
+  padding: 0.75rem 1rem;
+}
+
+.loadingText {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}

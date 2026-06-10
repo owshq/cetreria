@@ -1,0 +1,160 @@
+:global(*) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+:global(*::-webkit-scrollbar) {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+:global(*::-webkit-scrollbar-track) {
+  background: var(--scrollbar-track);
+}
+
+:global(*::-webkit-scrollbar-thumb) {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.15s ease;
+}
+
+:global(*::-webkit-scrollbar-thumb:hover) {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+:global(*::-webkit-scrollbar-thumb:active) {
+  background-color: var(--scrollbar-thumb-active);
+}
+
+:global(*::-webkit-scrollbar-button),
+:global(*::-webkit-scrollbar-button:single-button),
+:global(*::-webkit-scrollbar-button:double-button),
+:global(*::-webkit-scrollbar-button:vertical),
+:global(*::-webkit-scrollbar-button:horizontal),
+:global(*::-webkit-scrollbar-button:vertical:decrement),
+:global(*::-webkit-scrollbar-button:vertical:increment),
+:global(*::-webkit-scrollbar-button:horizontal:decrement),
+:global(*::-webkit-scrollbar-button:horizontal:increment) {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+:global(*::-webkit-scrollbar-corner) {
+  background: transparent;
+}
+
+:global([data-scroll-region]) {
+  min-height: 0;
+  overscroll-behavior: var(--scroll-overscroll-behavior, contain);
+}
+
+:global([data-popup-open]) [data-scroll-region] {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Paneles modales (p. ej. Vistas y filtros) deben seguir pudiendo hacer scroll. */
+:global([data-popup-open])
+  :is([role='dialog'], [role='alertdialog'], [data-popup-layer])
+  [data-scroll-region] {
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scrollAreaReveal {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scrollAreaReveal:hover,
+.scrollAreaReveal:focus-within {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.scrollArea {
+  composes: scrollAreaReveal;
+  overflow: auto;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: var(--scroll-gutter, stable);
+  overscroll-behavior: var(--scroll-overscroll-behavior, contain);
+}
+
+.scrollAreaY {
+  composes: scrollArea;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.scrollAreaX {
+  composes: scrollArea;
+  overflow-y: hidden;
+  overflow-x: auto;
+  scrollbar-gutter: stable both-edges;
+}
+
+/* Viewport al borde derecho: sin gutter reservado, barra pegada al extremo. */
+.scrollAreaEdgeY {
+  composes: scrollAreaReveal;
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: var(--scroll-overscroll-behavior, contain);
+}
+
+/*
+ * Sobrescribe :global(*) en contenedores marcados con data-scroll-region.
+ * html aumenta especificidad para ganar al bundling de :global(*).
+ * Debe ir al final: composes de CSS Modules no enlaza pseudo-elementos al DOM.
+ */
+:global(html [data-scroll-region]) {
+  scrollbar-width: none;
+}
+
+:global(html [data-scroll-region]:hover),
+:global(html [data-scroll-region]:focus-within) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+:global(html [data-scroll-region]::-webkit-scrollbar) {
+  width: 0;
+  height: 0;
+}
+
+:global(html [data-scroll-region]:hover::-webkit-scrollbar),
+:global(html [data-scroll-region]:focus-within::-webkit-scrollbar) {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+:global(html [data-scroll-region]::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+:global(html [data-scroll-region]::-webkit-scrollbar-thumb) {
+  background-color: transparent;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.15s ease;
+}
+
+:global(html [data-scroll-region]:hover::-webkit-scrollbar-thumb),
+:global(html [data-scroll-region]:focus-within::-webkit-scrollbar-thumb) {
+  background-color: var(--scrollbar-thumb);
+}
+
+:global(html [data-scroll-region]::-webkit-scrollbar-thumb:hover) {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+:global(html [data-scroll-region]::-webkit-scrollbar-thumb:active) {
+  background-color: var(--scrollbar-thumb-active);
+}

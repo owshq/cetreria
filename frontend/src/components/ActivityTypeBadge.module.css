@@ -1,0 +1,46 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0.125rem 0;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--type-color, var(--color-text-muted));
+  background: color-mix(in srgb, var(--type-color, var(--color-text-subtle)) 14%, transparent);
+  white-space: nowrap;
+}
+
+.emoji {
+  font-size: 0.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.label {
+  line-height: 1.35;
+  flex-shrink: 0;
+}
+
+.badgeInRow {
+  margin: 0;
+  max-width: none;
+  min-width: max-content;
+}
+
+.badgeSolid {
+  color: var(--type-color, var(--color-text-muted));
+  background: color-mix(in srgb, var(--type-color, var(--color-text-subtle)) 14%, transparent);
+}
+
+.badgeBtn {
+  margin: 0;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}

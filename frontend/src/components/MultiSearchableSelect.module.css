@@ -1,0 +1,56 @@
+.clearRow {
+  padding: 0.25rem 0.25rem 0;
+  border-bottom: 1px solid var(--stroke-gray);
+  margin-bottom: 0.25rem;
+}
+
+.clearButton {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  text-align: left;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.clearButton:hover {
+  background: var(--color-bg-muted);
+}
+
+.option {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.optionContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  border: 1.5px solid var(--stroke-gray-strong);
+  border-radius: 0.25rem;
+  background: var(--color-bg-surface);
+  color: var(--color-text-inverse);
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.checkboxChecked {
+  background: var(--color-bg-inverse);
+  border-color: var(--app-accent);
+}

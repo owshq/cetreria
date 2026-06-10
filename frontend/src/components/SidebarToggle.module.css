@@ -1,0 +1,23 @@
+.toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 1.125rem;
+  line-height: 1;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.toggle:hover {
+  background: var(--color-bg-muted);
+  border-color: var(--stroke-gray);
+}

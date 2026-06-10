@@ -1,0 +1,128 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.duplicateSelect {
+  width: 100%;
+}
+
+.duplicateSelect > div {
+  margin: 0;
+}
+
+.dropzone {
+  border: 2px dashed var(--stroke-gray-medium);
+  border-radius: 0.5rem;
+  padding: 0.875rem 1rem;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dropzoneActive {
+  border-color: var(--stroke-gray-strong);
+  background: var(--color-bg-subtle);
+}
+
+.dropzoneDisabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.dropzoneHint {
+  margin: 0;
+}
+
+.listSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.listSearch {
+  width: 100%;
+}
+
+.listSummary {
+  margin: 0;
+}
+
+.list {
+  composes: scrollAreaY from '../styles/scrollbars.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: min(16rem, 40vh);
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+  cursor: grab;
+  transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+}
+
+.item:active {
+  cursor: grabbing;
+}
+
+.item:hover:not(.itemDisabled) {
+  background: var(--color-bg-subtle);
+}
+
+.itemChecked {
+  border-color: var(--stroke-gray-strong);
+  background: var(--color-bg-subtle);
+}
+
+.itemDisabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.itemDragging {
+  opacity: 0.45;
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  color: var(--color-text-faint);
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.itemBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.itemTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.itemMeta {
+  font-size: 0.75rem;
+  color: var(--color-text-subtle);
+}
+
+.linkedBadge {
+  font-size: 0.6875rem;
+  color: var(--color-text-faint);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.emptyHint {
+  margin: 0;
+}

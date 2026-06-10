@@ -1,0 +1,105 @@
+.filterBuilder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.625rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.625rem;
+  background: var(--color-bg-subtle);
+}
+
+.groupNested {
+  margin-left: 0.75rem;
+  background: var(--color-bg-surface);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.groupTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.logicSelect {
+  width: auto;
+  min-width: 6.5rem;
+}
+
+.logicHint {
+  font-size: 0.75rem;
+  color: var(--color-text-faint);
+}
+
+.groupActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-left: auto;
+}
+
+.groupActionBtn {
+  composes: btnSecondary from '../styles/shared.module.css';
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+}
+
+.conditionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.conditionRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 1.2fr) auto;
+  gap: 0.375rem;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .conditionRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fieldSelect,
+.operatorSelect,
+.valueSelect {
+  min-width: 0;
+}
+
+.valueInput {
+  composes: control from '../styles/forms.module.css';
+  min-width: 0;
+  font-size: 0.8125rem;
+  min-height: 2rem;
+  padding: 0.3125rem 0.5625rem;
+}
+
+.removeBtn {
+  composes: btnIcon from '../styles/shared.module.css';
+  flex-shrink: 0;
+}
+
+.emptyGroup {
+  padding: 0.75rem;
+  border: 1px dashed var(--stroke-gray-medium);
+  border-radius: 0.5rem;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  text-align: center;
+}

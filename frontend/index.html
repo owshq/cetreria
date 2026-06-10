@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem('theme_preference');
+          if (!pref) pref = localStorage.getItem('crm_theme_preference');
+          if (!pref) {
+            var legacy = localStorage.getItem('color_scheme');
+            if (!legacy) legacy = localStorage.getItem('crm_color_scheme');
+            pref = legacy === 'dark' ? 'dark' : legacy === 'light' ? 'light' : 'auto';
+          }
+
+          var scheme = pref;
+          if (pref === 'auto') {
+            var hour = new Date().getHours();
+            scheme = hour >= 20 || hour < 7 ? 'dark' : 'light';
+          }
+
+          document.documentElement.setAttribute('data-theme', scheme);
+          document.documentElement.style.colorScheme = scheme;
+        } catch (e) {}
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/logo_black.png" />
+    <link rel="apple-touch-icon" href="/logo_black.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

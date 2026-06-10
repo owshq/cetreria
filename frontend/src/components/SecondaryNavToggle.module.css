@@ -1,0 +1,12 @@
+.toggleBtn {
+  composes: toggleBtn from './ChartSectionToggle.module.css';
+  flex-shrink: 0;
+}
+
+.chevron {
+  composes: toggleChevron from './ChartSectionToggle.module.css';
+}
+
+.chevronCollapsed {
+  composes: toggleChevronOpen from './ChartSectionToggle.module.css';
+}

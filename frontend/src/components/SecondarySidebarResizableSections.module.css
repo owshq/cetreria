@@ -1,0 +1,70 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-inline: var(--layout-secondary-sidebar-inline-padding);
+}
+
+.sectionGrow {
+  composes: section;
+  flex: 1 1 auto;
+  min-height: var(--layout-secondary-sidebar-section-min-height);
+  justify-content: flex-start;
+}
+
+.divider {
+  position: relative;
+  flex-shrink: 0;
+  width: 100%;
+  height: var(--layout-secondary-sidebar-divider-hit-size);
+  touch-action: none;
+  cursor: row-resize;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+  background: var(--color-settings-nav-border);
+  pointer-events: none;
+}
+
+.divider:hover::before,
+.divider:focus-visible::before,
+.divider[data-dragging]::before {
+  background: var(--stroke-gray-medium);
+}
+
+.divider:focus-visible {
+  outline: none;
+}
+
+.divider:focus-visible::before {
+  height: 2px;
+}
