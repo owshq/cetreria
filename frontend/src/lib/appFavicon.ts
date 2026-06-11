@@ -1,4 +1,3 @@
-import { DEFAULT_APP_LOGO_DARK } from '@/lib/appLogo';
 import { APP_EVENTS } from '@/lib/appEvents';
 import {
   readWorkspaceScopedStorage,
@@ -6,7 +5,7 @@ import {
   writeWorkspaceScopedStorage,
 } from '@/lib/workspaceStorage';
 
-export const DEFAULT_APP_FAVICON = DEFAULT_APP_LOGO_DARK;
+export const DEFAULT_APP_FAVICON = '/favicon.png';
 
 const FAVICON_STORAGE_PART = 'app_favicon';
 

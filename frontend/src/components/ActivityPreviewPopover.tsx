@@ -11,11 +11,11 @@ import type {
 import ActivityPreviewContent from '@/components/ActivityPreviewContent';
 import { useWorkspaceScheduleSettings } from '@/context/WorkspaceScheduleSettingsContext';
 import { useWorkspaceFeatureSettings } from '@/context/WorkspaceFeatureSettingsContext';
-import { buildActivityPreviewMeta, canViewerSignActivityHours } from '@/lib/activityPreview';
 import {
-  activityHasLinkedDeliveryNote,
-  canAssociateActivityDeliveryNote,
-} from '@/lib/activityDocumentModalOptions';
+  buildActivityPreviewMeta,
+  canViewerOpenWorkReportPreview,
+  canViewerSignActivityHours,
+} from '@/lib/activityPreview';
 import { authService } from '@/api';
 import { useActivityModal } from '@/context/ActivityModalContext';
 import styles from './ActivityPreviewPopover.module.css';
@@ -30,7 +30,6 @@ type ActivityPreviewPopoverProps = {
   documentsByActivity: Map<string, Document[]>;
   assigneesById: Map<string, UserAssignee>;
   events: CalendarEvent[];
-  onAssociateDocument?: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
 };
@@ -71,7 +70,6 @@ export default function ActivityPreviewPopover({
   documentsByActivity,
   assigneesById,
   events,
-  onAssociateDocument,
   onMouseEnter,
   onMouseLeave,
 }: ActivityPreviewPopoverProps) {
@@ -92,6 +90,11 @@ export default function ActivityPreviewPopover({
     openEditByActivity(activity, events, { editMode: true });
   }, [activity, events, openEditByActivity]);
 
+  const handleOpenWorkReport = useCallback(() => {
+    if (!activity) return;
+    openEditByActivity(activity, events, { focusSection: 'workReport' });
+  }, [activity, events, openEditByActivity]);
+
   const meta = buildActivityPreviewMeta({
     event,
     activity,
@@ -104,15 +107,13 @@ export default function ActivityPreviewPopover({
   });
 
   const linkedDocuments = activity ? (documentsByActivity.get(activity.id) ?? []) : [];
-  const showAssociateDocument = Boolean(
-    activity &&
-      currentUser &&
-      canAssociateActivityDeliveryNote(currentUser, activity, linkedDocuments, event),
+  const showWorkReportAction = canViewerOpenWorkReportPreview(
+    activity,
+    event,
+    currentUser,
+    activityTypes,
+    linkedDocuments,
   );
-  const associateDocumentLabel =
-    linkedDocuments.length > 0 && !activityHasLinkedDeliveryNote(linkedDocuments)
-      ? 'Crear albarán'
-      : 'Asociar documento';
 
   const reposition = useCallback(() => {
     if (!anchorEl || !popoverRef.current) return;
@@ -160,9 +161,9 @@ export default function ActivityPreviewPopover({
         meta={meta}
         activityTypes={activityTypes}
         clientsMap={clientsMap}
-        onAssociateDocument={onAssociateDocument}
-        showAssociateDocument={showAssociateDocument}
-        associateDocumentLabel={associateDocumentLabel}
+        onOpenWorkReport={activity ? handleOpenWorkReport : undefined}
+        showWorkReportAction={showWorkReportAction}
+        workReportActionLabel="Informe de trabajo"
         canSignHours={canSignHours}
         onSignHours={activity ? handleSignHours : undefined}
       />

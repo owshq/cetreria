@@ -1,0 +1,20 @@
+.loadingWrap {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: min(58vh, 36rem);
+}
+
+.error {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: min(58vh, 36rem);
+  margin: 0;
+  padding: 1.5rem;
+  color: var(--color-danger);
+  font-size: 0.875rem;
+  text-align: center;
+}

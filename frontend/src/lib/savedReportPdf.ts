@@ -2,9 +2,9 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Activity, ActivityType, Client, DatePeriod, Document, MonthlyReport } from '@shared/types';
 import {
-  formatPeriodDisplayLabel,
   aggregateInvoiceConcepts,
   documentMetricsForRange,
+  documentTypeMetricsForRange,
   reportRangeFromMonthlyReport,
 } from '@shared/types';
 import type { ChartMode } from '@/components/clientCharts/chartTypes';
@@ -110,6 +110,7 @@ function buildPdfParamsBase(
   const chartData = toChartData(buildTypeBuckets(periodActivities, activityTypes));
   const invoiceConcepts = aggregateInvoiceConcepts(documents, from, to, client.id);
   const docMetrics = documentMetricsForRange(documents, from, to, client.id);
+  const docTypeMetrics = documentTypeMetricsForRange(documents, from, to, client.id);
   const totalHours = periodActivities.reduce((sum, activity) => sum + activity.hours, 0);
 
   return {
@@ -131,6 +132,8 @@ function buildPdfParamsBase(
       sentAmount: docMetrics.sentAmount,
       draftCount: docMetrics.draft,
       draftAmount: docMetrics.draftAmount,
+      deliveryNoteCount: docTypeMetrics.deliveryNoteCount,
+      invoiceCount: docTypeMetrics.invoiceCount,
     },
     invoiceConcepts,
     chartMode,

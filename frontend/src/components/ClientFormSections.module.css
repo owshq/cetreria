@@ -54,3 +54,10 @@
   font-size: 0.875rem;
   color: var(--color-danger);
 }
+
+.operatorsHint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}

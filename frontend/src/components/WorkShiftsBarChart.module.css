@@ -65,7 +65,7 @@
 
 .stackedBarTopLabel {
   fill: var(--color-text-secondary);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   font-size: 9px;
   font-weight: 700;
 }

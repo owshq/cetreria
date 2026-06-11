@@ -5,12 +5,23 @@ import ui from '@/styles/shared.module.css';
 
 type ModalOverlayProps = HTMLAttributes<HTMLDivElement> & {
   children: ReactNode;
+  /** Apila encima de otro modal (p. ej. vista previa PDF). */
+  raised?: boolean;
 };
 
-export default function ModalOverlay({ children, className, ...props }: ModalOverlayProps) {
+export default function ModalOverlay({
+  children,
+  className,
+  raised = false,
+  ...props
+}: ModalOverlayProps) {
   return (
     <Portal>
-      <div {...props} className={cx(ui.modalOverlay, className)} data-popup-layer>
+      <div
+        {...props}
+        className={cx(ui.modalOverlay, raised && ui.modalOverlayRaised, className)}
+        data-popup-layer
+      >
         <div className={ui.modalFrame}>{children}</div>
       </div>
     </Portal>

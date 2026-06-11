@@ -6,7 +6,8 @@ import { getUserRoleLabel } from '@shared/types';
 import { readAvatarFile } from '@/lib/avatarImage';
 import { useTheme } from '@/context/ThemeContext';
 import { cx } from '@/lib/cx';
-import { Input } from '@/components/forms';
+import { Input, PasswordField } from '@/components/forms';
+import { PasswordLockIcon } from '@/components/icons/PasswordLockIcon';
 import ui from '@/styles/shared.module.css';
 import UserAvatar from '@/components/UserAvatar';
 import styles from './ProfileSettings.module.css';
@@ -19,6 +20,48 @@ type SectionFeedback = {
 };
 
 const emptyFeedback = (): SectionFeedback => ({ error: null, success: null });
+
+function ProfilePasswordField({
+  id,
+  label,
+  value,
+  autoComplete,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  autoComplete: 'current-password' | 'new-password';
+  onChange: (value: string) => void;
+}) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className={ui.field}>
+      <label className={ui.label} htmlFor={id}>
+        {label}
+      </label>
+      <PasswordField
+        id={id}
+        type={visible ? 'text' : 'password'}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        autoComplete={autoComplete}
+        trailing={
+          <button
+            type="button"
+            className={ui.passwordToggle}
+            onClick={() => setVisible((current) => !current)}
+            aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            aria-pressed={visible}
+          >
+            <PasswordLockIcon unlocked={visible} />
+          </button>
+        }
+      />
+    </div>
+  );
+}
 
 function SectionSaveFooter({
   saving,
@@ -404,44 +447,38 @@ export default function ProfileSettings() {
                 </p>
 
                 <div className={ui.form}>
-                  <div className={ui.field}>
-                    <label className={ui.label}>Contraseña actual</label>
-                    <Input
-                      type="password"
-                      value={formData.currentPassword}
-                      onChange={(e) => {
-                        setFormData({ ...formData, currentPassword: e.target.value });
-                        setSectionFeedback('password', { error: null, success: null });
-                      }}
-                      autoComplete="current-password"
-                    />
-                  </div>
+                  <ProfilePasswordField
+                    id="profile-current-password"
+                    label="Contraseña actual"
+                    value={formData.currentPassword}
+                    autoComplete="current-password"
+                    onChange={(currentPassword) => {
+                      setFormData((current) => ({ ...current, currentPassword }));
+                      setSectionFeedback('password', { error: null, success: null });
+                    }}
+                  />
 
-                  <div className={ui.field}>
-                    <label className={ui.label}>Nueva contraseña</label>
-                    <Input
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => {
-                        setFormData({ ...formData, password: e.target.value });
-                        setSectionFeedback('password', { error: null, success: null });
-                      }}
-                      autoComplete="new-password"
-                    />
-                  </div>
+                  <ProfilePasswordField
+                    id="profile-new-password"
+                    label="Nueva contraseña"
+                    value={formData.password}
+                    autoComplete="new-password"
+                    onChange={(password) => {
+                      setFormData((current) => ({ ...current, password }));
+                      setSectionFeedback('password', { error: null, success: null });
+                    }}
+                  />
 
-                  <div className={ui.field}>
-                    <label className={ui.label}>Confirmar nueva contraseña</label>
-                    <Input
-                      type="password"
-                      value={formData.confirmPassword}
-                      onChange={(e) => {
-                        setFormData({ ...formData, confirmPassword: e.target.value });
-                        setSectionFeedback('password', { error: null, success: null });
-                      }}
-                      autoComplete="new-password"
-                    />
-                  </div>
+                  <ProfilePasswordField
+                    id="profile-confirm-password"
+                    label="Confirmar nueva contraseña"
+                    value={formData.confirmPassword}
+                    autoComplete="new-password"
+                    onChange={(confirmPassword) => {
+                      setFormData((current) => ({ ...current, confirmPassword }));
+                      setSectionFeedback('password', { error: null, success: null });
+                    }}
+                  />
                 </div>
               </div>
               <SectionSaveFooter

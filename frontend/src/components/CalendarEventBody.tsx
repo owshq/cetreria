@@ -34,6 +34,8 @@ type CalendarEventBodyProps = {
   assigneesById: Map<string, UserAssignee>;
   events: CalendarEvent[];
   timeClassName?: string;
+  /** Vista mes: solo nombre de cliente, sin tipo ni franja. */
+  compact?: boolean;
 };
 
 export default function CalendarEventBody({
@@ -45,6 +47,7 @@ export default function CalendarEventBody({
   assigneesById,
   events,
   timeClassName,
+  compact = false,
 }: CalendarEventBodyProps) {
   const { boundaries } = useWorkspaceScheduleSettings();
   const { workerSignaturesEnabled } = useWorkspaceFeatureSettings();
@@ -70,7 +73,7 @@ export default function CalendarEventBody({
     <>
       <div className={styles.heading}>
         <div className={styles.client}>{meta.clientName}</div>
-        {typeLabel || hourRangeLabel ? (
+        {!compact && (typeLabel || hourRangeLabel) ? (
           <div className={styles.typeRow}>
             {typeLabel ? <div className={styles.type}>{typeLabel}</div> : null}
             {hourRangeLabel ? (
@@ -82,7 +85,7 @@ export default function CalendarEventBody({
         ) : null}
       </div>
 
-      {workerSignaturesEnabled && signatureSummary ? (
+      {!compact && workerSignaturesEnabled && signatureSummary ? (
         <div className={cx(styles.time, timeClassName)}>
           <Clock size={10} aria-hidden className={styles.icon} />
           <div className={styles.timeBody}>
@@ -99,7 +102,7 @@ export default function CalendarEventBody({
         </div>
       ) : null}
 
-      {typeUsesWorkReport && workReportSummary ? (
+      {!compact && typeUsesWorkReport && workReportSummary ? (
         <div className={cx(styles.time, timeClassName)}>
           <Clock size={10} aria-hidden className={styles.icon} />
           <div className={styles.timeBody}>

@@ -1,6 +1,7 @@
 import type {
   Activity,
   ActivityAssigneeSlot,
+  ActivityType,
   CalendarEvent,
   ClientScope,
   Document,
@@ -8,8 +9,10 @@ import type {
   UserAssignee,
 } from '@shared/types';
 import {
+  aggregateDeliveryNoteConcepts,
   aggregateInvoiceConcepts,
   documentMetricsForRange,
+  findActivityDeliveryNoteForWorker,
   findEventForActivity,
   getActivityAssigneeIds,
   getWorkerHoursStatus,
@@ -20,18 +23,28 @@ import {
   isUserAssignedToActivity,
   matchesClientScope,
   normalizeActivityAssigneeSlots,
+  resolveWorkerReportHours,
+  sumWorkerReportHours,
   SHIFT_CODES,
   SHIFT_META,
+  sumDocumentTotalByStatus,
+  sumDocumentTotals,
   type ShiftCode,
 } from '@shared/types';
 import type { TeamShiftBreakdownRow } from '@/lib/reportInstitutionalText';
 
 export type WorkerShiftHours = Partial<Record<ShiftCode, number>>;
 
+export type WorkerPeriodStatsOptions = {
+  activityTypes?: readonly ActivityType[];
+  workerSignaturesEnabled?: boolean;
+  shiftSchedulingEnabled?: boolean;
+};
+
 export type WorkerPeriodRow = {
   user: UserAssignee;
   activityCount: number;
-  /** Horas firmadas del operario en el periodo. */
+  /** Horas principales del periodo (segun modulos activos). */
   totalHours: number;
   assignedHours: number;
   signedHours: number;
@@ -43,6 +56,15 @@ export type WorkerPeriodRow = {
   billedAmount: number;
   conceptCount: number;
   topConcept: DocumentConceptSummary | null;
+  deliveryNoteCount: number;
+  deliveryNoteConceptCount: number;
+  deliveryNotesPaidAmount: number;
+  deliveryNotesTotalAmount: number;
+  topDeliveryNoteConcept: DocumentConceptSummary | null;
+  invoiceCount: number;
+  invoiceConceptCount: number;
+  invoicesPaidAmount: number;
+  invoicesTotalAmount: number;
 };
 
 export type TeamPeriodStats = {
@@ -204,15 +226,27 @@ export function workerHoursOnActivity(
   return hoursForWorkerOnActivity(activity, event, userId);
 }
 
+/** Horas principales del operario en una actividad (delega en resolveWorkerReportHours). */
+export function workerReportHoursOnActivity(
+  activity: Activity,
+  events: readonly CalendarEvent[],
+  userId: string,
+  options: WorkerPeriodStatsOptions = {},
+): number {
+  const event = findEventForActivity(activity, events);
+  return resolveWorkerReportHours(activity, event, userId, options).hours;
+}
+
+/** @deprecated Usar workerReportHoursOnActivity. */
+export const workerEffectiveHoursOnActivity = workerReportHoursOnActivity;
+
 export function sumWorkerHoursForActivities(
   activities: readonly Activity[],
   events: readonly CalendarEvent[],
   userId: string,
+  options: WorkerPeriodStatsOptions = {},
 ): number {
-  return activities.reduce(
-    (sum, activity) => sum + workerHoursOnActivity(activity, events, userId),
-    0,
-  );
+  return roundHours(sumWorkerReportHours(activities, events, userId, options));
 }
 
 export function workerActivitiesInRange(
@@ -265,9 +299,70 @@ export function workerDocumentsInRange(
     (document) =>
       Boolean(document.activityId) &&
       activityIds.has(document.activityId!) &&
-      isDateInRange(document.date, from, to) &&
       matchesClientScope(document.clientId, clientScope),
   );
+}
+
+/** Albaranes del operario en actividades asignadas (incluye legacy sin workerUserId). */
+export function workerDeliveryNotesInRange(
+  activities: readonly Activity[],
+  events: readonly CalendarEvent[],
+  documents: readonly Document[],
+  assignees: readonly UserAssignee[],
+  userId: string,
+  from: string,
+  to: string,
+  clientScope: ClientScope,
+): Document[] {
+  const periodActivities = workerActivitiesInRange(
+    activities,
+    events,
+    assignees,
+    userId,
+    from,
+    to,
+    clientScope,
+  );
+  const notes: Document[] = [];
+  const seen = new Set<string>();
+
+  for (const activity of periodActivities) {
+    const note = findActivityDeliveryNoteForWorker(
+      activity.id,
+      userId,
+      documents,
+      activity,
+    );
+    if (!note || seen.has(note.id)) continue;
+    if (!matchesClientScope(note.clientId, clientScope)) continue;
+    seen.add(note.id);
+    notes.push(note);
+  }
+
+  return notes.sort((left, right) => left.date.localeCompare(right.date));
+}
+
+/** Facturas vinculadas a actividades del operario en el periodo. */
+export function workerInvoicesInRange(
+  activities: readonly Activity[],
+  events: readonly CalendarEvent[],
+  documents: readonly Document[],
+  assignees: readonly UserAssignee[],
+  userId: string,
+  from: string,
+  to: string,
+  clientScope: ClientScope,
+): Document[] {
+  return workerDocumentsInRange(
+    activities,
+    events,
+    documents,
+    assignees,
+    userId,
+    from,
+    to,
+    clientScope,
+  ).filter((document) => document.type === 'invoice');
 }
 
 export function workerInvoiceConceptsInRange(
@@ -302,6 +397,7 @@ export function computeWorkerPeriodRow(
   from: string,
   to: string,
   clientScope: ClientScope,
+  options: WorkerPeriodStatsOptions = {},
 ): WorkerPeriodRow {
   const periodActivities = workerActivitiesInRange(
     activities,
@@ -322,7 +418,7 @@ export function computeWorkerPeriodRow(
     to,
     clientScope,
   );
-  const concepts = workerInvoiceConceptsInRange(
+  const deliveryNotes = workerDeliveryNotesInRange(
     activities,
     events,
     documents,
@@ -332,6 +428,23 @@ export function computeWorkerPeriodRow(
     to,
     clientScope,
   );
+  const deliveryNoteConcepts = aggregateDeliveryNoteConcepts(
+    deliveryNotes,
+    from,
+    to,
+    'all',
+  );
+  const invoices = workerInvoicesInRange(
+    activities,
+    events,
+    documents,
+    assignees,
+    user.id,
+    from,
+    to,
+    clientScope,
+  );
+  const invoiceConcepts = aggregateInvoiceConcepts(invoices, from, to, 'all');
   const docMetrics = documentMetricsForRange(workerDocuments, from, to, 'all');
 
   const signatureTotals = {
@@ -342,30 +455,74 @@ export function computeWorkerPeriodRow(
   };
   const shiftHours: WorkerShiftHours = {};
 
+  let totalHours = 0;
+
   for (const activity of periodActivities) {
     const event = findEventForActivity(activity, events);
-    accumulateWorkerSignatureStats(activity, event, user.id, signatureTotals);
-    accumulateWorkerShiftHours(shiftHours, activity, event, user.id);
+    totalHours = roundHours(
+      totalHours +
+        resolveWorkerReportHours(activity, event, user.id, options).hours,
+    );
+
+    if (options.workerSignaturesEnabled) {
+      accumulateWorkerSignatureStats(activity, event, user.id, signatureTotals);
+    }
+
+    if (options.shiftSchedulingEnabled) {
+      accumulateWorkerShiftHours(shiftHours, activity, event, user.id);
+    }
   }
 
-  const signedHours = signatureTotals.signedHours;
-  const assignedHours = signatureTotals.assignedHours;
+  const signedHours = options.workerSignaturesEnabled ? signatureTotals.signedHours : 0;
+  const assignedHours = options.workerSignaturesEnabled
+    ? signatureTotals.assignedHours
+    : totalHours;
 
   return {
     user,
     activityCount: periodActivities.length,
-    totalHours: signedHours,
+    totalHours,
     assignedHours,
     signedHours,
-    pendingHours: roundHours(Math.max(0, assignedHours - signedHours)),
-    signedActivityCount: signatureTotals.signedActivityCount,
-    unsignedActivityCount: signatureTotals.unsignedActivityCount,
+    pendingHours: options.workerSignaturesEnabled
+      ? roundHours(Math.max(0, signatureTotals.assignedHours - signatureTotals.signedHours))
+      : 0,
+    signedActivityCount: options.workerSignaturesEnabled
+      ? signatureTotals.signedActivityCount
+      : 0,
+    unsignedActivityCount: options.workerSignaturesEnabled
+      ? signatureTotals.unsignedActivityCount
+      : 0,
     shiftHours,
     documentCount: workerDocuments.length,
     billedAmount: docMetrics.paidAmount,
-    conceptCount: concepts.length,
-    topConcept: concepts[0] ?? null,
+    conceptCount: invoiceConcepts.length,
+    topConcept: invoiceConcepts[0] ?? null,
+    deliveryNoteCount: deliveryNotes.length,
+    deliveryNoteConceptCount: deliveryNoteConcepts.length,
+    deliveryNotesPaidAmount: sumDocumentTotalByStatus(deliveryNotes, 'paid'),
+    deliveryNotesTotalAmount: sumDocumentTotals(deliveryNotes),
+    topDeliveryNoteConcept: deliveryNoteConcepts[0] ?? null,
+    invoiceCount: invoices.length,
+    invoiceConceptCount: invoiceConcepts.length,
+    invoicesPaidAmount: sumDocumentTotalByStatus(invoices, 'paid'),
+    invoicesTotalAmount: sumDocumentTotals(invoices),
   };
+}
+
+function accumulateTeamRegisteredHours(
+  activity: Activity,
+  event: CalendarEvent | null | undefined,
+  totals: Pick<TeamPeriodStats, 'assignedHours'>,
+  options: WorkerPeriodStatsOptions,
+): void {
+  const assigneeIds = getActivityAssigneeIds(activity, event);
+  for (const userId of assigneeIds) {
+    totals.assignedHours = roundHours(
+      totals.assignedHours +
+        resolveWorkerReportHours(activity, event, userId, options).hours,
+    );
+  }
 }
 
 export function computeTeamPeriodStats(
@@ -374,6 +531,7 @@ export function computeTeamPeriodStats(
   from: string,
   to: string,
   clientScope: ClientScope,
+  options: WorkerPeriodStatsOptions = {},
 ): TeamPeriodStats {
   const periodActivities = activitiesInRange(activities, from, to, clientScope);
   const totals: TeamPeriodStats = {
@@ -389,11 +547,34 @@ export function computeTeamPeriodStats(
 
   for (const activity of periodActivities) {
     const event = findEventForActivity(activity, events);
-    accumulateActivitySignatureStats(activity, event, totals);
-    accumulateActivityShiftHours(totals.shiftHours, totals.signedShiftHours, activity, event);
+
+    if (options.workerSignaturesEnabled) {
+      accumulateActivitySignatureStats(activity, event, totals);
+    } else {
+      accumulateTeamRegisteredHours(activity, event, totals, options);
+    }
+
+    if (options.shiftSchedulingEnabled) {
+      accumulateActivityShiftHours(
+        totals.shiftHours,
+        totals.signedShiftHours,
+        activity,
+        event,
+      );
+    }
   }
 
-  totals.pendingHours = roundHours(Math.max(0, totals.assignedHours - totals.signedHours));
+  totals.pendingHours = options.workerSignaturesEnabled
+    ? roundHours(Math.max(0, totals.assignedHours - totals.signedHours))
+    : 0;
+
+  if (!options.workerSignaturesEnabled) {
+    totals.signedHours = 0;
+    totals.signedActivityCount = 0;
+    totals.unsignedActivityCount = 0;
+    totals.signedShiftHours = {};
+  }
+
   return totals;
 }
 
@@ -426,13 +607,24 @@ export function buildWorkerPeriodRows(
   to: string,
   clientScope: ClientScope,
   searchTerm = '',
+  options: WorkerPeriodStatsOptions = {},
 ): WorkerPeriodRow[] {
   const term = searchTerm.toLowerCase().trim();
 
   return assignees
     .filter((user) => !term || user.name.toLowerCase().includes(term))
     .map((user) =>
-      computeWorkerPeriodRow(user, activities, events, documents, assignees, from, to, clientScope),
+      computeWorkerPeriodRow(
+        user,
+        activities,
+        events,
+        documents,
+        assignees,
+        from,
+        to,
+        clientScope,
+        options,
+      ),
     )
     .filter(
       (row) =>
@@ -442,7 +634,9 @@ export function buildWorkerPeriodRows(
         row.conceptCount > 0,
     )
     .sort((a, b) => {
-      if (b.assignedHours !== a.assignedHours) return b.assignedHours - a.assignedHours;
+      const hoursA = options.workerSignaturesEnabled ? a.assignedHours : a.totalHours;
+      const hoursB = options.workerSignaturesEnabled ? b.assignedHours : b.totalHours;
+      if (hoursB !== hoursA) return hoursB - hoursA;
       if (b.billedAmount !== a.billedAmount) return b.billedAmount - a.billedAmount;
       if (b.signedHours !== a.signedHours) return b.signedHours - a.signedHours;
       return a.user.name.localeCompare(b.user.name, 'es');
@@ -451,4 +645,11 @@ export function buildWorkerPeriodRows(
 
 export function workerHasPeriodData(row: WorkerPeriodRow): boolean {
   return row.activityCount > 0 || row.documentCount > 0;
+}
+
+export function workerPeriodDisplayHours(
+  row: Pick<WorkerPeriodRow, 'totalHours' | 'assignedHours'>,
+  workerSignaturesEnabled: boolean,
+): number {
+  return workerSignaturesEnabled ? row.assignedHours : row.totalHours;
 }

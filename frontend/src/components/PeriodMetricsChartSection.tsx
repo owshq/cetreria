@@ -30,6 +30,8 @@ export type PeriodMetricButtonConfig = {
   chartPreset: MetricChartPreset;
   chartPresets?: MetricChartPreset[];
   title: string;
+  /** Etiqueta corta en pantallas pequeñas; `title` se muestra desde 768px. */
+  titleShort?: string;
   value: ReactNode;
   delta: PeriodMetricDelta;
   /** Variaciones mostradas a la derecha del valor principal. */
@@ -144,7 +146,18 @@ export default function PeriodMetricsChartSection({
               metric.valueDeltas ?? (metric.sub ? [] : [metric.delta]);
             const metricBody = (
               <>
-                <div className={dashboardStyles.statBoxTitle}>{metric.title}</div>
+                <div className={dashboardStyles.statBoxTitle}>
+                  {metric.titleShort ? (
+                    <>
+                      <span className={styles.statBoxTitleShort}>
+                        {metric.titleShort}
+                      </span>
+                      <span className={styles.statBoxTitleFull}>{metric.title}</span>
+                    </>
+                  ) : (
+                    metric.title
+                  )}
+                </div>
                 <div className={dashboardStyles.statBoxValueRow}>
                   <div className={ui.statBoxValue}>{metric.value}</div>
                   {valueDeltas.length > 0 ? (

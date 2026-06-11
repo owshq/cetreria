@@ -3,6 +3,7 @@ import {
   DEFAULT_PUBLIC_LOGIN_APPEARANCE,
   fetchPublicLoginAppearance,
 } from '@/api/publicLoginAppearance';
+import { applyWorkspaceTypography } from '@/lib/workspaceTypography';
 import type { PublicLoginAppearance } from '@shared/types';
 import ui from '@/styles/shared.module.css';
 
@@ -18,6 +19,7 @@ export default function LoginBackgroundGallery() {
       if (!cancelled) {
         setAppearance(data);
         setActiveIndex(0);
+        applyWorkspaceTypography(data.headingFontId, data.subtitleFontId);
       }
     });
     return () => {

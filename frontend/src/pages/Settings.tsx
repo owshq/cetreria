@@ -102,7 +102,7 @@ export default function Settings() {
   const { collapsed: secondaryNavCollapsed, toggle: toggleSecondaryNav } =
     useSecondaryNavCollapsed('settings');
   const isMobile = useMediaQuery('(max-width: 767px)');
-  const showSecondaryNav = isMobile ? !secondaryNavCollapsed : true;
+  const showSecondaryNav = isMobile ? true : !secondaryNavCollapsed;
   useLayoutSecondarySidebarWidth(!isMobile);
 
   const selectTab = (tab: SettingsTab) => {
@@ -114,12 +114,13 @@ export default function Settings() {
     tabs.find((tab) => tab.id === activeTabSafe)?.label ?? 'Configuración';
 
   return (
-    <div className={styles.settingsPage}>
+    <div className={cx(styles.settingsPage, isMobile && styles.settingsPageMobile)}>
       <SecondarySidebarPortal renderOnMobile>
       <aside
         id="settings-secondary-nav"
         className={cx(
           styles.settingsNav,
+          isMobile && styles.settingsNavMobile,
           !showSecondaryNav && styles.settingsNavCollapsed,
         )}
         aria-label="Secciones de configuración"
@@ -155,12 +156,12 @@ export default function Settings() {
 
       {activeTabSafe === 'users' && isAdmin ? (
         <UsersManagement
-          secondaryNavCollapsed={!showSecondaryNav}
+          secondaryNavCollapsed={!isMobile && secondaryNavCollapsed}
           onToggleSecondaryNav={toggleSecondaryNav}
         />
       ) : (
         <div className={styles.settingsContent}>
-          {!showSecondaryNav && (
+          {!isMobile && !showSecondaryNav && (
             <div className={styles.settingsContentNavExpand}>
               <SecondaryNavToggle
                 expanded={false}

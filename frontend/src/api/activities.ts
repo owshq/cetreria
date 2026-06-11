@@ -1,5 +1,8 @@
 import type { Activity } from '@shared/types';
-import { apiFetch } from './client';
+import { resolveDocumentSourceFileMimeType } from '@shared/types';
+import { apiFetch, apiFetchBlob, ApiError, getToken, getWorkspaceId } from './client';
+
+const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
 import {
   getCachedResource,
   invalidateDocumentsBootstrapCache,
@@ -74,7 +77,12 @@ export const activitiesService = {
 
   submitWorkReport: (
     id: string,
-    payload: { workedMinutes: number; notes?: string; status?: 'draft' | 'submitted' },
+    payload: {
+      workedMinutes: number;
+      notes?: string;
+      zones?: Array<{ id: string; title: string; notes: string }>;
+      status?: 'draft' | 'submitted';
+    },
   ): Promise<Activity> =>
     apiFetch<Activity>(`/activities/${id}/work-report`, {
       method: 'PUT',
@@ -84,6 +92,50 @@ export const activitiesService = {
       invalidateDocumentsBootstrapCache();
       return updated;
     }),
+
+  uploadWorkReportZoneImage: async (
+    activityId: string,
+    zoneId: string,
+    file: File,
+  ): Promise<Activity> => {
+    const token = getToken();
+    const workspaceId = getWorkspaceId();
+    const headers = new Headers();
+    headers.set('Content-Type', resolveDocumentSourceFileMimeType(file));
+    headers.set('X-Filename', file.name);
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+    if (workspaceId) headers.set('X-Workspace-Id', workspaceId);
+
+    const response = await fetch(
+      `${API_BASE}/activities/${activityId}/work-report/zones/${zoneId}/images`,
+      {
+        method: 'POST',
+        headers,
+        body: file,
+      },
+    );
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new ApiError(data.error ?? 'No se pudo subir la imagen.', response.status);
+    }
+
+    invalidateActivitiesCache();
+    invalidateDocumentsBootstrapCache();
+    return data as Activity;
+  },
+
+  deleteWorkReportZoneImage: (activityId: string, imageId: string): Promise<Activity> =>
+    apiFetch<Activity>(`/activities/${activityId}/work-report/images/${imageId}`, {
+      method: 'DELETE',
+    }).then((updated) => {
+      invalidateActivitiesCache();
+      invalidateDocumentsBootstrapCache();
+      return updated;
+    }),
+
+  getWorkReportImageBlob: (activityId: string, imageId: string): Promise<Blob> =>
+    apiFetchBlob(`/activities/${activityId}/work-report/images/${imageId}/file`),
 
   updateWorkReportExtraItems: (
     id: string,
@@ -102,4 +154,39 @@ export const activitiesService = {
       invalidateDocumentsBootstrapCache();
       return updated;
     }),
+
+  uploadAttachment: async (activityId: string, file: File): Promise<Activity> => {
+    const token = getToken();
+    const workspaceId = getWorkspaceId();
+    const headers = new Headers();
+    headers.set('Content-Type', file.type || 'application/octet-stream');
+    headers.set('X-Filename', file.name);
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+    if (workspaceId) headers.set('X-Workspace-Id', workspaceId);
+
+    const response = await fetch(`${API_BASE}/activities/${activityId}/attachments`, {
+      method: 'POST',
+      headers,
+      body: file,
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new ApiError(data.error ?? 'No se pudo subir el archivo.', response.status);
+    }
+
+    invalidateActivitiesCache();
+    return data as Activity;
+  },
+
+  deleteAttachment: (activityId: string, attachmentId: string): Promise<Activity> =>
+    apiFetch<Activity>(`/activities/${activityId}/attachments/${attachmentId}`, {
+      method: 'DELETE',
+    }).then((updated) => {
+      invalidateActivitiesCache();
+      return updated;
+    }),
+
+  getAttachmentBlob: (activityId: string, attachmentId: string): Promise<Blob> =>
+    apiFetchBlob(`/activities/${activityId}/attachments/${attachmentId}/file`),
 };

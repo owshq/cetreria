@@ -36,6 +36,45 @@ export function isActivityPast(
   return false;
 }
 
+/** Fecha/hora de inicio de la actividad (evento o día de la actividad). */
+export function getActivityStartDate(
+  options: {
+    activity?: Activity | null;
+    event?: CalendarEvent | null;
+  } = {},
+): Date | null {
+  const { activity, event } = options;
+
+  if (event?.date) {
+    if (event.startTime) {
+      const start = parseISO(`${event.date}T${event.startTime}`);
+      if (!Number.isNaN(start.getTime())) return start;
+    }
+    const day = parseISO(event.date);
+    if (!Number.isNaN(day.getTime())) return day;
+  }
+
+  if (activity?.date) {
+    const day = parseISO(activity.date);
+    if (!Number.isNaN(day.getTime())) return day;
+  }
+
+  return null;
+}
+
+/** true cuando la actividad ya ha empezado (hora de inicio o día en curso). */
+export function isActivityStarted(
+  options: {
+    activity?: Activity | null;
+    event?: CalendarEvent | null;
+  } = {},
+  now: Date = new Date(),
+): boolean {
+  const start = getActivityStartDate(options);
+  if (!start) return false;
+  return start <= now;
+}
+
 /** Fecha/hora de referencia para mostrar cuánto hace que terminó la actividad. */
 export function getActivityEndDate(
   options: {

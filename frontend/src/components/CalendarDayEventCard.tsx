@@ -7,16 +7,17 @@ import type {
   Document,
   UserAssignee,
 } from '@shared/types';
+import {
+  activityUsesWorkReport,
+} from '@shared/types';
 import ActivityPreviewContent from '@/components/ActivityPreviewContent';
 import { useActivityModal } from '@/context/ActivityModalContext';
 import { useWorkspaceScheduleSettings } from '@/context/WorkspaceScheduleSettingsContext';
-import { activityUsesWorkReport } from '@shared/types';
-import { buildActivityPreviewMeta, canViewerSignActivityHours } from '@/lib/activityPreview';
 import {
-  activityHasLinkedDeliveryNote,
-  buildActivityDocumentsModalOptions,
-  canAssociateActivityDeliveryNote,
-} from '@/lib/activityDocumentModalOptions';
+  buildActivityPreviewMeta,
+  canViewerOpenWorkReportPreview,
+  canViewerSignActivityHours,
+} from '@/lib/activityPreview';
 import { authService } from '@/api';
 import { cx } from '@/lib/cx';
 import ui from '@/styles/shared.module.css';
@@ -47,7 +48,7 @@ export default function CalendarDayEventCard({
   past = false,
   onOpen,
 }: CalendarDayEventCardProps) {
-  const { openEdit, openEditByActivity } = useActivityModal();
+  const { openEditByActivity } = useActivityModal();
   const { boundaries } = useWorkspaceScheduleSettings();
   const viewerUserId = authService.getCurrentUser()?.id;
 
@@ -71,40 +72,18 @@ export default function CalendarDayEventCard({
 
   const currentUser = authService.getCurrentUser();
   const linkedDocuments = activity ? (documentsByActivity.get(activity.id) ?? []) : [];
-  const showAssociateDocument = Boolean(
-    activity &&
-      currentUser &&
-      (activityUsesWorkReportFlow
-        ? !activityHasLinkedDeliveryNote(linkedDocuments)
-        : canAssociateActivityDeliveryNote(currentUser, activity, linkedDocuments, event)),
-  );
-  const associateDocumentLabel = activityUsesWorkReportFlow
-    ? 'Informe de trabajo'
-    : linkedDocuments.length > 0 && !activityHasLinkedDeliveryNote(linkedDocuments)
-      ? 'Crear albarán'
-      : 'Asociar documento';
-
-  const handleAssociateDocument = useCallback(() => {
-    if (activity) {
-      openEditByActivity(
-        activity,
-        events,
-        activityUsesWorkReportFlow
-          ? { focusSection: 'workReport' }
-          : buildActivityDocumentsModalOptions(currentUser, activity, event),
-      );
-      return;
-    }
-    openEdit(event, { editMode: true, focusSection: 'documents' });
-  }, [
+  const showWorkReportAction = canViewerOpenWorkReportPreview(
     activity,
-    activityUsesWorkReportFlow,
-    currentUser,
     event,
-    events,
-    openEdit,
-    openEditByActivity,
-  ]);
+    currentUser,
+    activityTypes,
+    linkedDocuments,
+  );
+
+  const handleOpenWorkReport = useCallback(() => {
+    if (!activity) return;
+    openEditByActivity(activity, events, { focusSection: 'workReport' });
+  }, [activity, events, openEditByActivity]);
 
   const handleSignHours = useCallback(() => {
     if (!activity) return;
@@ -144,9 +123,9 @@ export default function CalendarDayEventCard({
         activityTypes={activityTypes}
         variant="day"
         clientsMap={clientsMap}
-        onAssociateDocument={handleAssociateDocument}
-        showAssociateDocument={showAssociateDocument}
-        associateDocumentLabel={associateDocumentLabel}
+        onOpenWorkReport={handleOpenWorkReport}
+        showWorkReportAction={showWorkReportAction}
+        workReportActionLabel="Informe de trabajo"
         canSignHours={canSignHours}
         onSignHours={activity ? handleSignHours : undefined}
       />

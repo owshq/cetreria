@@ -96,6 +96,11 @@ export function getWorkShiftsMeasureOptions(workerSignaturesEnabled: boolean) {
   );
 }
 
+export function getWorkShiftsDimensionOptions(shiftSchedulingEnabled: boolean) {
+  if (shiftSchedulingEnabled) return DIMENSION_OPTIONS;
+  return DIMENSION_OPTIONS.filter((option) => option.id !== 'shift');
+}
+
 export function normalizeWorkShiftsValueMeasure(
   valueMeasure: WorkShiftsValueMeasure,
   workerSignaturesEnabled: boolean,
@@ -341,6 +346,7 @@ export function WorkShiftsChartToggles({
   onGroupByChange,
   onValueMeasureChange,
   workerSignaturesEnabled,
+  shiftSchedulingEnabled,
   className,
 }: {
   groupBy: WorkShiftsGroupBy;
@@ -348,10 +354,12 @@ export function WorkShiftsChartToggles({
   onGroupByChange: (groupBy: WorkShiftsGroupBy) => void;
   onValueMeasureChange: (valueMeasure: WorkShiftsValueMeasure) => void;
   workerSignaturesEnabled: boolean;
+  shiftSchedulingEnabled: boolean;
   className?: string;
 }) {
   const { controlsRef, openMenu, setOpenMenu, toggleMenu } =
     useFilterPillMenu<WorkShiftsChartMenu>();
+  const dimensionOptions = getWorkShiftsDimensionOptions(shiftSchedulingEnabled);
   const measureOptions = getWorkShiftsMeasureOptions(workerSignaturesEnabled);
   const effectiveValueMeasure = normalizeWorkShiftsValueMeasure(
     valueMeasure,
@@ -369,7 +377,7 @@ export function WorkShiftsChartToggles({
             menu="dimension"
             groupLabel="Dimensión"
             value={groupBy}
-            options={DIMENSION_OPTIONS}
+            options={dimensionOptions}
             openMenu={openMenu}
             onToggle={toggleMenu}
             onSelect={(next) => {
@@ -520,13 +528,13 @@ export default function WorkShiftsBarChart({
   className,
 }: Props) {
   const shiftColors = useShiftColorPalette();
-  const { workerSignaturesEnabled } = useWorkspaceFeatureSettings();
+  const { workerSignaturesEnabled, shiftSchedulingEnabled } = useWorkspaceFeatureSettings();
   const effectiveValueMeasure = normalizeWorkShiftsValueMeasure(
     valueMeasure,
     workerSignaturesEnabled,
   );
 
-  const isStacked = groupBy !== 'shift';
+  const isStacked = shiftSchedulingEnabled && groupBy !== 'shift';
   const isHybridHours = workerSignaturesEnabled && effectiveValueMeasure === 'hours';
   const axisValueFormat = effectiveValueMeasure === 'income' ? 'income' : 'hours';
 
@@ -910,7 +918,9 @@ export default function WorkShiftsBarChart({
           </div>
           {isStacked ? (
             <>
-              <ShiftLegend shifts={activeShiftCodes} shiftColors={shiftColors} />
+              {shiftSchedulingEnabled ? (
+                <ShiftLegend shifts={activeShiftCodes} shiftColors={shiftColors} />
+              ) : null}
               {isHybridHours ? <HoursHybridLegend /> : null}
             </>
           ) : isHybridHours ? (

@@ -135,6 +135,34 @@
   justify-content: center;
 }
 
+.embeddedLayout {
+  overflow: visible;
+  flex: none;
+}
+
+.editPanel {
+  margin-bottom: 1rem;
+  padding: 0.875rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+  background: var(--color-bg-subtle);
+}
+
+.editPanelTitle {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.editPanelActions {
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--stroke-gray);
+}
+
 .managerLayout {
   display: flex;
   flex-direction: column;

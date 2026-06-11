@@ -1,9 +1,17 @@
-import type { Activity, ActivityType, Client, Document, DocumentLineItem } from './types.js';
+import type {
+  Activity,
+  ActivityType,
+  CalendarEvent,
+  Client,
+  Document,
+  DocumentLineItem,
+} from './types.js';
 import {
   activityTypeCreatesDeliveryNote,
   getActivityTypeLabel,
 } from './activityTypes.js';
 import {
+  buildActivityDeliveryNoteItemsForWorker,
   getActivityWorkReportExtraItems,
   getSubmittedActivityWorkReports,
   type ActivityWorkReport,
@@ -36,6 +44,11 @@ export type BuildActivityDeliveryNotePreviewOptions = {
   existingDeliveryNote?: Document | null;
   extraItemsOverride?: readonly DocumentLineItem[];
   pendingReport?: ActivityDeliveryNotePreviewPendingReport | null;
+  event?: CalendarEvent | null;
+  /** Albaran de un operario concreto. */
+  workerUserId?: string;
+  /** Permite previsualizar el albaran aunque aun no haya lineas (solo operario/extras). */
+  allowEmptyPreview?: boolean;
 };
 
 function buildHourLineItemsFromReports(
@@ -49,7 +62,7 @@ function buildHourLineItemsFromReports(
     .map((report) => {
       const hours = workedMinutesToHours(report.workedMinutes);
       const timeLabel = formatHoursMinutes(hours) ?? `${hours}h`;
-      const noteSuffix = report.notes?.trim() ? ` � ${report.notes.trim()}` : '';
+      const noteSuffix = report.notes?.trim() ? ` — ${report.notes.trim()}` : '';
       return {
         name: label,
         description: `${report.userName}: ${timeLabel}${noteSuffix}`,
@@ -108,12 +121,28 @@ export function buildActivityDeliveryNotePreviewDocument(
     return null;
   }
 
-  const items = buildActivityDeliveryNotePreviewItems(options.activity, options.activityTypes, {
-    extraItemsOverride: options.extraItemsOverride,
-    pendingReport: options.pendingReport,
-  });
+  const serviceLabel = getActivityTypeLabel(
+    options.activity.type,
+    options.activityTypes as ActivityType[],
+  );
+  const items = options.workerUserId
+    ? buildActivityDeliveryNoteItemsForWorker(
+        options.activity,
+        serviceLabel,
+        options.workerUserId,
+        options.event,
+      )
+    : buildActivityDeliveryNotePreviewItems(options.activity, options.activityTypes, {
+        extraItemsOverride: options.extraItemsOverride,
+        pendingReport: options.pendingReport,
+      });
 
-  if (items.length === 0) {
+  const allowEmptyPreview =
+    options.allowEmptyPreview === true &&
+    Boolean(options.workerUserId) &&
+    !options.existingDeliveryNote;
+
+  if (items.length === 0 && !allowEmptyPreview) {
     return null;
   }
 
@@ -122,9 +151,13 @@ export function buildActivityDeliveryNotePreviewDocument(
     (Number.isFinite(options.defaultTaxRate) ? options.defaultTaxRate! : DEFAULT_DOCUMENT_TAX_RATE);
   const totals = computeDocumentTotals(items, taxRate);
 
+  const defaultNotes =
+    options.workerUserId && items.length === 0
+      ? 'Albaran pendiente del informe de trabajo del operario.'
+      : 'Albaran generado automaticamente a partir de los informes de trabajo.';
+
   const notes = [
-    options.existingDeliveryNote?.notes?.trim() ||
-      'Albaran generado automaticamente a partir de los informes de trabajo.',
+    options.existingDeliveryNote?.notes?.trim() || defaultNotes,
     options.activity.description.trim() || undefined,
   ]
     .filter(Boolean)
@@ -137,6 +170,7 @@ export function buildActivityDeliveryNotePreviewDocument(
     number: options.existingDeliveryNote?.number ?? 'BORRADOR',
     clientId: options.activity.clientId,
     activityId: options.activity.id,
+    workerUserId: options.existingDeliveryNote?.workerUserId ?? options.workerUserId,
     date: options.activity.date,
     items,
     subtotal: totals.subtotal,

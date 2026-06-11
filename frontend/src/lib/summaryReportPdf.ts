@@ -4,7 +4,12 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { ChartDatum } from '@/components/clientCharts/utils';
 import { CHART_MODE_LABELS, type ChartMode } from '@/components/clientCharts/chartTypes';
-import { formatDocumentAmount, type DocumentConceptSummary } from '@shared/types';
+import {
+  formatDocumentAmount,
+  getWorkerHoursDisplayLabel,
+  workerReportHoursColumnLabel,
+  type DocumentConceptSummary,
+} from '@shared/types';
 import { REPORT_KIND_HEADING, type ReportKind } from '@shared/types';
 import {
   buildChart1Conclusions,
@@ -12,8 +17,10 @@ import {
   buildReportAnalysis,
   buildReportConclusions,
   buildReportIntroduction,
+  getReportPeriodScopeLabel,
   getReportSubtitle,
   type ReportBreakdownRow,
+  type ReportFeatureFlags,
   type ReportNarrativeInput,
   type TeamShiftBreakdownRow,
 } from './reportInstitutionalText';
@@ -26,15 +33,148 @@ import {
   estimateChartBlockHeight,
 } from './reportPdfCharts';
 import { DEFAULT_APP_LOGO_LIGHT } from './appLogo';
+import {
+  formatWorkerActivityDetailConcepts,
+  formatWorkerActivityDetailHoursCell,
+  formatWorkerActivityDetailText,
+  workerDetailShowsReportedHoursColumn,
+  type WorkerActivityDetailRow,
+} from './workerActivityDetailReport';
+import { createReportPdfLayout } from './reportPdfLayout';
+import {
+  breakdownRowsHaveTypedDocumentCounts,
+  formatBreakdownDocumentCell,
+  resolveReportBreakdownDocumentCounts,
+} from './reportDocumentSummary';
 
 const PAGE_MARGIN = 20;
 const PAGE_WIDTH = 210;
 const CONTENT_WIDTH = PAGE_WIDTH - PAGE_MARGIN * 2;
 const LINE_HEIGHT = 5.5;
 const HEADER_LOGO_SIZE = 14;
+const HEADER_TITLE_GAP = 4;
+const HEADER_TITLE_X = PAGE_MARGIN + HEADER_LOGO_SIZE + HEADER_TITLE_GAP;
+const HEADER_TITLE_WIDTH = PAGE_WIDTH - PAGE_MARGIN - HEADER_TITLE_X;
+const COVER_TITLE_BASELINE_Y = PAGE_MARGIN + 10;
+const COVER_SUBTITLE_TOP = COVER_TITLE_BASELINE_Y + 6;
+const COVER_LOGO_Y =
+  (PAGE_MARGIN + (COVER_SUBTITLE_TOP + 3 - HEADER_LOGO_SIZE)) / 2;
 const HEADER_HEIGHT = HEADER_LOGO_SIZE + 4;
 const CONTENT_TOP = PAGE_MARGIN + HEADER_HEIGHT;
-const FOOTER_Y = 287;
+const FOOTER_RESERVE = 20;
+
+function footerLimit(pdf: jsPDF): number {
+  return pdf.internal.pageSize.getHeight() - FOOTER_RESERVE;
+}
+
+function usablePageContentHeight(pdf: jsPDF): number {
+  return footerLimit(pdf) - CONTENT_TOP;
+}
+
+function estimateWrappedTextHeight(
+  pdf: jsPDF,
+  text: string,
+  width: number,
+  lineHeight: number,
+  fontSize: number,
+): number {
+  pdf.setFontSize(fontSize);
+  const lines = pdf.splitTextToSize(text, width);
+  return Math.max(lineHeight, lines.length * lineHeight) + 2;
+}
+
+function estimateSectionTitleHeight(pdf: jsPDF, title: string): number {
+  return (
+    LINE_HEIGHT +
+    4 +
+    6 +
+    estimateWrappedTextHeight(pdf, title, CONTENT_WIDTH, LINE_HEIGHT, 12)
+  );
+}
+
+function estimateBulletListHeight(pdf: jsPDF, bullets: string[]): number {
+  if (bullets.length === 0) return LINE_HEIGHT;
+  return bullets.reduce(
+    (sum, bullet) =>
+      sum + estimateWrappedTextHeight(pdf, `• ${bullet}`, CONTENT_WIDTH, LINE_HEIGHT, 10),
+    0,
+  );
+}
+
+function estimateBreakdownTableHeight(pdf: jsPDF, rows: ReportBreakdownRow[]): number {
+  if (rows.length === 0) {
+    return estimateWrappedTextHeight(
+      pdf,
+      'Sin registros en el periodo seleccionado.',
+      CONTENT_WIDTH,
+      LINE_HEIGHT,
+      9,
+    );
+  }
+
+  const nameWidth = breakdownRowsHaveTypedDocumentCounts(rows) ? 56 : 68;
+  pdf.setFontSize(8);
+  let height = LINE_HEIGHT * 2 + 4;
+  for (const row of rows) {
+    height += pdf.splitTextToSize(row.name, nameWidth).length * LINE_HEIGHT;
+  }
+  return height + 4;
+}
+
+function estimateWorkerBreakdownTableHeight(pdf: jsPDF, rows: ReportBreakdownRow[]): number {
+  if (rows.length === 0) {
+    return estimateWrappedTextHeight(
+      pdf,
+      'Sin registros en el periodo seleccionado.',
+      CONTENT_WIDTH,
+      LINE_HEIGHT,
+      9,
+    );
+  }
+
+  pdf.setFontSize(7);
+  let height = LINE_HEIGHT * 2 + 4;
+  for (const row of rows) {
+    height += pdf.splitTextToSize(row.name, 54).length * LINE_HEIGHT;
+  }
+  return height + 4;
+}
+
+function estimateConceptsTableHeight(pdf: jsPDF, concepts: DocumentConceptSummary[]): number {
+  if (concepts.length === 0) {
+    return estimateWrappedTextHeight(
+      pdf,
+      'No hay conceptos de factura consolidados en el periodo.',
+      CONTENT_WIDTH,
+      LINE_HEIGHT,
+      10,
+    );
+  }
+
+  pdf.setFontSize(9);
+  let height = LINE_HEIGHT * 2 + 4;
+  for (const concept of concepts) {
+    height += pdf.splitTextToSize(concept.description, 88).length * LINE_HEIGHT;
+  }
+  return height + LINE_HEIGHT + 6;
+}
+
+function ensureSectionStart(pdf: jsPDF, y: number, blockHeight: number): number {
+  const limit = footerLimit(pdf);
+  const required = Math.min(blockHeight, usablePageContentHeight(pdf));
+
+  if (y + required > limit) {
+    pdf.addPage();
+    return CONTENT_TOP;
+  }
+  return y;
+}
+
+function beginSection(pdf: jsPDF, y: number, title: string, bodyHeightEstimate: number): number {
+  const titleHeight = estimateSectionTitleHeight(pdf, title);
+  y = ensureSectionStart(pdf, y, titleHeight + bodyHeightEstimate);
+  return writeSectionTitle(pdf, title, y, { leadingEnsure: false });
+}
 
 export type SummaryReportMetrics = {
   clientScope: string;
@@ -48,6 +188,8 @@ export type SummaryReportMetrics = {
   sentAmount: number;
   draftCount: number;
   draftAmount: number;
+  deliveryNoteCount?: number;
+  invoiceCount?: number;
   totalWorkers?: number;
   contactsServed?: number;
   teamAssignedHours?: number;
@@ -73,6 +215,8 @@ export type BuildSummaryReportPdfParams = {
   clientBreakdown?: ReportBreakdownRow[];
   workerBreakdown?: ReportBreakdownRow[];
   teamShiftBreakdown?: TeamShiftBreakdownRow[];
+  featureFlags?: ReportFeatureFlags;
+  workerActivityDetail?: WorkerActivityDetailRow[];
 };
 
 async function loadImageDataUrl(path: string): Promise<string | null> {
@@ -107,30 +251,44 @@ async function captureChartImage(element: HTMLElement): Promise<string | null> {
 }
 
 function ensureSpace(pdf: jsPDF, y: number, needed: number): number {
-  if (y + needed > FOOTER_Y - 10) {
+  const footerY = pdf.internal.pageSize.getHeight() - 10;
+  if (y + needed > footerY - 10) {
     pdf.addPage();
     return CONTENT_TOP;
   }
   return y;
 }
 
+function pageContentWidth(pdf: jsPDF): number {
+  return pdf.internal.pageSize.getWidth() - PAGE_MARGIN * 2;
+}
+
 function writeParagraph(
   pdf: jsPDF,
   text: string,
   y: number,
-  options?: { bold?: boolean; size?: number; indent?: number },
+  options?: { bold?: boolean; size?: number; indent?: number; x?: number; maxWidth?: number },
 ): number {
   const size = options?.size ?? 10;
   const indent = options?.indent ?? 0;
+  const x = options?.x ?? PAGE_MARGIN + indent;
+  const width = options?.maxWidth ?? PAGE_WIDTH - PAGE_MARGIN - x;
   pdf.setFontSize(size);
   pdf.setFont('helvetica', options?.bold ? 'bold' : 'normal');
-  const lines = pdf.splitTextToSize(text, CONTENT_WIDTH - indent);
+  const lines = pdf.splitTextToSize(text, width);
   for (const line of lines) {
     y = ensureSpace(pdf, y, LINE_HEIGHT);
-    pdf.text(line, PAGE_MARGIN + indent, y);
+    pdf.text(line, x, y);
     y += LINE_HEIGHT;
   }
   return y + 2;
+}
+
+function writeCoverDividerLine(pdf: jsPDF, y: number): number {
+  pdf.setDrawColor(230, 230, 230);
+  pdf.setLineWidth(0.3);
+  pdf.line(PAGE_MARGIN, y, PAGE_MARGIN + CONTENT_WIDTH, y);
+  return y + 4;
 }
 
 function writeBulletList(pdf: jsPDF, bullets: string[], y: number): number {
@@ -140,8 +298,15 @@ function writeBulletList(pdf: jsPDF, bullets: string[], y: number): number {
   return y;
 }
 
-function writeSectionTitle(pdf: jsPDF, title: string, y: number): number {
-  y = ensureSpace(pdf, y, LINE_HEIGHT + 4);
+function writeSectionTitle(
+  pdf: jsPDF,
+  title: string,
+  y: number,
+  options?: { leadingEnsure?: boolean },
+): number {
+  if (options?.leadingEnsure !== false) {
+    y = ensureSpace(pdf, y, LINE_HEIGHT + 4);
+  }
   pdf.setDrawColor(23, 23, 23);
   pdf.setLineWidth(0.4);
   pdf.line(PAGE_MARGIN, y, PAGE_MARGIN + CONTENT_WIDTH, y);
@@ -149,14 +314,44 @@ function writeSectionTitle(pdf: jsPDF, title: string, y: number): number {
   return writeParagraph(pdf, title, y, { bold: true, size: 12 });
 }
 
+function metricsHasTypedDocuments(metrics: SummaryReportMetrics): boolean {
+  return metrics.deliveryNoteCount != null && metrics.invoiceCount != null;
+}
+
+function insertDocumentTypeMetricRows(
+  rows: Array<[string, string]>,
+  metrics: SummaryReportMetrics,
+  insertAt: number,
+): void {
+  const deliveryNoteCount = metrics.deliveryNoteCount ?? 0;
+  const invoiceCount = metrics.invoiceCount ?? 0;
+  const typeRows: Array<[string, string]> = [];
+
+  if (deliveryNoteCount > 0 || invoiceCount === 0) {
+    typeRows.push(['Albaranes en periodo', String(deliveryNoteCount)]);
+  }
+  if (invoiceCount > 0 || deliveryNoteCount === 0) {
+    typeRows.push(['Facturas en periodo', String(invoiceCount)]);
+  }
+  if (deliveryNoteCount > 0 && invoiceCount > 0) {
+    typeRows.push(['Total documentos', String(deliveryNoteCount + invoiceCount)]);
+  }
+
+  rows.splice(insertAt, 0, ...typeRows);
+}
+
 function metricsRowsForKind(
   metrics: SummaryReportMetrics,
   kind: ReportKind,
+  featureFlags?: ReportFeatureFlags,
 ): Array<[string, string]> {
   const rows: Array<[string, string]> = [
     [metrics.clientsOrDocumentsLabel, String(metrics.clientsOrDocumentsValue)],
     ['Actividades registradas', String(metrics.totalActivities)],
-    ['Horas documentadas', `${metrics.totalHours} h`],
+    [
+      workerPeriodHoursMetricLabel(featureFlags),
+      `${metrics.totalHours} h`,
+    ],
     ['Importe cobrado (pagados)', formatDocumentAmount(metrics.paidAmount)],
     ['Documentos pagados', String(metrics.paidCount)],
     [
@@ -180,11 +375,18 @@ function metricsRowsForKind(
   if (kind === 'workers_global') {
     const teamRows: Array<[string, string]> = [];
     if (metrics.teamAssignedHours != null) {
-      teamRows.push(['Horas asignadas', `${metrics.teamAssignedHours} h`]);
-      teamRows.push(['Horas firmadas', `${metrics.teamSignedHours ?? 0} h`]);
-      teamRows.push(['Horas pendientes de firma', `${metrics.teamPendingHours ?? 0} h`]);
+      if (featureFlags?.workerSignaturesEnabled) {
+        teamRows.push(['Horas asignadas', `${metrics.teamAssignedHours} h`]);
+        teamRows.push(['Horas firmadas', `${metrics.teamSignedHours ?? 0} h`]);
+        teamRows.push(['Horas pendientes de firma', `${metrics.teamPendingHours ?? 0} h`]);
+      } else {
+        teamRows.push(['Horas registradas', `${metrics.teamAssignedHours} h`]);
+      }
     }
-    if (metrics.teamSignedActivities != null) {
+    if (
+      featureFlags?.workerSignaturesEnabled &&
+      metrics.teamSignedActivities != null
+    ) {
       teamRows.push([
         'Actividades con firma completa',
         String(metrics.teamSignedActivities),
@@ -200,14 +402,30 @@ function metricsRowsForKind(
   }
 
   if (kind === 'contact') {
-    rows[0] = ['Documentos en periodo', String(metrics.clientsOrDocumentsValue)];
+    if (metricsHasTypedDocuments(metrics)) {
+      rows.splice(0, 1);
+      insertDocumentTypeMetricRows(rows, metrics, 0);
+    } else {
+      rows[0] = ['Documentos en periodo', String(metrics.clientsOrDocumentsValue)];
+    }
+  } else if (metricsHasTypedDocuments(metrics)) {
+    const paidAmountIndex = rows.findIndex(
+      ([label]) => label === 'Importe cobrado (pagados)',
+    );
+    insertDocumentTypeMetricRows(rows, metrics, paidAmountIndex >= 0 ? paidAmountIndex : 3);
   }
 
   return rows;
 }
 
-function writeMetricsTable(pdf: jsPDF, metrics: SummaryReportMetrics, kind: ReportKind, y: number): number {
-  const rows = metricsRowsForKind(metrics, kind);
+function writeMetricsTable(
+  pdf: jsPDF,
+  metrics: SummaryReportMetrics,
+  kind: ReportKind,
+  y: number,
+  featureFlags?: ReportFeatureFlags,
+): number {
+  const rows = metricsRowsForKind(metrics, kind, featureFlags);
 
   y = ensureSpace(pdf, y, LINE_HEIGHT * (rows.length + 2));
   pdf.setFontSize(9);
@@ -229,6 +447,31 @@ function writeMetricsTable(pdf: jsPDF, metrics: SummaryReportMetrics, kind: Repo
   return y + 4;
 }
 
+function writeClientBreakdownTableHeader(
+  pdf: jsPDF,
+  y: number,
+  splitDocumentColumns: boolean,
+): number {
+  pdf.setFontSize(8);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Nombre', PAGE_MARGIN, y);
+  pdf.text('Act.', PAGE_MARGIN + 58, y);
+  pdf.text('Horas', PAGE_MARGIN + 70, y);
+  if (splitDocumentColumns) {
+    pdf.text('Alb.', PAGE_MARGIN + 84, y);
+    pdf.text('Fact.', PAGE_MARGIN + 94, y);
+    pdf.text('Cobrado', PAGE_MARGIN + 104, y);
+  } else {
+    pdf.text('Docs', PAGE_MARGIN + 84, y);
+    pdf.text('Cobrado', PAGE_MARGIN + 98, y);
+  }
+  y += LINE_HEIGHT;
+  pdf.setDrawColor(200, 200, 200);
+  pdf.line(PAGE_MARGIN, y - 3, PAGE_MARGIN + CONTENT_WIDTH, y - 3);
+  pdf.setFont('helvetica', 'normal');
+  return y;
+}
+
 function writeBreakdownTable(
   pdf: jsPDF,
   title: string,
@@ -236,43 +479,72 @@ function writeBreakdownTable(
   y: number,
   sectionNum: number,
 ): number {
-  y = writeSectionTitle(pdf, `${sectionNum}. ${title}`, y);
+  const sectionTitle = `${sectionNum}. ${title}`;
+  y = beginSection(pdf, y, sectionTitle, estimateBreakdownTableHeight(pdf, rows));
 
   if (rows.length === 0) {
     return writeParagraph(pdf, 'Sin registros en el periodo seleccionado.', y, { size: 9 });
   }
 
-  pdf.setFontSize(8);
-  pdf.setFont('helvetica', 'bold');
-  y = ensureSpace(pdf, y, LINE_HEIGHT);
-  pdf.text('Nombre', PAGE_MARGIN, y);
-  pdf.text('Act.', PAGE_MARGIN + 72, y);
-  pdf.text('Horas', PAGE_MARGIN + 88, y);
-  pdf.text('Docs', PAGE_MARGIN + 108, y);
-  pdf.text('Cobrado', PAGE_MARGIN + 125, y);
-  y += LINE_HEIGHT;
-  pdf.setDrawColor(200, 200, 200);
-  pdf.line(PAGE_MARGIN, y - 3, PAGE_MARGIN + CONTENT_WIDTH, y - 3);
+  const splitDocumentColumns = breakdownRowsHaveTypedDocumentCounts(rows);
+  const nameWidth = splitDocumentColumns ? 56 : 68;
+  y = writeClientBreakdownTableHeader(pdf, y, splitDocumentColumns);
+  const limit = footerLimit(pdf);
 
-  pdf.setFont('helvetica', 'normal');
   for (const row of rows) {
-    y = ensureSpace(pdf, y, LINE_HEIGHT);
-    const nameLines = pdf.splitTextToSize(row.name, 68);
+    const nameLines = pdf.splitTextToSize(row.name, nameWidth);
+    const rowHeight = nameLines.length * LINE_HEIGHT;
+    const counts = resolveReportBreakdownDocumentCounts(row);
+
+    if (y + rowHeight > limit) {
+      pdf.addPage();
+      y = CONTENT_TOP;
+      y = writeClientBreakdownTableHeader(pdf, y, splitDocumentColumns);
+    }
+
     pdf.text(nameLines[0], PAGE_MARGIN, y);
-    pdf.text(String(row.activities), PAGE_MARGIN + 72, y);
-    pdf.text(`${row.hours} h`, PAGE_MARGIN + 88, y);
-    pdf.text(String(row.documents), PAGE_MARGIN + 108, y);
-    pdf.text(formatDocumentAmount(row.paidAmount), PAGE_MARGIN + 125, y);
+    pdf.text(String(row.activities), PAGE_MARGIN + 58, y);
+    pdf.text(`${row.hours} h`, PAGE_MARGIN + 70, y);
+    if (splitDocumentColumns) {
+      pdf.text(String(counts.deliveryNoteCount), PAGE_MARGIN + 84, y);
+      pdf.text(String(counts.invoiceCount), PAGE_MARGIN + 94, y);
+      pdf.text(formatDocumentAmount(row.paidAmount), PAGE_MARGIN + 104, y);
+    } else {
+      pdf.text(String(counts.legacyTotal), PAGE_MARGIN + 84, y);
+      pdf.text(formatDocumentAmount(row.paidAmount), PAGE_MARGIN + 98, y);
+    }
     y += LINE_HEIGHT;
 
     for (let i = 1; i < nameLines.length; i += 1) {
-      y = ensureSpace(pdf, y, LINE_HEIGHT);
+      if (y + LINE_HEIGHT > limit) {
+        pdf.addPage();
+        y = CONTENT_TOP;
+        y = writeClientBreakdownTableHeader(pdf, y, splitDocumentColumns);
+      }
       pdf.text(nameLines[i], PAGE_MARGIN, y);
       y += LINE_HEIGHT;
     }
   }
 
   return y + 4;
+}
+
+function writeWorkerBreakdownTableHeader(pdf: jsPDF, y: number): number {
+  pdf.setFontSize(7);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Nombre', PAGE_MARGIN, y);
+  pdf.text('Act.', PAGE_MARGIN + 58, y);
+  pdf.text('Asig.', PAGE_MARGIN + 70, y);
+  pdf.text('Firm.', PAGE_MARGIN + 86, y);
+  pdf.text('Pend.', PAGE_MARGIN + 102, y);
+  pdf.text('F/P', PAGE_MARGIN + 118, y);
+  pdf.text('Documentos', PAGE_MARGIN + 128, y);
+  pdf.text('Cobrado', PAGE_MARGIN + 152, y);
+  y += LINE_HEIGHT;
+  pdf.setDrawColor(200, 200, 200);
+  pdf.line(PAGE_MARGIN, y - 3, PAGE_MARGIN + CONTENT_WIDTH, y - 3);
+  pdf.setFont('helvetica', 'normal');
+  return y;
 }
 
 function writeWorkerBreakdownTable(
@@ -281,46 +553,57 @@ function writeWorkerBreakdownTable(
   y: number,
   sectionNum: number,
 ): number {
-  y = writeSectionTitle(pdf, `${sectionNum}. Desglose por operario`, y);
+  const sectionTitle = `${sectionNum}. Desglose por operario`;
+  y = beginSection(pdf, y, sectionTitle, estimateWorkerBreakdownTableHeight(pdf, rows));
 
   if (rows.length === 0) {
     return writeParagraph(pdf, 'Sin registros en el periodo seleccionado.', y, { size: 9 });
   }
 
-  pdf.setFontSize(7);
-  pdf.setFont('helvetica', 'bold');
-  y = ensureSpace(pdf, y, LINE_HEIGHT);
-  pdf.text('Nombre', PAGE_MARGIN, y);
-  pdf.text('Act.', PAGE_MARGIN + 58, y);
-  pdf.text('Asig.', PAGE_MARGIN + 70, y);
-  pdf.text('Firm.', PAGE_MARGIN + 86, y);
-  pdf.text('Pend.', PAGE_MARGIN + 102, y);
-  pdf.text('F/P', PAGE_MARGIN + 118, y);
-  pdf.text('Docs', PAGE_MARGIN + 132, y);
-  pdf.text('Cobrado', PAGE_MARGIN + 148, y);
-  y += LINE_HEIGHT;
-  pdf.setDrawColor(200, 200, 200);
-  pdf.line(PAGE_MARGIN, y - 3, PAGE_MARGIN + CONTENT_WIDTH, y - 3);
+  y = writeWorkerBreakdownTableHeader(pdf, y);
+  const limit = footerLimit(pdf);
 
-  pdf.setFont('helvetica', 'normal');
   for (const row of rows) {
-    y = ensureSpace(pdf, y, LINE_HEIGHT);
     const nameLines = pdf.splitTextToSize(row.name, 54);
     const signedActs = row.signedActivities ?? 0;
     const unsignedActs = row.unsignedActivities ?? 0;
+    const documentSummary = formatBreakdownDocumentCell(row, 'compact');
+    const documentLines = pdf.splitTextToSize(documentSummary, 22);
+    const rowHeight = Math.max(nameLines.length, documentLines.length) * LINE_HEIGHT;
+
+    if (y + rowHeight > limit) {
+      pdf.addPage();
+      y = CONTENT_TOP;
+      y = writeWorkerBreakdownTableHeader(pdf, y);
+    }
+
     pdf.text(nameLines[0], PAGE_MARGIN, y);
     pdf.text(String(row.activities), PAGE_MARGIN + 58, y);
     pdf.text(`${row.hours} h`, PAGE_MARGIN + 70, y);
     pdf.text(`${row.signedHours ?? 0} h`, PAGE_MARGIN + 86, y);
     pdf.text(`${row.pendingHours ?? 0} h`, PAGE_MARGIN + 102, y);
     pdf.text(`${signedActs}/${unsignedActs}`, PAGE_MARGIN + 118, y);
-    pdf.text(String(row.documents), PAGE_MARGIN + 132, y);
-    pdf.text(formatDocumentAmount(row.paidAmount), PAGE_MARGIN + 148, y);
+    pdf.text(documentLines[0], PAGE_MARGIN + 128, y);
+    pdf.text(formatDocumentAmount(row.paidAmount), PAGE_MARGIN + 152, y);
     y += LINE_HEIGHT;
 
     for (let i = 1; i < nameLines.length; i += 1) {
-      y = ensureSpace(pdf, y, LINE_HEIGHT);
+      if (y + LINE_HEIGHT > limit) {
+        pdf.addPage();
+        y = CONTENT_TOP;
+        y = writeWorkerBreakdownTableHeader(pdf, y);
+      }
       pdf.text(nameLines[i], PAGE_MARGIN, y);
+      y += LINE_HEIGHT;
+    }
+
+    for (let i = 1; i < documentLines.length; i += 1) {
+      if (y + LINE_HEIGHT > limit) {
+        pdf.addPage();
+        y = CONTENT_TOP;
+        y = writeWorkerBreakdownTableHeader(pdf, y);
+      }
+      pdf.text(documentLines[i], PAGE_MARGIN + 128, y);
       y += LINE_HEIGHT;
     }
   }
@@ -328,37 +611,67 @@ function writeWorkerBreakdownTable(
   return y + 4;
 }
 
+function writeShiftBreakdownTableHeader(
+  pdf: jsPDF,
+  y: number,
+  includeSignatures: boolean,
+): number {
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Turno', PAGE_MARGIN, y);
+  pdf.text(includeSignatures ? 'Horas asignadas' : 'Horas', PAGE_MARGIN + 55, y);
+  if (includeSignatures) {
+    pdf.text('Horas firmadas', PAGE_MARGIN + 115, y);
+    pdf.text('Pendientes', PAGE_MARGIN + 155, y);
+  }
+  y += LINE_HEIGHT;
+  pdf.setDrawColor(200, 200, 200);
+  pdf.line(PAGE_MARGIN, y - 3, PAGE_MARGIN + CONTENT_WIDTH, y - 3);
+  pdf.setFont('helvetica', 'normal');
+  return y;
+}
+
 function writeShiftBreakdownTable(
   pdf: jsPDF,
   rows: TeamShiftBreakdownRow[],
   y: number,
   sectionNum: number,
+  includeSignatures: boolean,
 ): number {
-  y = writeSectionTitle(pdf, `${sectionNum}. Horas por turno`, y);
+  const sectionTitle = `${sectionNum}. Horas por turno`;
+  const bodyHeight =
+    rows.length === 0
+      ? estimateWrappedTextHeight(
+          pdf,
+          'Sin horas asignadas por turno en el periodo.',
+          CONTENT_WIDTH,
+          LINE_HEIGHT,
+          9,
+        )
+      : LINE_HEIGHT * (rows.length + 2) + 4;
+  y = beginSection(pdf, y, sectionTitle, bodyHeight);
 
   if (rows.length === 0) {
     return writeParagraph(pdf, 'Sin horas asignadas por turno en el periodo.', y, { size: 9 });
   }
 
-  pdf.setFontSize(9);
-  pdf.setFont('helvetica', 'bold');
-  y = ensureSpace(pdf, y, LINE_HEIGHT);
-  pdf.text('Turno', PAGE_MARGIN, y);
-  pdf.text('Horas asignadas', PAGE_MARGIN + 55, y);
-  pdf.text('Horas firmadas', PAGE_MARGIN + 115, y);
-  pdf.text('Pendientes', PAGE_MARGIN + 155, y);
-  y += LINE_HEIGHT;
-  pdf.setDrawColor(200, 200, 200);
-  pdf.line(PAGE_MARGIN, y - 3, PAGE_MARGIN + CONTENT_WIDTH, y - 3);
+  y = writeShiftBreakdownTableHeader(pdf, y, includeSignatures);
+  const limit = footerLimit(pdf);
 
-  pdf.setFont('helvetica', 'normal');
   for (const row of rows) {
-    y = ensureSpace(pdf, y, LINE_HEIGHT);
+    if (y + LINE_HEIGHT > limit) {
+      pdf.addPage();
+      y = CONTENT_TOP;
+      y = writeShiftBreakdownTableHeader(pdf, y, includeSignatures);
+    }
+
     const pending = Math.max(0, row.assignedHours - row.signedHours);
     pdf.text(row.shiftLabel, PAGE_MARGIN, y);
     pdf.text(`${row.assignedHours} h`, PAGE_MARGIN + 55, y);
-    pdf.text(`${row.signedHours} h`, PAGE_MARGIN + 115, y);
-    pdf.text(`${pending} h`, PAGE_MARGIN + 155, y);
+    if (includeSignatures) {
+      pdf.text(`${row.signedHours} h`, PAGE_MARGIN + 115, y);
+      pdf.text(`${pending} h`, PAGE_MARGIN + 155, y);
+    }
     y += LINE_HEIGHT;
   }
 
@@ -367,6 +680,20 @@ function writeShiftBreakdownTable(
 
 function formatConceptQuantity(quantity: number): string {
   return Number.isInteger(quantity) ? String(quantity) : quantity.toFixed(2);
+}
+
+function writeConceptsTableHeader(pdf: jsPDF, y: number): number {
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Concepto', PAGE_MARGIN, y);
+  pdf.text('Cant.', PAGE_MARGIN + 95, y);
+  pdf.text('Importe', PAGE_MARGIN + 115, y);
+  pdf.text('Fact.', PAGE_MARGIN + 150, y);
+  y += LINE_HEIGHT;
+  pdf.setDrawColor(200, 200, 200);
+  pdf.line(PAGE_MARGIN, y - 3, PAGE_MARGIN + CONTENT_WIDTH, y - 3);
+  pdf.setFont('helvetica', 'normal');
+  return y;
 }
 
 function writeConceptsTable(
@@ -382,21 +709,19 @@ function writeConceptsTable(
     );
   }
 
-  pdf.setFontSize(9);
-  pdf.setFont('helvetica', 'bold');
-  y = ensureSpace(pdf, y, LINE_HEIGHT);
-  pdf.text('Concepto', PAGE_MARGIN, y);
-  pdf.text('Cant.', PAGE_MARGIN + 95, y);
-  pdf.text('Importe', PAGE_MARGIN + 115, y);
-  pdf.text('Docs', PAGE_MARGIN + 150, y);
-  y += LINE_HEIGHT;
-  pdf.setDrawColor(200, 200, 200);
-  pdf.line(PAGE_MARGIN, y - 3, PAGE_MARGIN + CONTENT_WIDTH, y - 3);
+  y = writeConceptsTableHeader(pdf, y);
+  const limit = footerLimit(pdf);
 
-  pdf.setFont('helvetica', 'normal');
   for (const concept of concepts) {
-    y = ensureSpace(pdf, y, LINE_HEIGHT);
     const descriptionLines = pdf.splitTextToSize(concept.description, 88);
+    const rowHeight = descriptionLines.length * LINE_HEIGHT;
+
+    if (y + rowHeight > limit) {
+      pdf.addPage();
+      y = CONTENT_TOP;
+      y = writeConceptsTableHeader(pdf, y);
+    }
+
     pdf.text(descriptionLines[0], PAGE_MARGIN, y);
     pdf.text(formatConceptQuantity(concept.totalQuantity), PAGE_MARGIN + 95, y);
     pdf.text(formatDocumentAmount(concept.totalAmount), PAGE_MARGIN + 115, y);
@@ -404,7 +729,11 @@ function writeConceptsTable(
     y += LINE_HEIGHT;
 
     for (let lineIndex = 1; lineIndex < descriptionLines.length; lineIndex += 1) {
-      y = ensureSpace(pdf, y, LINE_HEIGHT);
+      if (y + LINE_HEIGHT > limit) {
+        pdf.addPage();
+        y = CONTENT_TOP;
+        y = writeConceptsTableHeader(pdf, y);
+      }
       pdf.text(descriptionLines[lineIndex], PAGE_MARGIN, y);
       y += LINE_HEIGHT;
     }
@@ -412,7 +741,10 @@ function writeConceptsTable(
 
   const totalQuantity = concepts.reduce((sum, concept) => sum + concept.totalQuantity, 0);
   const totalAmount = concepts.reduce((sum, concept) => sum + concept.totalAmount, 0);
-  y = ensureSpace(pdf, y, LINE_HEIGHT + 2);
+  if (y + LINE_HEIGHT + 2 > limit) {
+    pdf.addPage();
+    y = CONTENT_TOP;
+  }
   pdf.setFont('helvetica', 'bold');
   pdf.line(PAGE_MARGIN, y - 2, PAGE_MARGIN + CONTENT_WIDTH, y - 2);
   pdf.text('Total', PAGE_MARGIN, y);
@@ -458,14 +790,25 @@ function writeChartSection(
   y: number,
   sectionNum: number,
 ): number {
-  y = writeSectionTitle(pdf, `${sectionNum}. ${sectionTitle}`, y);
+  const fullTitle = `${sectionNum}. ${sectionTitle}`;
+  const chartHeight = estimateChartBlockHeight(chartDataForTable?.length ?? 4, false);
+  const subtitleHeight = estimateWrappedTextHeight(pdf, subtitle, CONTENT_WIDTH, LINE_HEIGHT, 9) + 2;
+  const tableHeight =
+    chartDataForTable && chartDataForTable.length > 0
+      ? chartDataForTable.length * LINE_HEIGHT + LINE_HEIGHT * 2 + 4
+      : 0;
+  const conclusionsHeight =
+    estimateWrappedTextHeight(pdf, 'Conclusiones del gráfico', CONTENT_WIDTH, LINE_HEIGHT, 10) +
+    estimateBulletListHeight(pdf, conclusions);
+  y = beginSection(
+    pdf,
+    y,
+    fullTitle,
+    subtitleHeight + chartHeight + tableHeight + conclusionsHeight,
+  );
   y = writeParagraph(pdf, subtitle, y, { size: 9 });
   y += 2;
 
-  const chartHeight = estimateChartBlockHeight(
-    chartDataForTable?.length ?? 4,
-    false,
-  );
   y = ensureSpace(pdf, y, chartHeight);
   y = drawChart(pdf, PAGE_MARGIN, y);
   y += 2;
@@ -483,7 +826,7 @@ function writeChartSection(
 function chart2Title(kind: ReportKind): string {
   const titles: Record<ReportKind, string> = {
     general: 'Contactos con mayor dedicación',
-    contacts_global: 'Ranking de contactos por horas',
+    contacts_global: 'Ranking de clientes por horas',
     contact: 'Estado de la documentación',
     workers_global: 'Ranking de operarios por horas',
     worker: 'Contactos atendidos por el operario',
@@ -491,28 +834,279 @@ function chart2Title(kind: ReportKind): string {
   return titles[kind];
 }
 
-function chart2Subtitle(kind: ReportKind): string {
-  const subtitles: Record<ReportKind, string> = {
-    general: 'Comparativa de horas registradas por contacto (top del periodo).',
-    contacts_global: 'Horas y actividades por contacto para priorizar seguimiento.',
+function chart2Subtitle(kind: ReportKind, featureFlags?: ReportFeatureFlags): string {
+  const subtitles: Record<Exclude<ReportKind, 'workers_global'>, string> = {
+    general: 'Comparativa de horas registradas por cliente (top del periodo).',
+    contacts_global: 'Horas y actividades por cliente para priorizar seguimiento.',
     contact: 'Distribución de documentos por estado e importe en el periodo.',
-    workers_global: 'Horas asignadas y firmadas por operario; columnas F/P = actividades firmadas / pendientes.',
-    worker: 'Distribución del esfuerzo del operario entre contactos atendidos.',
+    worker: 'Distribución del esfuerzo del operario entre clientes atendidos.',
   };
+  if (kind === 'workers_global') {
+    if (featureFlags?.workerSignaturesEnabled) {
+      return 'Horas asignadas y firmadas por operario; columnas F/P = actividades firmadas / pendientes.';
+    }
+    return 'Horas registradas por operario en el periodo.';
+  }
   return subtitles[kind];
 }
 
-function writePageHeader(pdf: jsPDF, logo: string | null) {
+type WorkerDetailColumn = {
+  label: string;
+  weight: number;
+  value: (row: WorkerActivityDetailRow) => string;
+};
+
+const TAIL_WORKER_DETAIL_COLUMNS: WorkerDetailColumn[] = [
+  {
+    label: 'Estado parte',
+    weight: 14,
+    value: (row) => formatWorkerActivityDetailText(row.reportStatus),
+  },
+  {
+    label: 'Zonas',
+    weight: 20,
+    value: (row) => formatWorkerActivityDetailText(row.zonesWorked || row.zones),
+  },
+  {
+    label: 'Notas',
+    weight: 20,
+    value: (row) => formatWorkerActivityDetailText(row.workerNotes || row.notes),
+  },
+  {
+    label: 'Albaran',
+    weight: 14,
+    value: (row) => formatWorkerActivityDetailText(row.deliveryNoteNumber),
+  },
+  {
+    label: 'Documentos',
+    weight: 22,
+    value: (row) => formatWorkerActivityDetailText(row.linkedDocuments),
+  },
+  {
+    label: 'Conceptos',
+    weight: 24,
+    value: (row) => formatWorkerActivityDetailConcepts(row),
+  },
+];
+
+const SHIFT_DETAIL_COLUMN: WorkerDetailColumn = {
+  label: 'Turno',
+  weight: 14,
+  value: (row) => formatWorkerActivityDetailText(row.shiftLabel),
+};
+
+function workerDetailMainHoursLabel(featureFlags?: ReportFeatureFlags): string {
+  return getWorkerHoursDisplayLabel({
+    workerSignaturesEnabled: featureFlags?.workerSignaturesEnabled,
+    shiftSchedulingEnabled: featureFlags?.shiftSchedulingEnabled,
+    short: true,
+  });
+}
+
+function buildWorkerDetailColumns(featureFlags?: ReportFeatureFlags): WorkerDetailColumn[] {
+  const columns: WorkerDetailColumn[] = [
+    { label: 'Fecha', weight: 14, value: (row) => formatDetailDateIso(row.date) },
+    { label: 'Cliente', weight: 22, value: (row) => formatWorkerActivityDetailText(row.clientName) },
+    { label: 'Tipo', weight: 16, value: (row) => formatWorkerActivityDetailText(row.typeLabel) },
+    {
+      label: 'Descripcion',
+      weight: 26,
+      value: (row) => formatWorkerActivityDetailText(row.description),
+    },
+    {
+      label: 'H. planificadas',
+      weight: 12,
+      value: (row) => formatWorkerActivityDetailHoursCell(row.plannedActivityHours),
+    },
+  ];
+
+  if (featureFlags?.shiftSchedulingEnabled) {
+    columns.push({
+      label: workerReportHoursColumnLabel('shift'),
+      weight: 12,
+      value: (row) => formatWorkerActivityDetailHoursCell(row.assignedHours),
+    });
+  }
+
+  if (workerDetailShowsReportedHoursColumn(featureFlags)) {
+    columns.push({
+      label: workerReportHoursColumnLabel('work-report'),
+      weight: 12,
+      value: (row) => formatWorkerActivityDetailHoursCell(row.reportedHours),
+    });
+  }
+
+  if (featureFlags?.workerSignaturesEnabled) {
+    columns.push({
+      label: 'Firm.',
+      weight: 10,
+      value: (row) => formatWorkerActivityDetailHoursCell(row.signedHours),
+    });
+  }
+
+  columns.push({
+    label: workerDetailMainHoursLabel(featureFlags),
+    weight: 12,
+    value: (row) => formatWorkerActivityDetailHoursCell(row.reportHours),
+  });
+
+  columns.push(...TAIL_WORKER_DETAIL_COLUMNS);
+
+  if (featureFlags?.shiftSchedulingEnabled) {
+    columns.push(SHIFT_DETAIL_COLUMN);
+  }
+
+  return columns;
+}
+
+function formatDetailDateIso(isoDate: string): string {
+  try {
+    return format(parseISO(isoDate), 'd/M/yyyy', { locale: es });
+  } catch {
+    return isoDate;
+  }
+}
+
+function writeWorkerDetailTableHeader(
+  pdf: jsPDF,
+  y: number,
+  colWidths: number[],
+  columns: WorkerDetailColumn[],
+  lineHeight: number,
+): number {
+  pdf.setFontSize(WORKER_DETAIL_HEADER_FONT_SIZE);
+  pdf.setFont('helvetica', 'bold');
+  let x = PAGE_MARGIN;
+  for (let index = 0; index < columns.length; index += 1) {
+    const headerLines = pdf.splitTextToSize(columns[index].label, colWidths[index] - 1);
+    pdf.text(headerLines[0], x, y);
+    x += colWidths[index];
+  }
+  y += lineHeight;
+  pdf.setDrawColor(200, 200, 200);
+  pdf.line(PAGE_MARGIN, y - 2, PAGE_MARGIN + pageContentWidth(pdf), y - 2);
+  pdf.setFont('helvetica', 'normal');
+  return y;
+}
+
+const WORKER_DETAIL_ANNEX_TITLE = 'Detalle de actividades';
+const WORKER_DETAIL_ROW_FONT_SIZE = 5.5;
+const WORKER_DETAIL_HEADER_FONT_SIZE = 6;
+const WORKER_DETAIL_TITLE_FONT_SIZE = 12;
+const WORKER_DETAIL_LINE_HEIGHT = 4.2;
+
+function estimateWorkerDetailRowHeight(
+  pdf: jsPDF,
+  row: WorkerActivityDetailRow,
+  columns: WorkerDetailColumn[],
+  colWidths: number[],
+  lineHeight: number,
+): number {
+  pdf.setFontSize(WORKER_DETAIL_ROW_FONT_SIZE);
+  const cellLines = columns.map((column, index) =>
+    pdf.splitTextToSize(column.value(row), colWidths[index] - 1),
+  );
+  const rowLineCount = Math.max(1, ...cellLines.map((lines) => lines.length));
+  return rowLineCount * lineHeight + 1.5;
+}
+
+function writeWorkerActivityDetailAnnex(
+  pdf: jsPDF,
+  rows: WorkerActivityDetailRow[],
+  featureFlags?: ReportFeatureFlags,
+): void {
+  const columns = buildWorkerDetailColumns(featureFlags);
+  const layout = createReportPdfLayout({
+    pageMargin: PAGE_MARGIN,
+    lineHeight: WORKER_DETAIL_LINE_HEIGHT,
+    contentTop: CONTENT_TOP,
+    footerReserve: FOOTER_RESERVE,
+  });
+
+  pdf.addPage('a4', 'landscape');
+  let y = CONTENT_TOP;
+  const lineHeight = WORKER_DETAIL_LINE_HEIGHT;
+  const contentWidth = pageContentWidth(pdf);
+  const totalWeight = columns.reduce((sum, column) => sum + column.weight, 0);
+  const colWidths = columns.map((column) => (column.weight / totalWeight) * contentWidth);
+  const titleBlockHeight = 8 + lineHeight + 4;
+
+  const writeAnnexTitle = () => {
+    pdf.setFontSize(WORKER_DETAIL_TITLE_FONT_SIZE);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(WORKER_DETAIL_ANNEX_TITLE, PAGE_MARGIN, y);
+    y += 8;
+  };
+
+  const startAnnexTablePage = (withTitle: boolean) => {
+    if (withTitle) {
+      y = layout.ensureSectionStart(pdf, y, titleBlockHeight + lineHeight * 2);
+      writeAnnexTitle();
+    } else {
+      y = CONTENT_TOP;
+      y = writeWorkerDetailTableHeader(pdf, y, colWidths, columns, lineHeight);
+    }
+  };
+
+  startAnnexTablePage(true);
+
+  if (rows.length === 0) {
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Sin actividades en el periodo seleccionado.', PAGE_MARGIN, y);
+    return;
+  }
+
+  y = writeWorkerDetailTableHeader(pdf, y, colWidths, columns, lineHeight);
+
+  for (const row of rows) {
+    const rowHeight = estimateWorkerDetailRowHeight(pdf, row, columns, colWidths, lineHeight);
+
+    if (y + rowHeight > layout.footerLimit(pdf)) {
+      pdf.addPage('a4', 'landscape');
+      startAnnexTablePage(false);
+    }
+
+    pdf.setFontSize(WORKER_DETAIL_ROW_FONT_SIZE);
+    pdf.setFont('helvetica', 'normal');
+    const cellLines = columns.map((column, index) =>
+      pdf.splitTextToSize(column.value(row), colWidths[index] - 1),
+    );
+    const rowLineCount = Math.max(1, ...cellLines.map((lines) => lines.length));
+
+    for (let lineIndex = 0; lineIndex < rowLineCount; lineIndex += 1) {
+      let x = PAGE_MARGIN;
+      for (let colIndex = 0; colIndex < columns.length; colIndex += 1) {
+        const text = cellLines[colIndex][lineIndex] ?? '';
+        if (text) pdf.text(text, x, y + lineIndex * lineHeight);
+        x += colWidths[colIndex];
+      }
+    }
+    y += rowLineCount * lineHeight + 1.5;
+  }
+}
+
+function writePageHeader(pdf: jsPDF, logo: string | null, pageNum: number, kind: ReportKind) {
   if (!logo) return;
 
-  pdf.addImage(logo, 'PNG', PAGE_MARGIN, PAGE_MARGIN, HEADER_LOGO_SIZE, HEADER_LOGO_SIZE);
+  const logoY = pageNum === 1 ? COVER_LOGO_Y : PAGE_MARGIN;
+  pdf.addImage(logo, 'PNG', PAGE_MARGIN, logoY, HEADER_LOGO_SIZE, HEADER_LOGO_SIZE);
+
+  if (pageNum === 1) {
+    pdf.setFontSize(16);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(23, 23, 23);
+    pdf.text(REPORT_KIND_HEADING[kind], HEADER_TITLE_X, COVER_TITLE_BASELINE_Y);
+    return;
+  }
+
   pdf.setDrawColor(230, 230, 230);
   pdf.setLineWidth(0.3);
   pdf.line(
     PAGE_MARGIN,
-    PAGE_MARGIN + HEADER_LOGO_SIZE + 2,
+    logoY + HEADER_LOGO_SIZE + 2,
     PAGE_MARGIN + CONTENT_WIDTH,
-    PAGE_MARGIN + HEADER_LOGO_SIZE + 2,
+    logoY + HEADER_LOGO_SIZE + 2,
   );
 }
 
@@ -524,12 +1118,14 @@ function writeFooter(
   companyName: string,
   kind: ReportKind,
 ) {
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const footerY = pdf.internal.pageSize.getHeight() - 10;
   pdf.setFontSize(8);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(115, 115, 115);
-  pdf.text(`${companyName} — ${REPORT_KIND_HEADING[kind]}`, PAGE_MARGIN, FOOTER_Y);
-  pdf.text(generatedLabel, PAGE_MARGIN, FOOTER_Y + 4);
-  pdf.text(`Página ${pageNum} de ${totalPages}`, PAGE_WIDTH - PAGE_MARGIN, FOOTER_Y, { align: 'right' });
+  pdf.text(`${companyName} — ${REPORT_KIND_HEADING[kind]}`, PAGE_MARGIN, footerY);
+  pdf.text(generatedLabel, PAGE_MARGIN, footerY + 4);
+  pdf.text(`Página ${pageNum} de ${totalPages}`, pageWidth - PAGE_MARGIN, footerY, { align: 'right' });
   pdf.setTextColor(23, 23, 23);
 }
 
@@ -572,41 +1168,61 @@ export async function buildSummaryReportPdf(
   const periodRangeLabel =
     params.dateFrom === params.dateTo ? fromLabel : `${fromLabel} — ${toLabel}`;
   const kind = params.reportKind;
+  const featureFlags = params.featureFlags;
 
-  let y = CONTENT_TOP;
+  let y = COVER_SUBTITLE_TOP;
   let sectionNum = 1;
 
-  const nextSection = (title: string) => {
-    y = writeSectionTitle(pdf, `${sectionNum}. ${title}`, y);
+  const beginReportSection = (title: string, bodyHeightEstimate: number) => {
+    const fullTitle = `${sectionNum}. ${title}`;
+    y = beginSection(pdf, y, fullTitle, bodyHeightEstimate);
     sectionNum += 1;
     return y;
   };
 
   const logo = await loadImageDataUrl(DEFAULT_APP_LOGO_LIGHT);
 
-  y = writeParagraph(pdf, REPORT_KIND_HEADING[kind], y, { bold: true, size: 16 });
-  y = writeParagraph(pdf, getReportSubtitle(kind), y, { size: 9 });
+  y = writeParagraph(pdf, getReportSubtitle(kind, featureFlags), y, {
+    size: 9,
+    x: HEADER_TITLE_X,
+    maxWidth: HEADER_TITLE_WIDTH,
+  });
+  y = writeCoverDividerLine(pdf, y);
   y += 2;
 
-  y = writeParagraph(pdf, `Periodo: ${periodRangeLabel}`, y, { bold: true, size: 11 });
+  y = writeParagraph(pdf, getReportPeriodScopeLabel(params.dateFrom, params.dateTo), y, {
+    bold: true,
+    size: 11,
+    x: PAGE_MARGIN,
+    maxWidth: CONTENT_WIDTH,
+  });
+  y = writeParagraph(pdf, `Periodo: ${periodRangeLabel}`, y, {
+    bold: true,
+    size: 11,
+    x: PAGE_MARGIN,
+    maxWidth: CONTENT_WIDTH,
+  });
   y = writeParagraph(pdf, `Ámbito: ${params.metrics.clientScope}`, y, { size: 10 });
   y = writeParagraph(pdf, `Organización: ${params.companyName}`, y, { size: 10 });
   y = writeParagraph(pdf, `Emisión: ${generatedLabel}`, y, { size: 9 });
   y += 4;
 
-  nextSection('Resumen ejecutivo');
-  y = writeBulletList(pdf, buildReportIntroduction(params.narrative), y);
+  const introBullets = buildReportIntroduction(params.narrative);
+  beginReportSection('Resumen ejecutivo', estimateBulletListHeight(pdf, introBullets));
+  y = writeBulletList(pdf, introBullets, y);
 
-  nextSection('Indicadores clave');
-  y = writeMetricsTable(pdf, params.metrics, kind, y);
+  const metricsRows = metricsRowsForKind(params.metrics, kind, featureFlags);
+  beginReportSection('Indicadores clave', LINE_HEIGHT * (metricsRows.length + 2) + 4);
+  y = writeMetricsTable(pdf, params.metrics, kind, y, featureFlags);
 
-  nextSection('Análisis del periodo');
-  y = writeBulletList(pdf, buildReportAnalysis(params.narrative), y);
+  const analysisBullets = buildReportAnalysis(params.narrative);
+  beginReportSection('Análisis del periodo', estimateBulletListHeight(pdf, analysisBullets));
+  y = writeBulletList(pdf, analysisBullets, y);
 
   if (includesClientBreakdown(kind) && params.clientBreakdown) {
     y = writeBreakdownTable(
       pdf,
-      'Desglose por contacto',
+      'Desglose por cliente',
       params.clientBreakdown,
       y,
       sectionNum,
@@ -614,14 +1230,28 @@ export async function buildSummaryReportPdf(
     sectionNum += 1;
   }
 
-  if (kind === 'workers_global' && params.teamShiftBreakdown?.length) {
-    y = writeShiftBreakdownTable(pdf, params.teamShiftBreakdown, y, sectionNum);
+  if (kind === 'workers_global' && featureFlags?.shiftSchedulingEnabled && params.teamShiftBreakdown?.length) {
+    y = writeShiftBreakdownTable(
+      pdf,
+      params.teamShiftBreakdown,
+      y,
+      sectionNum,
+      featureFlags.workerSignaturesEnabled === true,
+    );
     sectionNum += 1;
   }
 
   if (includesWorkerBreakdown(kind) && params.workerBreakdown) {
-    if (kind === 'workers_global') {
+    if (kind === 'workers_global' && featureFlags?.workerSignaturesEnabled) {
       y = writeWorkerBreakdownTable(pdf, params.workerBreakdown, y, sectionNum);
+    } else if (kind === 'workers_global') {
+      y = writeBreakdownTable(
+        pdf,
+        'Desglose por operario',
+        params.workerBreakdown,
+        y,
+        sectionNum,
+      );
     } else {
       y = writeBreakdownTable(
         pdf,
@@ -634,7 +1264,10 @@ export async function buildSummaryReportPdf(
     sectionNum += 1;
   }
 
-  nextSection('Conceptos de factura');
+  beginReportSection(
+    'Conceptos de factura',
+    estimateConceptsTableHeight(pdf, params.invoiceConcepts),
+  );
   y = writeConceptsTable(pdf, params.invoiceConcepts, y);
 
   const chart1Items = chartDataToBarItems(params.chartData);
@@ -677,7 +1310,7 @@ export async function buildSummaryReportPdf(
     y = writeChartSection(
       pdf,
       `Gráfico 2 — ${chart2Title(kind)}`,
-      chart2Subtitle(kind),
+      chart2Subtitle(kind, featureFlags),
       (doc, x, startY) => drawDocumentStatusBars(doc, documentSlices, x, startY, CONTENT_WIDTH),
       chart2Conclusions,
       null,
@@ -689,7 +1322,7 @@ export async function buildSummaryReportPdf(
     y = writeChartSection(
       pdf,
       `Gráfico 2 — ${chart2Title(kind)}`,
-      chart2Subtitle(kind),
+      chart2Subtitle(kind, featureFlags),
       (doc, x, startY) =>
         drawHorizontalBarChart(doc, chart2Items, x, startY, CONTENT_WIDTH, {
           emptyMessage: 'Sin datos comparativos en el periodo.',
@@ -707,25 +1340,28 @@ export async function buildSummaryReportPdf(
     : null;
 
   if (chartImage) {
-    y = writeSectionTitle(pdf, `${sectionNum}. Vista ampliada del gráfico`, y);
-    sectionNum += 1;
-    y = ensureSpace(pdf, y, 90);
     const imgHeight = 72;
-    if (y + imgHeight > FOOTER_Y - 10) {
-      pdf.addPage();
-      y = CONTENT_TOP;
-    }
+    y = beginSection(pdf, y, `${sectionNum}. Vista ampliada del gráfico`, imgHeight + 6);
+    sectionNum += 1;
     pdf.addImage(chartImage, 'PNG', PAGE_MARGIN, y, CONTENT_WIDTH, imgHeight);
     y += imgHeight + 6;
   }
 
-  nextSection('Conclusiones y recomendaciones');
-  y = writeBulletList(pdf, buildReportConclusions(params.narrative), y);
+  const conclusionBullets = buildReportConclusions(params.narrative);
+  beginReportSection(
+    'Conclusiones y recomendaciones',
+    estimateBulletListHeight(pdf, conclusionBullets),
+  );
+  y = writeBulletList(pdf, conclusionBullets, y);
+
+  if (kind === 'worker' && params.workerActivityDetail) {
+    writeWorkerActivityDetailAnnex(pdf, params.workerActivityDetail, params.featureFlags);
+  }
 
   const totalPages = pdf.getNumberOfPages();
   for (let page = 1; page <= totalPages; page += 1) {
     pdf.setPage(page);
-    writePageHeader(pdf, logo);
+    writePageHeader(pdf, logo, page, kind);
     writeFooter(pdf, page, totalPages, `Generado el ${generatedLabel}`, params.companyName, kind);
   }
 

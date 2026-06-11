@@ -1,5 +1,6 @@
 import type { Client } from '@shared/types';
 import {
+  normalizeClientAssignedUserIds,
   normalizeClientCreatedAt,
   normalizeClientCreatedAtPrecision,
   normalizeClientCustomFields,
@@ -41,6 +42,7 @@ export function normalizeClientRecord(
     })(),
     observations: normalized.observations ?? [],
     customFields: normalizeClientCustomFields(normalized.customFields),
+    assignedUserIds: normalizeClientAssignedUserIds(normalized.assignedUserIds),
   };
 }
 

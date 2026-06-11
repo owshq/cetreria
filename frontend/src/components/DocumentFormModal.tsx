@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useCloseAllPopups, usePopupEscape } from '@/context/PopupStackContext';
 import { format, isAfter, parseISO, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { CalendarPlus, ChevronDown, Plus, CircleMinus, X, FileText, FilePlus, CloudUpload, Camera } from 'lucide-react';
+import { CalendarPlus, ChevronDown, Plus, CircleMinus, X, FileText, FilePlus, CloudUpload, Camera, AlertTriangle, RefreshCw } from 'lucide-react';
 import {
   activitiesService,
   authService,
@@ -14,7 +14,14 @@ import {
 import ModalHeader from '@/components/ModalHeader';
 import { ModalActions, ModalFooter, modalBtnPrimary, modalBtnSecondary } from '@/components/ModalFooter';
 import ModalOverlay from '@/components/ModalOverlay';
-import type { Activity, Client, Document, DocumentBillingAddress, WorkspaceBillingSettings } from '@shared/types';
+import type {
+  Activity,
+  CalendarEvent,
+  Client,
+  Document,
+  DocumentBillingAddress,
+  WorkspaceBillingSettings,
+} from '@shared/types';
 import {
   canOperatorCreateDocumentType,
   billingAddressFromClient,
@@ -35,9 +42,17 @@ import {
   getActivityTypeLabel,
   resolveDocumentTemplate,
   validateActivityInvoiceRequiresDeliveryNote,
+  validateActivityInvoiceRequiresWorkerDeliveryNotes,
+  ACTIVITY_INVOICE_ZERO_HOUR_PRICE_WARNING,
+  deliveryNotesHaveZeroPricedHourLines,
   validateRemovingDeliveryNoteFromActivity,
-  VERIFACTU_INVOICE_KIND_LABELS,
-  VERIFACTU_INVOICE_KINDS,
+  validateSingleActivityInvoice,
+  buildInvoiceItemsFromDeliveryNotes,
+  getInvoiceDeliveryNotesMismatchTooltip,
+  INVOICE_DELIVERY_NOTES_OUT_OF_SYNC_SUMMARY,
+  normalizeDocumentLineItem,
+  activityTypeUsesWorkReport,
+  resolveActivityType,
   type VerifactuInvoiceKind,
   type DocumentTemplateId,
 } from '@shared/types';
@@ -111,12 +126,18 @@ type DocumentFormModalProps = {
   externalActivityId?: string;
   lockClientId?: boolean;
   defaultType?: Document['type'];
+  /** Bloquea el tipo (p. ej. factura desde actividad). */
+  fixedDocType?: Document['type'];
   onRequestActivity?: (context: { clientId: string; date: string }) => void;
   onClientCreated?: (client: Client) => void;
   /** When false, saving only closes this modal (keeps parent popups, e.g. activity form). Default true. */
   closeAllPopupsOnSave?: boolean;
   /** Modo inicial al crear un documento nuevo (p. ej. desde el modal de actividad). */
   initialCreationMode?: DocumentCreationMode;
+  /** Al editar factura: recarga lineas desde albaranes al abrir (p. ej. tras desfase). */
+  initialReloadFromDeliveryNotes?: boolean;
+  /** Evento de calendario vinculado a la actividad (validacion de informes/albaranes). */
+  linkedCalendarEvent?: CalendarEvent | null;
 };
 
 const DOC_TYPE_SELECT_OPTIONS: SelectMenuOption[] = [
@@ -250,10 +271,13 @@ export default function DocumentFormModal({
   externalActivityId = '',
   lockClientId = false,
   defaultType,
+  fixedDocType,
   onRequestActivity,
   onClientCreated,
   closeAllPopupsOnSave = true,
   initialCreationMode = 'generate',
+  initialReloadFromDeliveryNotes = false,
+  linkedCalendarEvent = null,
 }: DocumentFormModalProps) {
   usePopupEscape(open, onClose);
   const closeAllPopups = useCloseAllPopups();
@@ -460,9 +484,32 @@ export default function DocumentFormModal({
   ]);
 
   useEffect(() => {
+    if (!open || !fixedDocType) return;
+    setDocType(fixedDocType);
+  }, [open, fixedDocType]);
+
+  useEffect(() => {
     if (!open || !externalActivityId) return;
     setFormData((current) => ({ ...current, activityId: externalActivityId }));
   }, [open, externalActivityId]);
+
+  useEffect(() => {
+    if (!open || !isNewDocument || docType !== 'invoice' || !formData.activityId) return;
+
+    const deliveryNotes = catalogDocuments.filter(
+      (doc) => doc.activityId === formData.activityId && doc.type === 'delivery-note',
+    );
+    if (deliveryNotes.length === 0) return;
+
+    const prefilledItems = buildInvoiceItemsFromDeliveryNotes(deliveryNotes).map(mapLineItemForm);
+    setFormData((current) => {
+      const hasManualItems = current.items.some(
+        (item) => item.name.trim() !== '' || item.description.trim() !== '',
+      );
+      if (hasManualItems) return current;
+      return { ...current, items: prefilledItems };
+    });
+  }, [open, isNewDocument, docType, formData.activityId, catalogDocuments]);
 
   const clientsMap = useMemo(() => new Map(allClients.map((c) => [c.id, c])), [allClients]);
 
@@ -649,6 +696,87 @@ export default function DocumentFormModal({
     () => computeDocumentTotals(formData.items, workspaceTaxRate),
     [formData.items, workspaceTaxRate],
   );
+
+  const activityDeliveryNotes = useMemo(
+    () =>
+      catalogDocuments.filter(
+        (doc) => doc.activityId === formData.activityId && doc.type === 'delivery-note',
+      ),
+    [catalogDocuments, formData.activityId],
+  );
+
+  const canReloadInvoiceFromDeliveryNotes =
+    docType === 'invoice' && Boolean(formData.activityId) && activityDeliveryNotes.length > 0;
+
+  const invoiceZeroHourPriceWarning = useMemo(() => {
+    if (docType !== 'invoice' || activityDeliveryNotes.length === 0) return null;
+    return deliveryNotesHaveZeroPricedHourLines(activityDeliveryNotes)
+      ? ACTIVITY_INVOICE_ZERO_HOUR_PRICE_WARNING
+      : null;
+  }, [activityDeliveryNotes, docType]);
+
+  const invoiceFormMismatchTooltip = useMemo(() => {
+    if (!canReloadInvoiceFromDeliveryNotes) return null;
+    const items = formData.items
+      .filter((item) => item.name.trim())
+      .map((item) =>
+        normalizeDocumentLineItem({
+          name: item.name,
+          description: item.description,
+          quantity: item.quantity,
+          price: item.price,
+        }),
+      );
+    const pseudoInvoice: Document = {
+      id: 'form-compare',
+      workspaceId: '',
+      type: 'invoice',
+      number: '',
+      clientId: formData.clientId,
+      activityId: formData.activityId,
+      date: formData.date,
+      items,
+      subtotal: totals.subtotal,
+      taxRate: workspaceTaxRate,
+      taxAmount: totals.taxAmount,
+      total: totals.total,
+      status: 'draft',
+      createdAt: '',
+    };
+    return getInvoiceDeliveryNotesMismatchTooltip(pseudoInvoice, activityDeliveryNotes);
+  }, [
+    activityDeliveryNotes,
+    canReloadInvoiceFromDeliveryNotes,
+    formData.activityId,
+    formData.clientId,
+    formData.date,
+    formData.items,
+    totals.subtotal,
+    totals.taxAmount,
+    totals.total,
+    workspaceTaxRate,
+  ]);
+
+  const reloadInvoiceItemsFromDeliveryNotes = useCallback(() => {
+    if (!canReloadInvoiceFromDeliveryNotes) return;
+    const prefilledItems = buildInvoiceItemsFromDeliveryNotes(activityDeliveryNotes).map(
+      mapLineItemForm,
+    );
+    if (prefilledItems.length === 0) return;
+    setFormData((current) => ({ ...current, items: prefilledItems }));
+  }, [activityDeliveryNotes, canReloadInvoiceFromDeliveryNotes]);
+
+  useEffect(() => {
+    if (!open || !editingDoc || !initialReloadFromDeliveryNotes) return;
+    if (activityDeliveryNotes.length === 0) return;
+    reloadInvoiceItemsFromDeliveryNotes();
+  }, [
+    open,
+    editingDoc,
+    initialReloadFromDeliveryNotes,
+    activityDeliveryNotes,
+    reloadInvoiceItemsFromDeliveryNotes,
+  ]);
 
   const documentDisplayName = useMemo(() => {
     const selectedClient = formData.clientId ? clientsMap.get(formData.clientId) : undefined;
@@ -882,6 +1010,35 @@ export default function DocumentFormModal({
         },
       );
       if (pairError) return pairError;
+      const singleInvoiceError = validateSingleActivityInvoice(
+        catalogDocuments,
+        resolvedActivityId,
+        undefined,
+        {
+          excludeDocumentId: editingDoc?.id,
+          addingInvoice:
+            docType === 'invoice' &&
+            (!editingDoc ||
+              editingDoc.type !== 'invoice' ||
+              formData.activityId !== (editingDoc.activityId ?? '')),
+        },
+      );
+      if (singleInvoiceError) return singleInvoiceError;
+
+      const linkedActivity = activitiesForClient.find(
+        (activity) => activity.id === resolvedActivityId,
+      );
+      if (linkedActivity) {
+        const resolvedActivityType = resolveActivityType(linkedActivity.type, activityTypes);
+        if (activityTypeUsesWorkReport(resolvedActivityType)) {
+          const workReportError = validateActivityInvoiceRequiresWorkerDeliveryNotes(
+            linkedActivity,
+            linkedCalendarEvent,
+            catalogDocuments,
+          );
+          if (workReportError) return workReportError;
+        }
+      }
     }
     if (
       docType === 'delivery-note' &&
@@ -1188,7 +1345,11 @@ export default function DocumentFormModal({
                           onChange={(type) => setDocType(type as Document['type'])}
                           options={docTypeSelectOptions}
                           ariaLabel="Tipo de documento"
-                          disabled={!!editingDoc || docTypeSelectOptions.length <= 1}
+                          disabled={
+                            !!editingDoc ||
+                            !!fixedDocType ||
+                            docTypeSelectOptions.length <= 1
+                          }
                           menuPortal
                         />
                       </div>
@@ -1232,63 +1393,35 @@ export default function DocumentFormModal({
                           menuPortal
                         />
                       </div>
-                      {docType === 'invoice' ? (
-                        <>
-                          <div className={ui.field}>
-                            <label className={ui.label} htmlFor="document-invoice-kind">
-                              Tipo de factura (Veri*Factu)
-                            </label>
-                            <SelectMenu
-                              id="document-invoice-kind"
-                              value={formData.invoiceKind}
-                              onChange={(kind) =>
-                                setFormData((current) => ({
-                                  ...current,
-                                  invoiceKind: kind as VerifactuInvoiceKind,
-                                  rectifiesDocumentId:
-                                    kind === 'rectificativa' || kind === 'rectificativa_simplificada'
-                                      ? current.rectifiesDocumentId
-                                      : '',
-                                }))
-                              }
-                              options={VERIFACTU_INVOICE_KINDS.map((kind) => ({
-                                value: kind,
-                                label: VERIFACTU_INVOICE_KIND_LABELS[kind],
+                      {docType === 'invoice' &&
+                      (formData.invoiceKind === 'rectificativa' ||
+                        formData.invoiceKind === 'rectificativa_simplificada') ? (
+                        <div className={ui.field}>
+                          <label className={ui.label} htmlFor="document-rectifies">
+                            Factura que rectifica
+                          </label>
+                          <SelectMenu
+                            id="document-rectifies"
+                            value={formData.rectifiesDocumentId}
+                            onChange={(value) =>
+                              setFormData((current) => ({
+                                ...current,
+                                rectifiesDocumentId: value,
+                              }))
+                            }
+                            options={catalogDocuments
+                              .filter(
+                                (item) =>
+                                  item.type === 'invoice' && item.id !== editingDoc?.id,
+                              )
+                              .map((item) => ({
+                                value: item.id,
+                                label: item.number,
                               }))}
-                              ariaLabel="Tipo de factura Veri*Factu"
-                              menuPortal
-                            />
-                          </div>
-                          {formData.invoiceKind === 'rectificativa' ||
-                          formData.invoiceKind === 'rectificativa_simplificada' ? (
-                            <div className={ui.field}>
-                              <label className={ui.label} htmlFor="document-rectifies">
-                                Factura que rectifica
-                              </label>
-                              <SelectMenu
-                                id="document-rectifies"
-                                value={formData.rectifiesDocumentId}
-                                onChange={(value) =>
-                                  setFormData((current) => ({
-                                    ...current,
-                                    rectifiesDocumentId: value,
-                                  }))
-                                }
-                                options={catalogDocuments
-                                  .filter(
-                                    (item) =>
-                                      item.type === 'invoice' && item.id !== editingDoc?.id,
-                                  )
-                                  .map((item) => ({
-                                    value: item.id,
-                                    label: item.number,
-                                  }))}
-                                ariaLabel="Factura que rectifica"
-                                menuPortal
-                              />
-                            </div>
-                          ) : null}
-                        </>
+                            ariaLabel="Factura que rectifica"
+                            menuPortal
+                          />
+                        </div>
                       ) : null}
                     </div>
                   </div>
@@ -1554,13 +1687,48 @@ export default function DocumentFormModal({
                   <h2 id="document-section-lines" className={ui.pageSectionTitle}>
                     Conceptos a facturar
                   </h2>
-                  <button type="button" onClick={handleAddItem} className={ui.btnSecondary}>
-                    <Plus size={16} aria-hidden />
-                    Añadir línea
-                  </button>
+                  <div className={styles.linesSectionActions}>
+                    {canReloadInvoiceFromDeliveryNotes ? (
+                      <div className={styles.linesSectionReloadGroup}>
+                        <button
+                          type="button"
+                          onClick={reloadInvoiceItemsFromDeliveryNotes}
+                          className={ui.btnSecondary}
+                        >
+                          <RefreshCw size={16} aria-hidden />
+                          Recargar desde albaranes
+                        </button>
+                        {invoiceFormMismatchTooltip ? (
+                          <span className={styles.invoiceSyncTooltipWrap}>
+                            <button
+                              type="button"
+                              className={styles.invoiceSyncTooltipTrigger}
+                              aria-label={INVOICE_DELIVERY_NOTES_OUT_OF_SYNC_SUMMARY}
+                              title={invoiceFormMismatchTooltip}
+                            >
+                              <AlertTriangle size={16} aria-hidden />
+                            </button>
+                            <span className={styles.invoiceSyncTooltipBubble} role="tooltip">
+                              {INVOICE_DELIVERY_NOTES_OUT_OF_SYNC_SUMMARY}
+                            </span>
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <button type="button" onClick={handleAddItem} className={ui.btnSecondary}>
+                      <Plus size={16} aria-hidden />
+                      Añadir línea
+                    </button>
+                  </div>
                 </div>
                 <div className={ui.card}>
                   <div className={styles.sectionCardBody}>
+                    {invoiceZeroHourPriceWarning ? (
+                      <p className={styles.invoiceZeroPriceWarning} role="status">
+                        <AlertTriangle size={16} aria-hidden />
+                        {invoiceZeroHourPriceWarning}
+                      </p>
+                    ) : null}
                     {showSourceUpload && sourceFile && (
                       <DocumentOcrHints
                         loading={ocrLoading}

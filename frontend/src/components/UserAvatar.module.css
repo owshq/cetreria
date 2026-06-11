@@ -19,6 +19,13 @@
   padding: 0;
 }
 
+.xs {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.4375rem;
+  font-weight: 600;
+}
+
 .sm {
   width: var(--avatar-size);
   height: var(--avatar-size);

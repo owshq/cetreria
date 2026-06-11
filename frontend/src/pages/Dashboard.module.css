@@ -131,6 +131,7 @@
   max-width: 100%;
   overflow-x: hidden;
   background: var(--dashboard-surface-bg);
+  padding-bottom: 1.5rem;
 }
 
 .dashboardTwoColGrid {
@@ -168,6 +169,12 @@
   min-width: 0;
   width: 100%;
   max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  .dashboardPage {
+    padding-bottom: 1.5rem;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -362,35 +369,18 @@
   }
 }
 
-/* Scroll interno: barra visible solo al hover/focus de la seccion */
+/* Scroll interno: thumb visible solo al hover/focus de la seccion (ancho fijo, sin salto) */
 .dashboardHoverSection :global([data-scroll-region]) {
-  scrollbar-width: none;
-}
-
-.dashboardHoverSection :global([data-scroll-region]:hover),
-.dashboardHoverSection :global([data-scroll-region]:focus-within) {
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
 
 .dashboardHoverSection:hover :global([data-scroll-region]),
 .dashboardHoverSection:focus-within :global([data-scroll-region]) {
-  scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .dashboardHoverSection :global([data-scroll-region]::-webkit-scrollbar) {
-  width: 0;
-  height: 0;
-}
-
-.dashboardHoverSection :global([data-scroll-region]:hover::-webkit-scrollbar),
-.dashboardHoverSection :global([data-scroll-region]:focus-within::-webkit-scrollbar) {
-  width: 0;
-  height: 0;
-}
-
-.dashboardHoverSection:hover :global([data-scroll-region]::-webkit-scrollbar),
-.dashboardHoverSection:focus-within :global([data-scroll-region]::-webkit-scrollbar) {
   width: var(--scrollbar-size);
   height: var(--scrollbar-size);
 }
@@ -405,11 +395,6 @@
   border: 2px solid transparent;
   background-clip: padding-box;
   transition: background-color 0.15s ease;
-}
-
-.dashboardHoverSection :global([data-scroll-region]:hover::-webkit-scrollbar-thumb),
-.dashboardHoverSection :global([data-scroll-region]:focus-within::-webkit-scrollbar-thumb) {
-  background-color: transparent;
 }
 
 .dashboardHoverSection:hover :global([data-scroll-region]::-webkit-scrollbar-thumb),

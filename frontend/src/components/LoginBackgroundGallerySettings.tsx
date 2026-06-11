@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Download, Trash2 } from 'lucide-react';
+import { ArrowDownToLine, CircleMinus } from 'lucide-react';
 import {
   workspaceAppearanceSettingsService,
   type LoginBackgroundImageView,
   type WorkspaceAppearanceSettingsView,
 } from '@/api/workspaceAppearanceSettings';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { MAX_LOGIN_BACKGROUND_IMAGES } from '@shared/types';
-import { cx } from '@/lib/cx';
 import ui from '@/styles/shared.module.css';
 import styles from '@/pages/AppearanceSettings.module.css';
 
@@ -27,6 +27,7 @@ export default function LoginBackgroundGallerySettings() {
   const [externalUrl, setExternalUrl] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<LoginBackgroundImageView | null>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
 
   const loadSettings = async () => {
@@ -91,11 +92,17 @@ export default function LoginBackgroundGallerySettings() {
     try {
       const next = await workspaceAppearanceSettingsService.removeImage(image.id);
       applySettings(next, 'Imagen eliminada de la galeria.');
+      setDeleteTarget(null);
     } catch {
       setError('No se pudo eliminar la imagen.');
     } finally {
       setBusyId(null);
     }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    await handleRemove(deleteTarget);
   };
 
   const handleDownload = async (image: LoginBackgroundImageView) => {
@@ -163,21 +170,23 @@ export default function LoginBackgroundGallerySettings() {
                     <div className={styles.galleryActions}>
                       <button
                         type="button"
-                        className={cx(ui.btnSecondary, styles.galleryActionBtn)}
+                        className={ui.btnIcon}
                         onClick={() => void handleDownload(image)}
                         disabled={busyId != null}
                         title="Descargar"
+                        aria-label="Descargar imagen"
                       >
-                        <Download size={16} strokeWidth={2} />
+                        <ArrowDownToLine size={16} aria-hidden />
                       </button>
                       <button
                         type="button"
-                        className={cx(ui.btnSecondary, styles.galleryActionBtn)}
-                        onClick={() => void handleRemove(image)}
+                        className={ui.btnIconDanger}
+                        onClick={() => setDeleteTarget(image)}
                         disabled={busyId != null}
                         title="Eliminar"
+                        aria-label="Eliminar imagen"
                       >
-                        <Trash2 size={16} strokeWidth={2} />
+                        <CircleMinus size={16} aria-hidden />
                       </button>
                     </div>
                   </article>
@@ -230,6 +239,23 @@ export default function LoginBackgroundGallerySettings() {
           {success && <p className={styles.gallerySuccess}>{success}</p>}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Eliminar imagen"
+        message={
+          deleteTarget
+            ? `¿Eliminar ${
+                deleteTarget.filename ? `"${deleteTarget.filename}"` : 'esta imagen'
+              } de la galeria del login? Esta accion es irreversible.`
+            : ''
+        }
+        loading={deleteTarget !== null && busyId === deleteTarget.id}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          if (busyId !== deleteTarget?.id) setDeleteTarget(null);
+        }}
+      />
     </section>
   );
 }

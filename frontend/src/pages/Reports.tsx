@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, Fragment } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   ArrowDownToLine,
@@ -27,7 +27,6 @@ import type {
   CalendarEvent,
   Client,
   ClientGroup,
-  DatePeriod,
   Document,
   MonthlyReport,
   UserAssignee,
@@ -39,10 +38,11 @@ import {
   DEFAULT_CLIENT_GROUP_NAME,
   getActivityTypeLabel,
   getPreviousDateRange,
-  percentChange,
   aggregateInvoiceConcepts,
   isDateInRange,
   documentMetricsForRange,
+  documentTypeMetricsForRange,
+  documentTypeMetricsForDocuments,
   reportOverlapsRange,
   countClientsWithPeriodData,
   getPeriodDocuments,
@@ -79,9 +79,17 @@ import {
   workerActivitiesInRange,
   workerDocumentsInRange,
   workerHasPeriodData,
-  workerHoursOnActivity,
+  workerReportHoursOnActivity,
   workerInvoiceConceptsInRange,
+  workerPeriodDisplayHours,
+  type TeamPeriodStats,
+  type WorkerPeriodRow,
 } from '@/lib/workerPeriodStats';
+import { buildWorkerActivityDetailRows } from '@/lib/workerActivityDetailReport';
+import {
+  buildWorkerDetailedReportFilename,
+  downloadWorkerDetailedReportCsv,
+} from '@/lib/workerDetailedReportCsv';
 import { teamUserIdToUrlParam } from '@/lib/activitiesTeamFilter';
 import {
   dashboardMetricForDimension,
@@ -114,14 +122,20 @@ import {
   buildSummaryReportPdfBlob,
   type BuildSummaryReportPdfParams,
 } from '@/lib/summaryReportPdf';
-import { REPORT_KIND_LABELS } from '@shared/types';
+import { normalizeReportKind, REPORT_KIND_LABELS } from '@shared/types';
 import type { ReportBreakdownRow } from '@/lib/reportInstitutionalText';
 import { resolveReportKind, type ReportKind } from '@shared/types';
+import ReportsKindNav, {
+  type ReportsKindNavOption,
+  type SavedReportKindFilter,
+} from '@/components/ReportsKindNav';
 import InfiniteScrollSentinel from '@/components/InfiniteScrollSentinel';
 import SecondaryNavToggle from '@/components/SecondaryNavToggle';
 import SecondarySidebarPortal from '@/components/SecondarySidebarPortal';
+import { SidebarFooter, SidebarFooterAction } from '@/components/SidebarFooter';
 import { useActivityTypes } from '@/context/ActivityTypesContext';
 import { useWorkspace } from '@/context/useWorkspace';
+import { useWorkspaceFeatureSettings } from '@/context/WorkspaceFeatureSettingsContext';
 import { useDatePeriodFilter, REPORTS_PERIOD_FILTER_STORAGE_KEY } from '@/hooks/useDatePeriodFilter';
 import { useSecondaryNavCollapsed } from '@/hooks/useSecondaryNavCollapsed';
 import { useLayoutSecondarySidebarWidth } from '@/hooks/useLayoutSecondarySidebarWidth';
@@ -138,16 +152,27 @@ import dashboardStyles from './Dashboard.module.css';
 import documentDetailStyles from './DocumentDetail.module.css';
 import styles from './Reports.module.css';
 
-function formatSavedReportCount(count: number): string {
-  if (count === 1) return '1 informe generado';
-  return `${count} informes generados`;
-}
-
 const WORKSPACE_REPORT_KINDS: ReportKind[] = [
   'general',
   'contacts_global',
   'workers_global',
 ];
+
+const SAVED_REPORT_KIND_ORDER: ReportKind[] = [
+  'workers_global',
+  'contact',
+  'worker',
+  'general',
+  'contacts_global',
+];
+
+function resolveSavedReportKind(report: MonthlyReport): ReportKind {
+  if (report.reportKind) return normalizeReportKind(report.reportKind);
+  return resolveReportKind({
+    clientId: report.clientId,
+    workerUserId: report.workerUserId,
+  });
+}
 
 function resolveWorkspaceReportLabel(
   reportKind: ReportKind,
@@ -168,7 +193,7 @@ function savedReportTitle(
     return resolveWorkspaceReportLabel(report.reportKind, clientsGlobalReportScopeName);
   }
   if (report.reportLabel?.trim()) return report.reportLabel.trim();
-  return client?.name ?? 'Contacto desconocido';
+  return client?.name ?? 'Cliente desconocido';
 }
 
 const REPORTS_PERIOD_METRIC_IDS = ['documents', 'work'] as const;
@@ -252,7 +277,7 @@ function buildSavedReportSearchHaystack(
     parts.push(String(activity.hours));
     parts.push(format(parseISO(activity.date), 'dd/MM/yyyy'));
     parts.push(format(parseISO(activity.date), 'yyyy-MM-dd'));
-    activity.attachments.forEach((attachment) => parts.push(attachment));
+    activity.attachments.forEach((attachment) => parts.push(attachment.filename));
   });
 
   return parts.join(' ').toLowerCase();
@@ -272,13 +297,241 @@ function matchesSavedReportSearch(
   return tokens.every((token) => haystack.includes(token));
 }
 
-type ClientReportRow = {
-  client: Client;
-  reportCount: number;
-  activities: ReportSummary['activities'];
-  totalHours: number;
-  documentCount: number;
-};
+type ReportsGenerateTab = 'contacts' | 'workers' | 'summary';
+
+const REPORTS_GENERATE_TABS: { id: ReportsGenerateTab; label: string }[] = [
+  { id: 'summary', label: 'Resumen' },
+  { id: 'contacts', label: 'Clientes' },
+  { id: 'workers', label: 'Operarios' },
+];
+
+function ClientPeriodDocumentMeta({
+  deliveryNoteCount,
+  invoiceCount,
+  hasLeadingContent,
+}: {
+  deliveryNoteCount: number;
+  invoiceCount: number;
+  hasLeadingContent: boolean;
+}) {
+  const parts: React.ReactNode[] = [];
+
+  if (deliveryNoteCount > 0) {
+    parts.push(
+      <>
+        {deliveryNoteCount} {deliveryNoteCount === 1 ? 'albarán' : 'albaranes'}
+      </>,
+    );
+  }
+
+  if (invoiceCount > 0) {
+    parts.push(
+      <>
+        {invoiceCount} {invoiceCount === 1 ? 'factura' : 'facturas'}
+      </>,
+    );
+  }
+
+  if (parts.length === 0) return null;
+
+  return (
+    <>
+      {hasLeadingContent ? ' • ' : ''}
+      {parts.map((part, index) => (
+        <Fragment key={index}>
+          {index > 0 ? ' • ' : null}
+          {part}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+function WorkerPeriodActivityMeta({
+  row,
+  workerSignaturesEnabled,
+  shiftSchedulingEnabled,
+}: {
+  row: Pick<
+    WorkerPeriodRow,
+    | 'totalHours'
+    | 'assignedHours'
+    | 'signedHours'
+    | 'pendingHours'
+    | 'signedActivityCount'
+    | 'unsignedActivityCount'
+    | 'shiftHours'
+  >;
+  workerSignaturesEnabled: boolean;
+  shiftSchedulingEnabled: boolean;
+}) {
+  const shiftSummary =
+    shiftSchedulingEnabled && formatWorkerShiftSummary(row.shiftHours)
+      ? formatWorkerShiftSummary(row.shiftHours)
+      : '';
+
+  const displayHours = workerPeriodDisplayHours(row, workerSignaturesEnabled);
+  const hoursLabel = workerSignaturesEnabled
+    ? 'asig.'
+    : shiftSchedulingEnabled
+      ? 'asig.'
+      : 'reg.';
+
+  if (displayHours <= 0 && !shiftSummary) return null;
+
+  return (
+    <>
+      {displayHours > 0 && (
+        <>
+          {' '}
+          • {formatHoursMinutes(displayHours) ?? '0m'} {hoursLabel}
+          {workerSignaturesEnabled && row.signedHours > 0 && (
+            <> · {formatHoursMinutes(row.signedHours)} firm.</>
+          )}
+          {workerSignaturesEnabled && row.pendingHours > 0 && (
+            <> · {formatHoursMinutes(row.pendingHours)} pend.</>
+          )}
+        </>
+      )}
+      {workerSignaturesEnabled &&
+      (row.signedActivityCount > 0 || row.unsignedActivityCount > 0) ? (
+        <>
+          {' '}
+          • {row.signedActivityCount} firmada
+          {row.signedActivityCount === 1 ? '' : 's'}
+          {row.unsignedActivityCount > 0 && (
+            <>
+              {' '}
+              / {row.unsignedActivityCount} sin firma
+            </>
+          )}
+        </>
+      ) : null}
+      {shiftSummary ? <> • {shiftSummary}</> : null}
+    </>
+  );
+}
+
+function WorkerPeriodDocumentMeta({
+  row,
+  hasLeadingContent,
+}: {
+  row: WorkerPeriodRow;
+  hasLeadingContent: boolean;
+}) {
+  const deliveryAmount =
+    row.deliveryNotesPaidAmount > 0
+      ? row.deliveryNotesPaidAmount
+      : row.deliveryNotesTotalAmount;
+  const deliveryAmountLabel =
+    row.deliveryNotesPaidAmount > 0 ? 'cobrado en albaranes' : 'total en albaranes';
+  const invoiceAmount =
+    row.invoicesPaidAmount > 0 ? row.invoicesPaidAmount : row.invoicesTotalAmount;
+  const invoiceAmountLabel =
+    row.invoicesPaidAmount > 0 ? 'cobrado en facturas' : 'total en facturas';
+
+  const parts: React.ReactNode[] = [];
+
+  if (row.deliveryNoteCount > 0) {
+    parts.push(
+      <>
+        {row.deliveryNoteCount}{' '}
+        {row.deliveryNoteCount === 1 ? 'albarán' : 'albaranes'}
+        {deliveryAmount > 0 ? (
+          <>
+            {' '}
+            · {formatDocumentAmount(deliveryAmount)} {deliveryAmountLabel}
+          </>
+        ) : null}
+        {row.deliveryNoteConceptCount > 0 ? (
+          <>
+            {' '}
+            · {row.deliveryNoteConceptCount}{' '}
+            {row.deliveryNoteConceptCount === 1 ? 'concepto' : 'conceptos'}
+          </>
+        ) : null}
+      </>,
+    );
+  }
+
+  if (row.invoiceCount > 0) {
+    parts.push(
+      <>
+        {row.invoiceCount} {row.invoiceCount === 1 ? 'factura' : 'facturas'}
+        {invoiceAmount > 0 ? (
+          <>
+            {' '}
+            · {formatDocumentAmount(invoiceAmount)} {invoiceAmountLabel}
+          </>
+        ) : null}
+        {row.invoiceConceptCount > 0 ? (
+          <>
+            {' '}
+            · {row.invoiceConceptCount}{' '}
+            {row.invoiceConceptCount === 1 ? 'concepto' : 'conceptos'}
+          </>
+        ) : null}
+      </>,
+    );
+  }
+
+  if (parts.length === 0) return null;
+
+  return (
+    <>
+      {hasLeadingContent ? ' • ' : ''}
+      {parts.map((part, index) => (
+        <Fragment key={index}>
+          {index > 0 ? ' • ' : null}
+          {part}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+function TeamPeriodSummary({
+  stats,
+  workerSignaturesEnabled,
+  shiftSchedulingEnabled,
+}: {
+  stats: TeamPeriodStats;
+  workerSignaturesEnabled: boolean;
+  shiftSchedulingEnabled: boolean;
+}) {
+  const shiftSummary =
+    shiftSchedulingEnabled && formatWorkerShiftSummary(stats.shiftHours)
+      ? formatWorkerShiftSummary(stats.shiftHours)
+      : '';
+
+  return (
+    <p className={cx(ui.textMuted, styles.teamPeriodSummary)}>
+      {stats.activityCount} {stats.activityCount === 1 ? 'actividad' : 'actividades'}
+      {stats.assignedHours > 0 && (
+        <>
+          {' · '}
+          {formatHoursMinutes(stats.assignedHours) ?? '0m'}{' '}
+          {workerSignaturesEnabled || shiftSchedulingEnabled ? 'asignadas' : 'registradas'}
+          {workerSignaturesEnabled ? (
+            <>
+              {' · '}
+              {formatHoursMinutes(stats.signedHours) ?? '0m'} firmadas
+              {stats.pendingHours > 0 ? (
+                <>
+                  {' · '}
+                  {formatHoursMinutes(stats.pendingHours)} pendientes
+                </>
+              ) : null}
+              {' · '}
+              {stats.signedActivityCount} firmadas / {stats.unsignedActivityCount} sin firma
+            </>
+          ) : null}
+        </>
+      )}
+      {shiftSummary ? <> · {shiftSummary}</> : null}
+    </p>
+  );
+}
 
 export default function Reports() {
   const navigate = useNavigate();
@@ -334,7 +587,7 @@ export default function Reports() {
   const [chartControlsHost, setChartControlsHost] = useState<HTMLDivElement | null>(null);
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
-  const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
+  const selectedClientIds: string[] = [];
   const [clientGroups, setClientGroups] = useState<ClientGroup[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -343,9 +596,9 @@ export default function Reports() {
   const [users, setUsers] = useState<UserAssignee[]>([]);
   const { activityTypes } = useActivityTypes();
   const { currentWorkspace } = useWorkspace();
+  const { workerSignaturesEnabled, shiftSchedulingEnabled } = useWorkspaceFeatureSettings();
   const companyName = currentWorkspace?.name ?? 'Empresa';
   const [monthlyData, setMonthlyData] = useState<ReportSummary[]>([]);
-  const [prevMonthlyData, setPrevMonthlyData] = useState<ReportSummary[]>([]);
   const [savedReports, setSavedReports] = useState<MonthlyReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
@@ -356,6 +609,7 @@ export default function Reports() {
   const [workerSearchOpen, setWorkerSearchOpen] = useState(false);
   const workerSearchInputRef = useRef<HTMLInputElement>(null);
   const [savedSearchTerm, setSavedSearchTerm] = useState('');
+  const [savedReportKindFilter, setSavedReportKindFilter] = useState<SavedReportKindFilter>('all');
   const [mainView, setMainView] = useState<ReportsMainView>(() => {
     if (typeof window === 'undefined') return 'generate';
     return window.matchMedia('(max-width: 767px)').matches ? 'idle' : 'generate';
@@ -379,19 +633,30 @@ export default function Reports() {
   const [clientsChartExpanded, setClientsChartExpanded] = useState(false);
   const [workersChartExpanded, setWorkersChartExpanded] = useState(false);
   const [clientsChartMeasure, setClientsChartMeasure] = useState<ReportBreakdownMeasure>('hours');
-  const [workersChartMeasure, setWorkersChartMeasure] = useState<ReportBreakdownMeasure>('signatures');
+  const [workersChartMeasure, setWorkersChartMeasure] = useState<ReportBreakdownMeasure>('hours');
   const [activitiesChartGroupBy, setActivitiesChartGroupBy] = useState<ActivityGroupBy>('type');
   const [activitiesChartValueMeasure, setActivitiesChartValueMeasure] =
     useState<ActivityValueMeasure>('hours');
+  const [activeGenerateTab, setActiveGenerateTab] = useState<ReportsGenerateTab>('summary');
   const [generatingReport, setGeneratingReport] = useState(false);
   const [reportActionMenu, setReportActionMenu] = useState<{
     x: number;
     y: number;
     report: MonthlyReport;
   } | null>(null);
+  const [sidebarDownloadMenu, setSidebarDownloadMenu] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const { highlightedReportId, highlightReport } = useSavedReportHighlight();
   const savedReportsSectionRef = useRef<HTMLDivElement>(null);
   const chartThemeVersion = useChartThemeVersion();
+
+  useEffect(() => {
+    if (!workerSignaturesEnabled && workersChartMeasure === 'signatures') {
+      setWorkersChartMeasure('hours');
+    }
+  }, [workerSignaturesEnabled, workersChartMeasure]);
 
   const loadClients = async () => {
     const [clientsResult, docsResult, usersResult, groupsResult] = await Promise.allSettled([
@@ -425,31 +690,20 @@ export default function Reports() {
   const loadSummary = async () => {
     if (invalidCustomRange) {
       setMonthlyData([]);
-      setPrevMonthlyData([]);
       setLoading(false);
       return;
     }
 
     setLoading(true);
     try {
-      const prevRange = getPreviousDateRange(dateRange.from, dateRange.to);
-      const [data, prevData] = await Promise.all([
-        reportsService.getPeriodSummary(
-          dateRange.from,
-          dateRange.to,
-          selectedClientIds,
-        ),
-        reportsService.getPeriodSummary(
-          prevRange.from,
-          prevRange.to,
-          selectedClientIds,
-        ),
-      ]);
+      const data = await reportsService.getPeriodSummary(
+        dateRange.from,
+        dateRange.to,
+        selectedClientIds,
+      );
       setMonthlyData(data);
-      setPrevMonthlyData(prevData);
     } catch (error) {
       setMonthlyData([]);
-      setPrevMonthlyData([]);
       setDataError(
         error instanceof Error
           ? error.message
@@ -642,33 +896,26 @@ export default function Reports() {
     [accessibleSavedReports, dateRange.from, dateRange.to, selectedClientIds, hasClientFilter],
   );
 
-  const filteredSavedReports = useMemo(() => {
-    return savedForPeriod
-      .filter((report) => {
-        const client = clientsMap.get(report.clientId);
-        return matchesSavedReportSearch(report, client, activityTypes, savedSearchTerm);
-      })
-      .sort(
-        (a, b) => parseISO(b.generatedAt).getTime() - parseISO(a.generatedAt).getTime(),
-      );
-  }, [savedForPeriod, savedSearchTerm, clientsMap, activityTypes]);
-
-  const reportCountByClientId = useMemo(() => {
-    const counts = new Map<string, number>();
-    accessibleSavedReports.forEach((report) => {
-      if (hasClientFilter && !selectedClientIds.includes(report.clientId)) return;
-      if (!reportOverlapsRange(report, dateRange.from, dateRange.to)) return;
-      counts.set(report.clientId, (counts.get(report.clientId) ?? 0) + 1);
-    });
+  const periodDocumentCountsByClientId = useMemo(() => {
+    const counts = new Map<string, { deliveryNoteCount: number; invoiceCount: number }>();
+    getPeriodDocuments(documents, dateRange.from, dateRange.to, reportClientScope).forEach(
+      (doc) => {
+        const current = counts.get(doc.clientId) ?? { deliveryNoteCount: 0, invoiceCount: 0 };
+        if (doc.type === 'invoice') {
+          current.invoiceCount += 1;
+        } else {
+          current.deliveryNoteCount += 1;
+        }
+        counts.set(doc.clientId, current);
+      },
+    );
     return counts;
-  }, [accessibleSavedReports, selectedClientIds, hasClientFilter, dateRange.from, dateRange.to]);
+  }, [documents, dateRange.from, dateRange.to, reportClientScope]);
 
   const allPeriodActivities = useMemo(
     () => monthlyData.flatMap((data) => data.activities),
     [monthlyData],
   );
-
-  const totalHours = monthlyData.reduce((sum, data) => sum + data.totalHours, 0);
 
   const activityClientIds = useMemo(
     () =>
@@ -736,7 +983,7 @@ export default function Reports() {
     if (isAdmin) {
       const extraSubLine = [
         !hasClientFilter
-          ? `${clientsWithPeriodDataCount} contactos con datos`
+          ? `${clientsWithPeriodDataCount} clientes con datos`
           : null,
         `${savedForPeriod.length} informes en el periodo`,
       ]
@@ -786,11 +1033,11 @@ export default function Reports() {
   );
 
   const clientScopeLabel = useMemo(() => {
-    if (!hasClientFilter) return 'Todos los contactos';
+    if (!hasClientFilter) return 'Todos los clientes';
     if (selectedClientIds.length === 1) {
-      return clientsMap.get(selectedClientIds[0])?.name ?? 'Contacto seleccionado';
+      return clientsMap.get(selectedClientIds[0])?.name ?? 'Cliente seleccionado';
     }
-    return `${selectedClientIds.length} contactos seleccionados`;
+    return `${selectedClientIds.length} clientes seleccionados`;
   }, [hasClientFilter, selectedClientIds, clientsMap]);
 
   const clientGroupsById = useMemo(
@@ -848,16 +1095,6 @@ export default function Reports() {
   );
   const workersMobileDownloadLabel = buildMobileDownloadLabel('Informe de Equipo');
 
-  const periodDocumentCountsByClientId = useMemo(() => {
-    const counts = new Map<string, number>();
-    getPeriodDocuments(documents, dateRange.from, dateRange.to, reportClientScope).forEach(
-      (doc) => {
-        counts.set(doc.clientId, (counts.get(doc.clientId) ?? 0) + 1);
-      },
-    );
-    return counts;
-  }, [documents, dateRange.from, dateRange.to, reportClientScope]);
-
   const clientReportRows = useMemo(() => {
     const monthlyByClientId = new Map(
       monthlyData
@@ -876,12 +1113,16 @@ export default function Reports() {
       .filter((client) => !term || client.name.toLowerCase().includes(term))
       .map((client) => {
         const summary = monthlyByClientId.get(client.id);
+        const documentCounts = periodDocumentCountsByClientId.get(client.id) ?? {
+          deliveryNoteCount: 0,
+          invoiceCount: 0,
+        };
         return {
           client,
-          reportCount: reportCountByClientId.get(client.id) ?? 0,
           activities: summary?.activities ?? [],
           totalHours: summary?.totalHours ?? 0,
-          documentCount: periodDocumentCountsByClientId.get(client.id) ?? 0,
+          deliveryNoteCount: documentCounts.deliveryNoteCount,
+          invoiceCount: documentCounts.invoiceCount,
         };
       })
       .sort((a, b) => a.client.name.localeCompare(b.client.name, 'es'));
@@ -890,7 +1131,6 @@ export default function Reports() {
     hasClientFilter,
     selectedClientIds,
     monthlyData,
-    reportCountByClientId,
     periodDocumentCountsByClientId,
     clientSearchTerm,
   ]);
@@ -913,6 +1153,15 @@ export default function Reports() {
   const canSearchClients = accessibleClients.length > 0 && !loading && !invalidCustomRange;
   const showClientSearchField = canSearchClients && clientSearchOpen;
 
+  const workerPeriodStatsOptions = useMemo(
+    () => ({
+      activityTypes,
+      workerSignaturesEnabled,
+      shiftSchedulingEnabled,
+    }),
+    [activityTypes, workerSignaturesEnabled, shiftSchedulingEnabled],
+  );
+
   const teamPeriodStats = useMemo(() => {
     if (invalidCustomRange) return null;
     return computeTeamPeriodStats(
@@ -921,6 +1170,7 @@ export default function Reports() {
       dateRange.from,
       dateRange.to,
       reportClientScope,
+      workerPeriodStatsOptions,
     );
   }, [
     operatorActivities,
@@ -928,6 +1178,7 @@ export default function Reports() {
     dateRange.from,
     dateRange.to,
     reportClientScope,
+    workerPeriodStatsOptions,
     invalidCustomRange,
   ]);
 
@@ -947,6 +1198,7 @@ export default function Reports() {
       dateRange.to,
       reportClientScope,
       workerSearchTerm,
+      workerPeriodStatsOptions,
     );
   }, [
     accessibleUsers,
@@ -957,6 +1209,7 @@ export default function Reports() {
     dateRange.to,
     reportClientScope,
     workerSearchTerm,
+    workerPeriodStatsOptions,
     invalidCustomRange,
   ]);
 
@@ -976,7 +1229,9 @@ export default function Reports() {
           name: row.client.name,
           activities: row.activities.length,
           hours: row.totalHours,
-          documents: row.documentCount,
+          documents: row.deliveryNoteCount + row.invoiceCount,
+          deliveryNoteCount: row.deliveryNoteCount,
+          invoiceCount: row.invoiceCount,
           paidAmount: documentMetricsForRange(
             documents,
             dateRange.from,
@@ -993,19 +1248,21 @@ export default function Reports() {
       workerReportRows.map((row) => ({
         name: row.user.name,
         activities: row.activityCount,
-        hours: row.assignedHours,
-        documents: row.documentCount,
+        hours: workerPeriodDisplayHours(row, workerSignaturesEnabled),
+        documents: row.deliveryNoteCount + row.invoiceCount,
+        deliveryNoteCount: row.deliveryNoteCount,
+        invoiceCount: row.invoiceCount,
         paidAmount: row.billedAmount,
-        signedHours: row.signedHours,
-        pendingHours: row.pendingHours,
-        signedActivities: row.signedActivityCount,
-        unsignedActivities: row.unsignedActivityCount,
+        signedHours: workerSignaturesEnabled ? row.signedHours : undefined,
+        pendingHours: workerSignaturesEnabled ? row.pendingHours : undefined,
+        signedActivities: workerSignaturesEnabled ? row.signedActivityCount : undefined,
+        unsignedActivities: workerSignaturesEnabled ? row.unsignedActivityCount : undefined,
       })),
-    [workerReportRows],
+    [workerReportRows, workerSignaturesEnabled],
   );
 
   const workerSignatureChartRows = useMemo((): ReportBreakdownRow[] => {
-    if (!teamPeriodStats) return [];
+    if (!workerSignaturesEnabled || !teamPeriodStats) return [];
     const rows: ReportBreakdownRow[] = [];
     if (teamPeriodStats.signedActivityCount > 0) {
       rows.push({
@@ -1028,7 +1285,7 @@ export default function Reports() {
       });
     }
     return rows;
-  }, [teamPeriodStats]);
+  }, [teamPeriodStats, workerSignaturesEnabled]);
 
   const workersChartRows =
     workersChartMeasure === 'signatures' ? workerSignatureChartRows : workerBreakdownChartRows;
@@ -1091,6 +1348,58 @@ export default function Reports() {
     setWorkerSearchTerm('');
   }, [canSearchWorkers]);
 
+  const savedReportKindCounts = useMemo(() => {
+    const counts = new Map<ReportKind, number>();
+    savedForPeriod.forEach((report) => {
+      const kind = resolveSavedReportKind(report);
+      counts.set(kind, (counts.get(kind) ?? 0) + 1);
+    });
+    return counts;
+  }, [savedForPeriod]);
+
+  const savedReportKindOptions = useMemo((): ReportsKindNavOption[] => {
+    const kinds = SAVED_REPORT_KIND_ORDER.filter(
+      (kind) => (savedReportKindCounts.get(kind) ?? 0) > 0,
+    );
+    if (kinds.length <= 1) return [];
+
+    const options: ReportsKindNavOption[] = [{ id: 'all', label: 'Todos' }];
+    for (const kind of kinds) {
+      options.push({
+        id: kind,
+        label:
+          kind === 'contacts_global'
+            ? resolveWorkspaceReportLabel(kind, clientsGlobalReportScopeName)
+            : REPORT_KIND_LABELS[kind],
+      });
+    }
+    return options;
+  }, [savedReportKindCounts, clientsGlobalReportScopeName]);
+
+  useEffect(() => {
+    if (savedReportKindFilter === 'all') return;
+    if (!savedReportKindCounts.has(savedReportKindFilter)) {
+      setSavedReportKindFilter('all');
+    }
+  }, [savedReportKindFilter, savedReportKindCounts]);
+
+  const filteredSavedReports = useMemo(() => {
+    return savedForPeriod
+      .filter((report) => {
+        if (
+          savedReportKindFilter !== 'all' &&
+          resolveSavedReportKind(report) !== savedReportKindFilter
+        ) {
+          return false;
+        }
+        const client = clientsMap.get(report.clientId);
+        return matchesSavedReportSearch(report, client, activityTypes, savedSearchTerm);
+      })
+      .sort(
+        (a, b) => parseISO(b.generatedAt).getTime() - parseISO(a.generatedAt).getTime(),
+      );
+  }, [savedForPeriod, savedSearchTerm, savedReportKindFilter, clientsMap, activityTypes]);
+
   const {
     visibleItems: visibleSavedReports,
     sentinelRef: savedReportsSentinelRef,
@@ -1099,6 +1408,7 @@ export default function Reports() {
     filteredSavedReports,
     [
       savedSearchTerm,
+      savedReportKindFilter,
       dateRange.from,
       dateRange.to,
       selectedClientIds,
@@ -1194,6 +1504,10 @@ export default function Reports() {
       ? documentMetricsForRange(workerDocuments, dateRange.from, dateRange.to, 'all')
       : documentMetricsForRange(documents, dateRange.from, dateRange.to, exportScope);
 
+    const exportDocTypeMetrics = workerDocuments
+      ? documentTypeMetricsForDocuments(workerDocuments, 'all')
+      : documentTypeMetricsForRange(documents, dateRange.from, dateRange.to, exportScope);
+
     const exportInvoiceConcepts = workerUserId
       ? workerInvoiceConceptsInRange(
           activities,
@@ -1207,16 +1521,13 @@ export default function Reports() {
         )
       : aggregateInvoiceConcepts(documents, dateRange.from, dateRange.to, exportScope);
 
-    const exportClientName = workerUser?.name
-      ? workerUser.name
-      : clientId
-        ? clientsMap.get(clientId)?.name
-        : hasClientFilter && selectedClientIds.length === 1
-          ? clientsMap.get(selectedClientIds[0])?.name
-          : undefined;
-
     const exportHours = workerUserId
-      ? sumWorkerHoursForActivities(exportActivities, events, workerUserId)
+      ? sumWorkerHoursForActivities(
+          exportActivities,
+          events,
+          workerUserId,
+          workerPeriodStatsOptions,
+        )
       : reportKind === 'workers_global' && teamPeriodStats
         ? teamPeriodStats.assignedHours
         : exportActivities.reduce((sum, activity) => sum + activity.hours, 0);
@@ -1238,7 +1549,7 @@ export default function Reports() {
           : workerUser
             ? `${workerUser.name} (operario)`
             : clientId
-              ? (clientsMap.get(clientId)?.name ?? 'Contacto')
+              ? (clientsMap.get(clientId)?.name ?? 'Cliente')
               : clientScopeLabel;
 
     const exportClientsCount = workerUserId
@@ -1270,7 +1581,9 @@ export default function Reports() {
           name: row.client.name,
           activities: row.activities.length,
           hours: row.totalHours,
-          documents: row.documentCount,
+          documents: row.deliveryNoteCount + row.invoiceCount,
+          deliveryNoteCount: row.deliveryNoteCount,
+          invoiceCount: row.invoiceCount,
           paidAmount: documentMetricsForRange(
             documents,
             dateRange.from,
@@ -1284,13 +1597,15 @@ export default function Reports() {
       workerReportRows.map((row) => ({
         name: row.user.name,
         activities: row.activityCount,
-        hours: row.assignedHours,
-        documents: row.documentCount,
+        hours: workerPeriodDisplayHours(row, workerSignaturesEnabled),
+        documents: row.deliveryNoteCount + row.invoiceCount,
+        deliveryNoteCount: row.deliveryNoteCount,
+        invoiceCount: row.invoiceCount,
         paidAmount: row.billedAmount,
-        signedHours: row.signedHours,
-        pendingHours: row.pendingHours,
-        signedActivities: row.signedActivityCount,
-        unsignedActivities: row.unsignedActivityCount,
+        signedHours: workerSignaturesEnabled ? row.signedHours : undefined,
+        pendingHours: workerSignaturesEnabled ? row.pendingHours : undefined,
+        signedActivities: workerSignaturesEnabled ? row.signedActivityCount : undefined,
+        unsignedActivities: workerSignaturesEnabled ? row.unsignedActivityCount : undefined,
       }));
 
     const teamStatsForReport =
@@ -1302,18 +1617,28 @@ export default function Reports() {
       for (const activity of exportActivities) {
         const current = hoursByClient.get(activity.clientId) ?? { hours: 0, activities: 0 };
         hoursByClient.set(activity.clientId, {
-          hours: current.hours + workerHoursOnActivity(activity, events, workerUserId),
+          hours:
+            current.hours +
+            workerReportHoursOnActivity(activity, events, workerUserId, workerPeriodStatsOptions),
           activities: current.activities + 1,
         });
       }
       return [...hoursByClient.entries()]
         .map(([id, stats]) => {
           const docMetrics = documentMetricsForRange(documents, dateRange.from, dateRange.to, id);
+          const docTypeMetrics = documentTypeMetricsForRange(
+            documents,
+            dateRange.from,
+            dateRange.to,
+            id,
+          );
           return {
             name: clientsMap.get(id)?.name ?? 'Sin nombre',
             activities: stats.activities,
             hours: stats.hours,
-            documents: docMetrics.total,
+            documents: docTypeMetrics.deliveryNoteCount + docTypeMetrics.invoiceCount,
+            deliveryNoteCount: docTypeMetrics.deliveryNoteCount,
+            invoiceCount: docTypeMetrics.invoiceCount,
             paidAmount: docMetrics.paidAmount,
           };
         })
@@ -1339,7 +1664,7 @@ export default function Reports() {
       reportKind === 'workers_global'
         ? 'Operarios con actividad'
         : scopedSummary
-          ? 'Contactos con actividad o documentación'
+          ? 'Clientes con actividad o documentación'
           : 'Documentos';
 
     const metricsClientsValue =
@@ -1372,6 +1697,8 @@ export default function Reports() {
         sentAmount: exportDocMetrics.sentAmount,
         draftCount: exportDocMetrics.draft,
         draftAmount: exportDocMetrics.draftAmount,
+        deliveryNoteCount: exportDocTypeMetrics.deliveryNoteCount,
+        invoiceCount: exportDocTypeMetrics.invoiceCount,
         totalWorkers: reportKind === 'general' ? activeWorkerCount : undefined,
         contactsServed: reportKind === 'worker' ? exportClientsCount : undefined,
         teamAssignedHours: teamStatsForReport?.assignedHours,
@@ -1387,7 +1714,13 @@ export default function Reports() {
       clientBreakdown,
       workerBreakdown,
       teamShiftBreakdown:
-        reportKind === 'workers_global' ? teamShiftBreakdown : undefined,
+        reportKind === 'workers_global' && shiftSchedulingEnabled
+          ? teamShiftBreakdown
+          : undefined,
+      featureFlags: {
+        workerSignaturesEnabled,
+        shiftSchedulingEnabled,
+      },
       narrative: {
         reportKind,
         companyName,
@@ -1417,9 +1750,30 @@ export default function Reports() {
         teamSignedActivities: teamStatsForReport?.signedActivityCount,
         teamUnsignedActivities: teamStatsForReport?.unsignedActivityCount,
         teamShiftBreakdown:
-          reportKind === 'workers_global' ? teamShiftBreakdown : undefined,
+          reportKind === 'workers_global' && shiftSchedulingEnabled
+            ? teamShiftBreakdown
+            : undefined,
+        workerSignaturesEnabled,
+        shiftSchedulingEnabled,
       },
     };
+
+    if (reportKind === 'worker' && workerUserId) {
+      params.workerActivityDetail = buildWorkerActivityDetailRows({
+        activities,
+        events,
+        documents,
+        clients,
+        assignees: users,
+        activityTypes,
+        userId: workerUserId,
+        from: dateRange.from,
+        to: dateRange.to,
+        clientScope: exportScope,
+        workerSignaturesEnabled,
+        shiftSchedulingEnabled,
+      });
+    }
 
     const saveScope: SaveReportScope = {
       from: dateRange.from,
@@ -1577,6 +1931,30 @@ export default function Reports() {
     };
   }, [routeReportId, savedReports, clients, navigate]);
 
+  const handleDownloadWorkerDetail = (workerUserId: string, workerName: string) => {
+    if (invalidCustomRange) return;
+    const rows = buildWorkerActivityDetailRows({
+      activities,
+      events,
+      documents,
+      clients,
+      assignees: users,
+      activityTypes,
+      userId: workerUserId,
+      from: dateRange.from,
+      to: dateRange.to,
+      clientScope: reportClientScope,
+      workerSignaturesEnabled,
+      shiftSchedulingEnabled,
+    });
+    if (rows.length === 0) return;
+    downloadWorkerDetailedReportCsv(
+      rows,
+      buildWorkerDetailedReportFilename(workerName, dateRange.from, dateRange.to),
+      { workerSignaturesEnabled, shiftSchedulingEnabled },
+    );
+  };
+
   const handleGenerateReport = async (
     options: { kind?: ReportKind; clientId?: string; workerUserId?: string },
     onComplete?: () => void,
@@ -1594,7 +1972,7 @@ export default function Reports() {
         return;
       }
       if (clientId && assignedClientIds && !assignedClientIds.has(clientId)) {
-        window.alert('No tienes permiso para generar informes de este contacto.');
+        window.alert('No tienes permiso para generar informes de este cliente.');
         return;
       }
     }
@@ -1779,6 +2157,14 @@ export default function Reports() {
             placeholder={isMobile ? 'Buscar reportes' : 'Buscar'}
             value={savedSearchTerm}
             onChange={(e) => setSavedSearchTerm(e.target.value)}
+            trailing={
+              <ReportsKindNav
+                compact
+                options={savedReportKindOptions}
+                activeKind={savedReportKindFilter}
+                onSelect={setSavedReportKindFilter}
+              />
+            }
           />
         </div>
         <div
@@ -1848,7 +2234,11 @@ export default function Reports() {
               <div className={styles.savedSidebarEmpty}>
                 <p className={styles.savedSidebarEmptyTitle}>Sin coincidencias</p>
                 <p className={styles.savedSidebarEmptyText}>
-                  No hay informes que coincidan con la búsqueda.
+                  {savedReportKindFilter !== 'all' && !savedSearchTerm.trim()
+                    ? 'No hay informes de este tipo en el periodo.'
+                    : savedReportKindFilter !== 'all'
+                      ? 'No hay informes de este tipo que coincidan con la búsqueda.'
+                      : 'No hay informes que coincidan con la búsqueda.'}
                 </p>
               </div>
             )
@@ -1862,17 +2252,37 @@ export default function Reports() {
           )}
         </div>
         </div>
-        {isMobile && (
-          <footer className={styles.reportsSavedSidebarFooter}>
-            <button
-              type="button"
-              className={styles.reportsSavedSidebarFooterBtn}
-              onClick={openMobileGenerateView}
-            >
-              <Plus size={14} strokeWidth={2.25} aria-hidden />
-              Generar reporte
-            </button>
-          </footer>
+        {(isAdmin || isMobile) && (
+          <SidebarFooter variant="secondary">
+            {isAdmin ? (
+              <SidebarFooterAction
+                fullWidth
+                onClick={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  setSidebarDownloadMenu({ x: rect.left, y: rect.top - 4 });
+                }}
+                aria-label="Descargar informe por tipo"
+                title="Descargar informe por tipo"
+                label="Descargar informe"
+                disabled={invalidCustomRange || generatingReport}
+                aria-haspopup="menu"
+                aria-expanded={sidebarDownloadMenu != null}
+              >
+                <ArrowDownToLine size={14} strokeWidth={2.25} aria-hidden />
+              </SidebarFooterAction>
+            ) : null}
+            {isMobile ? (
+              <SidebarFooterAction
+                fullWidth
+                onClick={openMobileGenerateView}
+                aria-label="Generar reporte"
+                title="Generar reporte"
+                label="Generar reporte"
+              >
+                <Plus size={14} strokeWidth={2.25} aria-hidden />
+              </SidebarFooterAction>
+            ) : null}
+          </SidebarFooter>
         )}
       </aside>
       </SecondarySidebarPortal>
@@ -1891,13 +2301,14 @@ export default function Reports() {
         <div className={styles.reportsHeaderBlock}>
           <DatePeriodFilters
             sectionLayout
+            sectionPart="heading"
             abbreviated={isMobile}
             className={cx(
               dashboardStyles.filtersSection,
               styles.periodSection,
+              styles.reportsPeriodHeading,
               isMobile && styles.reportsPeriodSection,
             )}
-            panelClassName={cx(dashboardStyles.filtersCardAccent, styles.periodCard)}
             headingStart={
               isMobile ? (
                 <SecondaryNavToggle
@@ -1936,35 +2347,32 @@ export default function Reports() {
             onCustomToChange={setCustomTo}
             periodFiltersRef={periodFiltersRef}
             invalidCustomRange={invalidCustomRange}
-          >
-            <PeriodMetricsChartSection
-              metrics={reportsPeriodMetrics}
-              metricsStripClassName={periodMetricsStyles.periodMetricsStrip}
-              selectedMetricId={selectedPeriodMetricId}
-              chartsExpanded={chartsExpanded}
-              onMetricSelect={handlePeriodMetricSelect}
-              onChartsToggle={handleChartsToggle}
-              onChartDimensionChange={handleChartDimensionChange}
-              defaultMetricId={reportsDefaultMetricId}
-              chartsPanelId="reports-charts-panel"
-              activities={chartActivities}
-              events={events}
-              activityTypes={activityTypes}
-              clients={chartClients}
-              documents={isAdmin ? documents : operatorDocuments}
-              from={dateRange.from}
-              to={dateRange.to}
-              invalidCustomRange={invalidCustomRange}
-              hideChartViewToggle
-              isDesktop={isDesktop}
-              chartControlsHost={chartControlsHost}
-            />
-            {isAdmin && chartsExpanded && selectedPeriodMetricId ? (
-              <div className={styles.periodCardGenerate}>
-                {renderSectionGenerateButton('contacts')}
-              </div>
-            ) : null}
-          </DatePeriodFilters>
+          />
+          <div className={styles.generateTabBar}>
+            <nav
+              className={styles.generateTabList}
+              role="tablist"
+              aria-label="Secciones del informe"
+            >
+              {REPORTS_GENERATE_TABS.map((tab) => {
+                const active = activeGenerateTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    id={`reports-generate-tab-${tab.id}`}
+                    aria-selected={active}
+                    aria-controls={`reports-generate-panel-${tab.id}`}
+                    className={cx(styles.generateTab, active && styles.generateTabActive)}
+                    onClick={() => setActiveGenerateTab(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
         </div>
 
         <div className={cx(ui.tableBody, styles.reportsTableBody)}>
@@ -1973,11 +2381,17 @@ export default function Reports() {
             {dataError}
           </p>
         ) : null}
-        <div className={cx(ui.twoColGrid, styles.reportsTwoColGrid)}>
-        <div className={cx(ui.twoColMain, styles.reportsTwoColMain)}>
+        <div className={styles.generateSection}>
+          {activeGenerateTab === 'contacts' ? (
+          <div
+            role="tabpanel"
+            id="reports-generate-panel-contacts"
+            aria-labelledby="reports-generate-tab-contacts"
+            className={styles.generateTabPanel}
+          >
           <section className={cx(ui.pageSection, styles.reportsMobileSection)}>
             <div className={ui.pageSectionTitleRow}>
-              <h2 className={ui.pageSectionTitle}>Por Cliente</h2>
+              <h2 className={ui.pageSectionTitle}>Clientes del periodo</h2>
               <div className={styles.sectionTitleActions}>
                 {isDesktop && showClientsChart ? (
                   <ReportBreakdownChartToggles
@@ -1990,7 +2404,7 @@ export default function Reports() {
                 <button
                   type="button"
                   className={styles.clientSearchToggleBtn}
-                  aria-label={clientSearchOpen ? 'Ocultar búsqueda' : 'Buscar contactos'}
+                  aria-label={clientSearchOpen ? 'Ocultar búsqueda' : 'Buscar clientes'}
                   aria-expanded={clientSearchOpen}
                   onClick={() => setClientSearchOpen((open) => !open)}
                 >
@@ -2005,7 +2419,7 @@ export default function Reports() {
                   <SearchField
                     ref={clientSearchInputRef}
                     wrapperClassName={ui.searchWrapper}
-                    placeholder="Buscar contacto..."
+                    placeholder="Buscar cliente..."
                     value={clientSearchTerm}
                     onChange={(e) => setClientSearchTerm(e.target.value)}
                   />
@@ -2036,7 +2450,7 @@ export default function Reports() {
                     <ReportBreakdownDonutChart
                       rows={clientBreakdownChartRows}
                       measure={clientsChartMeasure}
-                      ariaLabel="Distribución por contacto"
+                      ariaLabel="Distribución por cliente"
                     />
                     {!isDesktop && (
                       <ReportBreakdownChartToggles
@@ -2061,7 +2475,7 @@ export default function Reports() {
                         invalidCustomRange,
                         hasPeriodData: rowHasPeriodData,
                         generating: generatingReport,
-                        entity: 'contacto',
+                        entity: 'cliente',
                         reportKind: 'contact',
                       });
 
@@ -2078,40 +2492,32 @@ export default function Reports() {
                           >
                             <div className={ui.fontMedium}>{row.client.name}</div>
                             <div className={styles.savedMeta}>
-                              {formatSavedReportCount(row.reportCount)}
                               {row.activities.length > 0 && (
                                 <>
-                                  {' '}
-                                  • {row.activities.length} actividades • {row.totalHours}h
+                                  {row.activities.length} actividades • {row.totalHours}h
                                 </>
                               )}
-                              {row.documentCount > 0 && (
-                                <>
-                                  {' '}
-                                  • {row.documentCount}{' '}
-                                  {row.documentCount === 1 ? 'documento' : 'documentos'}
-                                </>
-                              )}
+                              <ClientPeriodDocumentMeta
+                                deliveryNoteCount={row.deliveryNoteCount}
+                                invoiceCount={row.invoiceCount}
+                                hasLeadingContent={row.activities.length > 0}
+                              />
                             </div>
                           </button>
                           ) : (
                           <div className={styles.clientReportLink}>
                             <div className={ui.fontMedium}>{row.client.name}</div>
                             <div className={styles.savedMeta}>
-                              {formatSavedReportCount(row.reportCount)}
                               {row.activities.length > 0 && (
                                 <>
-                                  {' '}
-                                  • {row.activities.length} actividades • {row.totalHours}h
+                                  {row.activities.length} actividades • {row.totalHours}h
                                 </>
                               )}
-                              {row.documentCount > 0 && (
-                                <>
-                                  {' '}
-                                  • {row.documentCount}{' '}
-                                  {row.documentCount === 1 ? 'documento' : 'documentos'}
-                                </>
-                              )}
+                              <ClientPeriodDocumentMeta
+                                deliveryNoteCount={row.deliveryNoteCount}
+                                invoiceCount={row.invoiceCount}
+                                hasLeadingContent={row.activities.length > 0}
+                              />
                             </div>
                           </div>
                           )}
@@ -2147,7 +2553,7 @@ export default function Reports() {
                   </div>
                 ) : (
                   <p className={cx(ui.textMuted, styles.emptySection)}>
-                    No hay contactos que coincidan con la búsqueda.
+                    No hay clientes que coincidan con la búsqueda.
                   </p>
                 )}
               </>
@@ -2155,7 +2561,7 @@ export default function Reports() {
               <div className={styles.emptySection}>
                 <EmptyState
                   emoji="📊"
-                  description="No hay contactos registrados."
+                  description="No hay clientes registrados."
                 />
               </div>
             )}
@@ -2185,16 +2591,30 @@ export default function Reports() {
             )}
             </div>
           </section>
+          {isAdmin ? (
+            <div className={cx(styles.generateTabFooter, styles.periodCardGenerate)}>
+              {renderSectionGenerateButton('contacts')}
+            </div>
+          ) : null}
+          </div>
+          ) : null}
 
+          {activeGenerateTab === 'workers' ? (
+          <div
+            role="tabpanel"
+            id="reports-generate-panel-workers"
+            aria-labelledby="reports-generate-tab-workers"
+            className={styles.generateTabPanel}
+          >
           <section className={cx(ui.pageSection, styles.reportsMobileSection)}>
             <div className={ui.pageSectionTitleRow}>
-              <h2 className={ui.pageSectionTitle}>Por Operario</h2>
+              <h2 className={ui.pageSectionTitle}>Operarios del periodo</h2>
               <div className={styles.sectionTitleActions}>
                 {isDesktop && showWorkersChart ? (
                   <ReportBreakdownChartToggles
                     measure={workersChartMeasure}
                     onMeasureChange={setWorkersChartMeasure}
-                    includeSignatures
+                    includeSignatures={workerSignaturesEnabled}
                     className={styles.headerChartToggles}
                   />
                 ) : null}
@@ -2234,26 +2654,11 @@ export default function Reports() {
             {!loading && !invalidCustomRange && accessibleUsers.length > 0 &&
             teamPeriodStats &&
             teamPeriodStats.activityCount > 0 ? (
-              <p className={cx(ui.textMuted, styles.teamPeriodSummary)}>
-                {teamPeriodStats.activityCount}{' '}
-                {teamPeriodStats.activityCount === 1 ? 'actividad' : 'actividades'}
-                {' · '}
-                {formatHoursMinutes(teamPeriodStats.assignedHours) ?? '0m'} asignadas
-                {' · '}
-                {formatHoursMinutes(teamPeriodStats.signedHours) ?? '0m'} firmadas
-                {teamPeriodStats.pendingHours > 0 ? (
-                  <>
-                    {' · '}
-                    {formatHoursMinutes(teamPeriodStats.pendingHours)} pendientes
-                  </>
-                ) : null}
-                {' · '}
-                {teamPeriodStats.signedActivityCount} firmadas /{' '}
-                {teamPeriodStats.unsignedActivityCount} sin firma
-                {formatWorkerShiftSummary(teamPeriodStats.shiftHours) ? (
-                  <> · {formatWorkerShiftSummary(teamPeriodStats.shiftHours)}</>
-                ) : null}
-              </p>
+              <TeamPeriodSummary
+                stats={teamPeriodStats}
+                workerSignaturesEnabled={workerSignaturesEnabled}
+                shiftSchedulingEnabled={shiftSchedulingEnabled}
+              />
             ) : null}
             <div className={styles.reportsSectionCardBody}>
             {loading ? (
@@ -2282,7 +2687,7 @@ export default function Reports() {
                       <ReportBreakdownChartToggles
                         measure={workersChartMeasure}
                         onMeasureChange={setWorkersChartMeasure}
-                        includeSignatures
+                        includeSignatures={workerSignaturesEnabled}
                         className={styles.chartControlsBelow}
                       />
                     )}
@@ -2314,64 +2719,17 @@ export default function Reports() {
                                 <>
                                   {row.activityCount}{' '}
                                   {row.activityCount === 1 ? 'actividad' : 'actividades'}
-                                  {row.assignedHours > 0 && (
-                                    <>
-                                      {' '}
-                                      • {formatHoursMinutes(row.assignedHours) ?? '0m'} asig.
-                                      {row.signedHours > 0 && (
-                                        <> · {formatHoursMinutes(row.signedHours)} firm.</>
-                                      )}
-                                      {row.pendingHours > 0 && (
-                                        <> · {formatHoursMinutes(row.pendingHours)} pend.</>
-                                      )}
-                                    </>
-                                  )}
-                                  {(row.signedActivityCount > 0 ||
-                                    row.unsignedActivityCount > 0) && (
-                                    <>
-                                      {' '}
-                                      • {row.signedActivityCount} firmada
-                                      {row.signedActivityCount === 1 ? '' : 's'}
-                                      {row.unsignedActivityCount > 0 && (
-                                        <>
-                                          {' '}
-                                          / {row.unsignedActivityCount} sin firma
-                                        </>
-                                      )}
-                                    </>
-                                  )}
-                                  {formatWorkerShiftSummary(row.shiftHours) ? (
-                                    <> • {formatWorkerShiftSummary(row.shiftHours)}</>
-                                  ) : null}
+                                  <WorkerPeriodActivityMeta
+                                    row={row}
+                                    workerSignaturesEnabled={workerSignaturesEnabled}
+                                    shiftSchedulingEnabled={shiftSchedulingEnabled}
+                                  />
                                 </>
                               )}
-                              {row.documentCount > 0 && (
-                                <>
-                                  {row.activityCount > 0 ? ' • ' : ''}
-                                  {row.documentCount}{' '}
-                                  {row.documentCount === 1 ? 'documento' : 'documentos'}
-                                </>
-                              )}
-                              {row.billedAmount > 0 && (
-                                <>
-                                  {' '}
-                                  • {formatDocumentAmount(row.billedAmount)} facturado
-                                </>
-                              )}
-                              {row.conceptCount > 0 && (
-                                <>
-                                  {' '}
-                                  • {row.conceptCount}{' '}
-                                  {row.conceptCount === 1 ? 'concepto' : 'conceptos'}
-                                </>
-                              )}
-                              {row.topConcept ? (
-                                <>
-                                  {' '}
-                                  • Más facturado: {row.topConcept.description} (
-                                  {formatDocumentAmount(row.topConcept.totalAmount)})
-                                </>
-                              ) : null}
+                              <WorkerPeriodDocumentMeta
+                                row={row}
+                                hasLeadingContent={row.activityCount > 0}
+                              />
                             </div>
                           </button>
                           ) : (
@@ -2382,68 +2740,44 @@ export default function Reports() {
                                 <>
                                   {row.activityCount}{' '}
                                   {row.activityCount === 1 ? 'actividad' : 'actividades'}
-                                  {row.assignedHours > 0 && (
-                                    <>
-                                      {' '}
-                                      • {formatHoursMinutes(row.assignedHours) ?? '0m'} asig.
-                                      {row.signedHours > 0 && (
-                                        <> · {formatHoursMinutes(row.signedHours)} firm.</>
-                                      )}
-                                      {row.pendingHours > 0 && (
-                                        <> · {formatHoursMinutes(row.pendingHours)} pend.</>
-                                      )}
-                                    </>
-                                  )}
-                                  {(row.signedActivityCount > 0 ||
-                                    row.unsignedActivityCount > 0) && (
-                                    <>
-                                      {' '}
-                                      • {row.signedActivityCount} firmada
-                                      {row.signedActivityCount === 1 ? '' : 's'}
-                                      {row.unsignedActivityCount > 0 && (
-                                        <>
-                                          {' '}
-                                          / {row.unsignedActivityCount} sin firma
-                                        </>
-                                      )}
-                                    </>
-                                  )}
-                                  {formatWorkerShiftSummary(row.shiftHours) ? (
-                                    <> • {formatWorkerShiftSummary(row.shiftHours)}</>
-                                  ) : null}
+                                  <WorkerPeriodActivityMeta
+                                    row={row}
+                                    workerSignaturesEnabled={workerSignaturesEnabled}
+                                    shiftSchedulingEnabled={shiftSchedulingEnabled}
+                                  />
                                 </>
                               )}
-                              {row.documentCount > 0 && (
-                                <>
-                                  {row.activityCount > 0 ? ' • ' : ''}
-                                  {row.documentCount}{' '}
-                                  {row.documentCount === 1 ? 'documento' : 'documentos'}
-                                </>
-                              )}
-                              {row.billedAmount > 0 && (
-                                <>
-                                  {' '}
-                                  • {formatDocumentAmount(row.billedAmount)} facturado
-                                </>
-                              )}
-                              {row.conceptCount > 0 && (
-                                <>
-                                  {' '}
-                                  • {row.conceptCount}{' '}
-                                  {row.conceptCount === 1 ? 'concepto' : 'conceptos'}
-                                </>
-                              )}
-                              {row.topConcept ? (
-                                <>
-                                  {' '}
-                                  • Más facturado: {row.topConcept.description} (
-                                  {formatDocumentAmount(row.topConcept.totalAmount)})
-                                </>
-                              ) : null}
+                              <WorkerPeriodDocumentMeta
+                                row={row}
+                                hasLeadingContent={row.activityCount > 0}
+                              />
                             </div>
                           </div>
                           )}
                           <div className={styles.clientReportActions}>
+                            <span
+                              className={styles.generateBtnWrap}
+                              title={
+                                invalidCustomRange
+                                  ? 'Seleccione un periodo válido'
+                                  : row.activityCount > 0
+                                    ? 'Descargar detalle CSV (actividades, zonas, albaranes)'
+                                    : 'Sin actividades en el periodo'
+                              }
+                            >
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDownloadWorkerDetail(row.user.id, row.user.name);
+                                }}
+                                className={ui.btnIcon}
+                                aria-label="Descargar informe detallado CSV"
+                                disabled={invalidCustomRange || row.activityCount === 0}
+                              >
+                                <FilePlus size={16} />
+                              </button>
+                            </span>
                             <span className={styles.generateBtnWrap} title={rowGenerateTooltip}>
                               <button
                                 type="button"
@@ -2495,11 +2829,6 @@ export default function Reports() {
               </div>
             )}
             </div>
-            {isAdmin && showWorkersChart ? (
-              <div className={cx(styles.sectionGenerateFooter, styles.periodCardGenerate)}>
-                {renderSectionGenerateButton('workers')}
-              </div>
-            ) : null}
             {showWorkersChartToggle && (
               <div className={styles.chartToggleRow}>
                 <button
@@ -2525,9 +2854,64 @@ export default function Reports() {
             )}
             </div>
           </section>
-        </div>
+          {isAdmin ? (
+            <div className={cx(styles.generateTabFooter, styles.periodCardGenerate)}>
+              {renderSectionGenerateButton('workers')}
+            </div>
+          ) : null}
+          </div>
+          ) : null}
 
-        <div className={cx(ui.sidebarCol, styles.reportsSidebarCol)}>
+          {activeGenerateTab === 'summary' ? (
+          <div
+            role="tabpanel"
+            id="reports-generate-panel-summary"
+            aria-labelledby="reports-generate-tab-summary"
+            className={styles.generateTabPanel}
+          >
+            <DatePeriodFilters
+              sectionLayout
+              sectionPart="panel"
+              className={cx(
+                dashboardStyles.filtersSection,
+                styles.periodSection,
+                isMobile && styles.reportsPeriodSection,
+              )}
+              panelClassName={cx(dashboardStyles.filtersCardAccent, styles.periodCard)}
+              period={period}
+              customFrom={customFrom}
+              customTo={customTo}
+              dateRange={dateRange}
+              onPeriodChange={setPeriod}
+              onCustomFromChange={setCustomFrom}
+              onCustomToChange={setCustomTo}
+              periodFiltersRef={periodFiltersRef}
+              invalidCustomRange={invalidCustomRange}
+            >
+              <PeriodMetricsChartSection
+                metrics={reportsPeriodMetrics}
+                metricsStripClassName={periodMetricsStyles.periodMetricsStrip}
+                selectedMetricId={selectedPeriodMetricId}
+                chartsExpanded={chartsExpanded}
+                onMetricSelect={handlePeriodMetricSelect}
+                onChartsToggle={handleChartsToggle}
+                onChartDimensionChange={handleChartDimensionChange}
+                defaultMetricId={reportsDefaultMetricId}
+                chartsPanelId="reports-charts-panel"
+                activities={chartActivities}
+                events={events}
+                activityTypes={activityTypes}
+                clients={chartClients}
+                documents={isAdmin ? documents : operatorDocuments}
+                from={dateRange.from}
+                to={dateRange.to}
+                invalidCustomRange={invalidCustomRange}
+                hideChartViewToggle
+                isDesktop={isDesktop}
+                chartControlsHost={chartControlsHost}
+              />
+            </DatePeriodFilters>
+        <div className={styles.generateSummaryStack}>
           <section
             className={cx(
               ui.pageSectionFill,
@@ -2591,6 +2975,13 @@ export default function Reports() {
             />
           </section>
         </div>
+          {isAdmin ? (
+            <div className={cx(styles.generateTabFooter, styles.periodCardGenerate)}>
+              {renderSectionGenerateButton('general')}
+            </div>
+          ) : null}
+          </div>
+          ) : null}
         </div>
         </div>
 
@@ -2621,9 +3012,34 @@ export default function Reports() {
                         )}
                       />
                     ) : null}
-                    <h1 className={cx(ui.pageTitle, documentDetailStyles.pageHeaderTitle)}>
-                      {previewHeader.title}
-                    </h1>
+                    <div className={cx(headerStyles.headerTitleGroup, headerStyles.headerTitleGroupGrow)}>
+                      <h1 className={cx(ui.pageTitle, headerStyles.headerTitleText)}>
+                        {previewHeader.title}
+                      </h1>
+                      {(previewHeader.generatedBy || previewHeader.generatedRelative) && (
+                        <span className={headerStyles.headerTitleMeta}>
+                          {previewHeader.generatedBy ? (
+                            <span className={headerStyles.headerAuthor}>
+                              <UserAvatar user={previewHeader.generatedBy} size="xs" />
+                              <span className={headerStyles.headerAuthorName}>
+                                {previewHeader.generatedBy.name}
+                              </span>
+                            </span>
+                          ) : null}
+                          {previewHeader.generatedBy && previewHeader.generatedRelative ? (
+                            <span className={headerStyles.headerMetaSep} aria-hidden>
+                              ·
+                            </span>
+                          ) : null}
+                          {previewHeader.generatedRelative ? (
+                            <span className={headerStyles.headerTitleRelative}>
+                              {previewHeader.generatedRelative.charAt(0).toUpperCase() +
+                                previewHeader.generatedRelative.slice(1)}
+                            </span>
+                          ) : null}
+                        </span>
+                      )}
+                    </div>
                     {selectedSavedReport ? (
                       <div className={documentDetailStyles.pageHeaderMetaAside}>
                         <div className={ui.toolbarBtnGroup}>
@@ -2647,42 +3063,6 @@ export default function Reports() {
                       </div>
                     ) : null}
                   </div>
-                  {(previewHeader.generatedBy || previewHeader.generatedRelative) && (
-                    <div className={documentDetailStyles.pageHeaderMetaRow}>
-                      <div
-                        className={cx(
-                          documentDetailStyles.pageHeaderMetaMain,
-                          documentDetailStyles.pageHeaderMetaMainContent,
-                        )}
-                      >
-                        <p className={cx(ui.pageSubtitle, headerStyles.headerMeta)}>
-                          {previewHeader.generatedBy ? (
-                            <span className={headerStyles.headerAuthor}>
-                              <UserAvatar
-                                user={previewHeader.generatedBy}
-                                size="sm"
-                                className={headerStyles.headerAuthorAvatar}
-                              />
-                              <span className={headerStyles.headerAuthorName}>
-                                {previewHeader.generatedBy.name}
-                              </span>
-                            </span>
-                          ) : null}
-                          {previewHeader.generatedBy && previewHeader.generatedRelative ? (
-                            <span className={headerStyles.headerMetaSep} aria-hidden>
-                              ·
-                            </span>
-                          ) : null}
-                          {previewHeader.generatedRelative ? (
-                            <span className={headerStyles.headerTitleRelative}>
-                              {previewHeader.generatedRelative.charAt(0).toUpperCase() +
-                                previewHeader.generatedRelative.slice(1)}
-                            </span>
-                          ) : null}
-                        </p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -2704,11 +3084,49 @@ export default function Reports() {
           <EmptyState
             emoji="📊"
             title="Generar un informe"
-            description="Elige el período y genera el informe desde cada sección o desde cada contacto y operario."
+            description="Elige el periodo y usa las pestañas Clientes, Operarios o Resumen para generar y descargar informes."
           />
           </div>
         )}
       </div>
+
+      {sidebarDownloadMenu && (
+        <ContextMenu
+          x={sidebarDownloadMenu.x}
+          y={sidebarDownloadMenu.y}
+          ariaLabel="Tipo de informe"
+          onClose={() => setSidebarDownloadMenu(null)}
+          items={[
+            {
+              id: 'general',
+              label: summaryDownloadLabel,
+              icon: <ArrowDownToLine size={16} />,
+              disabled: summaryGenerateDisabled,
+              onSelect: () => {
+                void handleGenerateReport({ kind: 'general' });
+              },
+            },
+            {
+              id: 'contacts',
+              label: contactsGlobalDownloadLabel,
+              icon: <ArrowDownToLine size={16} />,
+              disabled: contactsGlobalGenerateDisabled,
+              onSelect: () => {
+                void handleGenerateReport({ kind: 'contacts_global' });
+              },
+            },
+            {
+              id: 'workers',
+              label: workersGlobalDownloadLabel,
+              icon: <ArrowDownToLine size={16} />,
+              disabled: workersGlobalGenerateDisabled,
+              onSelect: () => {
+                void handleGenerateReport({ kind: 'workers_global' });
+              },
+            },
+          ]}
+        />
+      )}
 
       {reportActionMenu && (
         <ContextMenu

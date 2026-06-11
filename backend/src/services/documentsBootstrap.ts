@@ -9,8 +9,7 @@ import type {
 import { filterClientsForUser, filterDocumentTypeGroupsForUser } from '@shared/types';
 import { DB_NAMES } from '../config.js';
 import type { DataStore } from '../db/dataStore.js';
-import { filterCollectionInWorkspace } from '../db/repository.js';
-import { refreshDbFromDisk } from '../db/store.js';
+import { getDataStore } from '../db/storeFactory.js';
 import type { AuthUser } from '../middleware/auth.js';
 import {
   filterActivitiesForUser,
@@ -24,28 +23,17 @@ export type DocumentsBootstrapResponse = {
   activities: Activity[];
 };
 
-/** Lectura cruda del workspace (repository / refreshDbFromDisk). */
+/** Lectura cruda del workspace via DataStore. */
 export async function loadDocumentsBootstrap(workspaceId: string): Promise<DocumentsBootstrap> {
-  const db = await refreshDbFromDisk();
+  const store = getDataStore();
+  const [documents, clients, documentTypeGroups, activities] = await Promise.all([
+    store.listAllInWorkspace<Document>(DB_NAMES.documents, workspaceId),
+    store.listAllInWorkspace<Client>(DB_NAMES.clients, workspaceId),
+    store.listAllInWorkspace<DocumentTypeGroup>(DB_NAMES.documentTypeGroups, workspaceId),
+    store.listAllInWorkspace<Activity>(DB_NAMES.activities, workspaceId),
+  ]);
 
-  return {
-    documents: filterCollectionInWorkspace(
-      db.data[DB_NAMES.documents] as unknown as Document[],
-      workspaceId,
-    ),
-    clients: filterCollectionInWorkspace(
-      db.data[DB_NAMES.clients] as unknown as Client[],
-      workspaceId,
-    ),
-    documentTypeGroups: filterCollectionInWorkspace(
-      db.data[DB_NAMES.documentTypeGroups] as unknown as DocumentTypeGroup[],
-      workspaceId,
-    ),
-    activities: filterCollectionInWorkspace(
-      db.data[DB_NAMES.activities] as unknown as Activity[],
-      workspaceId,
-    ),
-  };
+  return { documents, clients, documentTypeGroups, activities };
 }
 
 /** P2c: bootstrap visible via DataStore (piloto GET /api/documents/bootstrap). */

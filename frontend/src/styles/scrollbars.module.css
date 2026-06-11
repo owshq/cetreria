@@ -76,6 +76,15 @@
   scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
+.scrollAreaReveal::-webkit-scrollbar-thumb {
+  background-color: transparent;
+}
+
+.scrollAreaReveal:hover::-webkit-scrollbar-thumb,
+.scrollAreaReveal:focus-within::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+}
+
 .scrollArea {
   composes: scrollAreaReveal;
   overflow: auto;
@@ -111,25 +120,20 @@
 /*
  * Sobrescribe :global(*) en contenedores marcados con data-scroll-region.
  * html aumenta especificidad para ganar al bundling de :global(*).
+ * Thumb transparente + ancho fijo: sin salto de layout al hover.
  * Debe ir al final: composes de CSS Modules no enlaza pseudo-elementos al DOM.
  */
 :global(html [data-scroll-region]) {
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
 
 :global(html [data-scroll-region]:hover),
 :global(html [data-scroll-region]:focus-within) {
-  scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 :global(html [data-scroll-region]::-webkit-scrollbar) {
-  width: 0;
-  height: 0;
-}
-
-:global(html [data-scroll-region]:hover::-webkit-scrollbar),
-:global(html [data-scroll-region]:focus-within::-webkit-scrollbar) {
   width: var(--scrollbar-size);
   height: var(--scrollbar-size);
 }

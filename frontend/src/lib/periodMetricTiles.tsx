@@ -170,11 +170,14 @@ export function buildPendingPeriodMetric(
     stats.pendingDocuments,
   );
 
+  const title = options?.title ?? 'Documentos pendientes';
+
   return {
     id: options?.id ?? 'pending',
     chartMetric: 'documents',
     chartPreset: CLIENT_PERIOD_CHART_PRESETS.pending,
-    title: options?.title ?? 'Docs. pendientes',
+    title,
+    ...(options?.title ? {} : { titleShort: 'Docs. pendientes' }),
     value: formatDocumentAmount(stats.pendingDocumentsAmount),
     delta: pendingShare,
     sub: (

@@ -8,22 +8,35 @@
   gap: 1rem;
 }
 
-.faviconBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
 .logoSectionHint {
   margin: -0.25rem 0 0;
   font-size: 0.8125rem;
   color: var(--color-text-subtle);
 }
 
+.accentColorSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.logoSectionsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .logoGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+}
+
+.logoLoginColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
 .logoCard {
@@ -36,11 +49,24 @@
   background: var(--color-bg-subtle);
 }
 
+.logoCardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .logoCardLabel {
   margin: 0;
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-text-secondary);
+}
+
+.logoCardHint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--color-text-subtle);
 }
 
 .logoPreview {
@@ -66,8 +92,26 @@
 .logoPreviewImage {
   display: block;
   max-width: 100%;
-  max-height: 3.5rem;
   object-fit: contain;
+}
+
+.logoPreviewWordmarkImage {
+  width: auto;
+  max-height: none;
+}
+
+.logoPreviewLoginImage {
+  width: auto;
+  height: 4rem;
+  max-width: 100%;
+  max-height: none;
+}
+
+.logoPreviewIconImage {
+  width: auto;
+  height: 4.5rem;
+  max-width: 100%;
+  max-height: none;
 }
 
 .logoActions {
@@ -76,19 +120,23 @@
   gap: 0.5rem;
 }
 
-.hiddenInput {
-  display: none;
-}
-
-.faviconCard {
+.logoSizeControl {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-width: 16rem;
-  padding: 1rem;
-  border: 1px solid var(--stroke-gray);
-  border-radius: 0.625rem;
-  background: var(--color-bg-subtle);
+  gap: 0.375rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--stroke-gray);
+}
+
+.logoSizeControlLabel {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.hiddenInput {
+  display: none;
 }
 
 .faviconPreview {
@@ -97,17 +145,16 @@
   justify-content: center;
   width: 3rem;
   height: 3rem;
-  margin: 0 auto;
   padding: 0.375rem;
   border: 1px dashed var(--stroke-gray-medium);
   border-radius: 0.5rem;
-  background: var(--color-bg-surface);
+  background: #000000;
 }
 
 .faviconPreviewImage {
   display: block;
-  width: 2rem;
-  height: 2rem;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
@@ -173,13 +220,8 @@
 
 .galleryActions {
   display: flex;
-  gap: 0.375rem;
-}
-
-.galleryActionBtn {
-  flex: 1;
-  justify-content: center;
-  padding-inline: 0.5rem;
+  gap: 0.125rem;
+  justify-content: flex-end;
 }
 
 .galleryToolbar {
@@ -206,6 +248,96 @@
   margin: 0.75rem 0 0;
   font-size: 0.8125rem;
   color: var(--color-text-secondary);
+}
+
+.typographyStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.typographyGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.625rem;
+  background: var(--color-bg-subtle);
+}
+
+.typographyGroupHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.typographyPreview {
+  margin: 0;
+  padding: 0.875rem 1rem;
+  border: 1px dashed var(--stroke-gray-medium);
+  border-radius: 0.5rem;
+  background: var(--color-bg-surface);
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.typographyOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.5rem;
+}
+
+.typographyOption {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  min-height: 3.25rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--stroke-gray);
+  border-radius: 0.5rem;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.typographyOption:hover:not(:disabled) {
+  border-color: var(--stroke-gray-medium);
+}
+
+.typographyOption:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.typographyOptionActive {
+  border-color: var(--app-accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--app-accent) 35%, transparent);
+}
+
+.typographyOptionLabel {
+  font-size: 1rem;
+  font-weight: inherit;
+}
+
+.typographyOptionBadge {
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
 @media (max-width: 640px) {

@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import type { ClientGroup } from '@shared/types';
 import { DB_NAMES } from '../config.js';
-import { insertDoc, listAllInWorkspace } from '../db/repository.js';
+import { insertDoc, listAllInWorkspace, updateDoc } from '../db/repository.js';
 import {
   deleteClientGroupInWorkspace,
+  getClientGroupInWorkspace,
   readClientGroupsForWorkspaceFromStore,
 } from '../db/clientGroups.js';
 import { jsonFileStore } from '../db/jsonFileStore.js';
@@ -46,6 +47,39 @@ router.post('/', workspaceAdminRequired, async (req, res) => {
   };
   await insertDoc(DB_NAMES.clientGroups, group);
   res.status(201).json(group);
+});
+
+router.put('/:id', workspaceAdminRequired, async (req, res) => {
+  const workspaceId = req.workspaceId!;
+  const groupId = routeParam(req.params.id);
+  const existing = await getClientGroupInWorkspace(workspaceId, groupId);
+  if (!existing) {
+    res.status(404).json({ error: 'Grupo no encontrado' });
+    return;
+  }
+
+  const name = typeof req.body?.name === 'string' ? req.body.name.trim() : existing.name;
+  if (!name) {
+    res.status(400).json({ error: 'El nombre del grupo es obligatorio' });
+    return;
+  }
+
+  const siblings = await listAllInWorkspace<ClientGroup>(DB_NAMES.clientGroups, workspaceId);
+  const duplicate = siblings.some(
+    (group) => group.id !== groupId && group.name.trim().toLowerCase() === name.toLowerCase(),
+  );
+  if (duplicate) {
+    res.status(409).json({ error: 'Ya existe un grupo con ese nombre' });
+    return;
+  }
+
+  const updated = await updateDoc<ClientGroup>(DB_NAMES.clientGroups, groupId, { name });
+  if (!updated) {
+    res.status(404).json({ error: 'Grupo no encontrado' });
+    return;
+  }
+
+  res.json(updated);
 });
 
 router.delete('/:id', workspaceAdminRequired, async (req, res) => {

@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, it } from 'node:test';
 import type {
   Activity,
@@ -148,6 +151,13 @@ const baseCollections = (): BootstrapCollections => ({
 });
 
 describe('readDocumentsBootstrapFromStore', () => {
+  it('documentsBootstrap.ts no usa db.data ni refreshDbFromDisk', () => {
+    const modulePath = fileURLToPath(new URL('./documentsBootstrap.ts', import.meta.url));
+    const source = fs.readFileSync(modulePath, 'utf8');
+    assert.ok(!source.includes('db.data'));
+    assert.ok(!source.includes('refreshDbFromDisk'));
+  });
+
   it('admin recibe facturas, albaranes y contactos', async () => {
     const result = await readDocumentsBootstrapFromStore(
       WORKSPACE_ID,

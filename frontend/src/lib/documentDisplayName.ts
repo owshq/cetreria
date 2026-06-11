@@ -1,14 +1,10 @@
 import type { Document, WorkspaceBillingSettings } from '@shared/types';
-import { buildDocumentDisplayNameForDocument } from '@shared/types';
+import { resolveDocumentDisplayName } from '@shared/types';
 
 export function getDocumentDisplayName(
-  document: Pick<Document, 'type' | 'number' | 'date'>,
+  document: Pick<Document, 'type' | 'number' | 'date' | 'displayName'>,
   clientName: string,
   billingSettings?: Pick<WorkspaceBillingSettings, 'documentFormats'> | null,
 ): string {
-  return buildDocumentDisplayNameForDocument(
-    billingSettings?.documentFormats,
-    document,
-    clientName,
-  );
+  return resolveDocumentDisplayName(document, clientName, billingSettings?.documentFormats);
 }

@@ -26,7 +26,6 @@ export default function TopBar({ hasSidebar = true }: TopBarProps) {
         data-has-sidebar={hasSidebar ? '' : undefined}
       >
         <div className={isMobile ? styles.mobileStart : styles.leading}>
-          {isMobile && <BrandLogo size="sm" className={styles.mobileLogo} />}
           <SidebarToggle hidden={isMobile} />
         </div>
       </header>
@@ -59,7 +58,11 @@ export default function TopBar({ hasSidebar = true }: TopBarProps) {
             />
           </div>
           {!mobileSearchOpen && (
-            <BrandLogo size="sm" className={styles.mobileLogo} />
+            <BrandLogo
+              tone="onAccent"
+              adaptToColorScheme
+              className={styles.mobileLogo}
+            />
           )}
         </div>
       ) : (
@@ -68,9 +71,7 @@ export default function TopBar({ hasSidebar = true }: TopBarProps) {
         </div>
       )}
 
-      {showTrailingInTopBar && (
-        <TopBarTrailingActions placement="topbar" hideNotifications={isMobile} />
-      )}
+      {showTrailingInTopBar && <TopBarTrailingActions placement="topbar" />}
     </header>
   );
 }

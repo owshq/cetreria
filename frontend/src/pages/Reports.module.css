@@ -13,6 +13,7 @@
 
 .reportsSavedSidebar {
   composes: secondarySidebar from '../styles/shared.module.css';
+  --layout-secondary-sidebar-padding-bottom: 0;
 }
 
 .reportsSavedSidebarCollapsed {
@@ -203,21 +204,14 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .reportsTwoColGrid {
+  .generateTabPanel {
     flex: none;
     min-width: 0;
     width: 100%;
     max-width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: var(--page-section-stack-gap);
   }
 
-  .reportsTwoColMain,
-  .reportsSidebarCol {
-    display: flex;
-    flex-direction: column;
-    gap: var(--page-section-stack-gap);
+  .generateSummaryStack {
     min-width: 0;
     width: 100%;
   }
@@ -240,11 +234,17 @@
     overflow: hidden;
   }
 
-  /* Botón de gráfico a mitad fuera del borde: no recortar. */
+  /* Boton de grafico a mitad fuera del borde: no recortar (contactos/operarios). */
   .reportsMobileSection .reportsSectionCard:has(button[aria-controls*='chart-panel']) {
     overflow: visible;
     padding-bottom: 1rem;
     margin-bottom: 1.25rem;
+  }
+
+  .generateSummaryStack .reportsMobileSection .reportsSectionCard:has(button[aria-controls*='chart-panel']) {
+    overflow: hidden;
+    margin-bottom: 0;
+    padding-bottom: 1.25rem;
   }
 
   .reportsSectionCard .teamPeriodSummary,
@@ -262,14 +262,18 @@
 }
 
 @media (min-width: 1024px) {
-  .reportsTwoColGrid {
-    align-items: start;
+  .generateTabPanel .reportsSectionCard.reportsSectionCard {
+    max-height: min(52vh, 28rem);
   }
 }
 
 .periodSection {
   margin-bottom: 0;
   padding-top: 0;
+}
+
+.reportsPeriodHeading {
+  flex-shrink: 0;
 }
 
 @media (max-width: 767px) {
@@ -286,9 +290,177 @@
   gap: var(--page-major-section-gap);
 }
 
+.reportsGeneratePage > .reportsTableBody {
+  margin-top: calc(-1 * (var(--page-major-section-gap) - var(--page-section-gap)));
+}
+
+.generateSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--page-section-gap);
+  min-width: 0;
+  width: 100%;
+}
+
+.generateTabBar {
+  flex-shrink: 0;
+  margin-inline: calc(-1 * var(--layout-main-padding-inline, 0));
+  padding-inline: var(--layout-main-padding-inline, 0);
+  border-bottom: 1px solid var(--stroke-gray);
+  background: var(--color-bg-settings-main);
+}
+
+.generateTabList {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.generateTab {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.generateTab:hover {
+  color: var(--color-text-primary);
+}
+
+.generateTab:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: -2px;
+}
+
+.generateTabActive {
+  color: var(--color-text-primary);
+  border-bottom-color: var(--app-accent);
+}
+
+.generateTabPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--page-section-gap);
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.generateTabFooter {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding-top: 0.25rem;
+}
+
+.generateTabFooter .generateBtnWrap {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.generateTabFooter .reportsSectionGenerateBtn {
+  width: 100%;
+  max-width: none;
+  justify-content: flex-start;
+}
+
+.generateTabFooter.periodCardGenerate {
+  justify-content: stretch;
+  padding: 0.75rem 0 0.5rem;
+  border-top: 1px solid var(--stroke-gray-subtle, var(--stroke-gray));
+}
+
+.generateSummaryStack {
+  composes: twoColGrid from '../styles/shared.module.css';
+  gap: var(--page-section-stack-gap);
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .reportsGeneratePage .generateSummaryStack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.generateSummaryStack > section {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.generateSummaryStack > section > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.generateSummaryStack .reportsSectionCard.reportsSectionCard {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.generateSummaryStack .reportsSectionCard:has(button[aria-controls*='chart-panel']) {
+  margin-bottom: 0;
+  padding-bottom: 1.25rem;
+}
+
+.generateSummaryStack .reportsSectionCard > div:has(> button[aria-controls*='chart-panel']) {
+  top: auto;
+  bottom: 0.25rem;
+  transform: translateX(-50%);
+}
+
+.generateSummaryStack .reportsSectionCardBody {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 768px) {
+  .generateSummaryStack .reportsSectionCard.reportsSectionCard {
+    height: 100%;
+    min-height: min(48vh, 20rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .generateSummaryStack .reportsSectionCard.reportsSectionCard {
+    min-height: min(52vh, 28rem);
+    max-height: min(52vh, 28rem);
+  }
+}
+
 .reportsHeaderBlock {
   composes: dashboardHeaderBlock from './Dashboard.module.css';
   padding-top: var(--section-header-padding-block-start);
+}
+
+.generateTabPanel .periodSection {
+  margin-bottom: 0;
 }
 
 .periodCard {
@@ -318,7 +490,7 @@
 .reportsSavedNavGroupLabel {
   margin: 0;
   padding: 0.375rem 1rem 0.25rem;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -349,7 +521,7 @@
   border-radius: 0;
   background: transparent;
   color: var(--color-settings-nav-text);
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.875rem;
   font-weight: 400;
   text-align: left;
@@ -741,41 +913,16 @@
     overflow-y: auto;
   }
 
+  .reportsSavedSidebar.reportsSavedSidebarMobile footer {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
   .reportsSavedSidebar.reportsSavedSidebarMobileHidden {
     display: none;
   }
 
   .reportsSavedSidebarCollapsed {
     display: none;
-  }
-
-  .reportsSavedSidebarFooter {
-    flex-shrink: 0;
-    margin-inline: -1rem;
-    padding: 0.875rem 1rem calc(0.875rem + env(safe-area-inset-bottom, 0px));
-    background: var(--color-bg-surface);
-  }
-
-  .reportsSavedSidebarFooterBtn {
-    composes: btnText from '../styles/shared.module.css';
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.625rem 0;
-    background: transparent;
-    color: var(--color-text-primary);
-    border: 1px solid transparent;
-    border-radius: var(--radius-md);
-    font-size: 0.8125rem;
-    cursor: pointer;
-    transition: background 0.12s ease, color 0.12s ease;
-  }
-
-  .reportsSavedSidebarFooterBtn:hover:not(:disabled) {
-    background: var(--color-bg-muted);
-    color: var(--color-text-primary);
   }
 
   .reportsContentMobile {
@@ -883,15 +1030,6 @@
 
   .reportsGeneratePage .reportsTableBody {
     padding-block: 0;
-    padding-inline: 0;
-  }
-
-  .reportsGeneratePage .reportsTwoColGrid {
-    padding-bottom: 1rem;
-  }
-
-  .reportsTableBody {
-    padding-block: 0 1rem;
     padding-inline: 0;
   }
 

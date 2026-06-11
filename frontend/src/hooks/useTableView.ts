@@ -16,6 +16,8 @@ import {
   loadSavedViews,
   normalizeSavedViewsList,
   parseRemoteViewState,
+  persistSavedViews,
+  resolvePersistedStateAgainstSavedViews,
   applyPinnedColumnLayout,
   pinLockedColumns,
   sanitizeColumnWidths,
@@ -146,7 +148,20 @@ export function useTableView<T, Ctx = undefined>(
 
   const syncViewsToServer = useCallback(
     async (views: SavedTableView[]) => {
+      persistSavedViews(pageKey, views);
       await savedTableViewsService.saveByPageKey(pageKey, views);
+    },
+    [pageKey],
+  );
+
+  const persistTableViewStateNow = useCallback(
+    (nextConfig: TableViewConfig, nextActiveSavedViewId: string | null) => {
+      skipNextViewStateSaveRef.current = true;
+      void tableViewStateService
+        .saveByPageKey(pageKey, buildViewStatePayload(nextConfig, nextActiveSavedViewId))
+        .catch(() => {
+          // El debounce reintentara en el proximo cambio de config.
+        });
     },
     [pageKey],
   );
@@ -156,14 +171,19 @@ export function useTableView<T, Ctx = undefined>(
       persisted: ReturnType<typeof parseRemoteViewState>,
       views: SavedTableView[],
     ) => {
-      const migratedConfig = migrateConfig(persisted.config);
+      const resolved = resolvePersistedStateAgainstSavedViews(
+        persisted,
+        views,
+        displayColumns,
+      );
+      const migratedConfig = migrateConfig(resolved.config);
       const prepared = prepareViewConfig(
         migratedConfig,
         displayColumns,
         dataColumns,
         defaultFilterColumnId,
       );
-      const nextActiveId = persisted.activeSavedViewId;
+      const nextActiveId = resolved.activeSavedViewId;
       const baseline = buildViewAnchorConfig(
         nextActiveId,
         views,
@@ -287,16 +307,31 @@ export function useTableView<T, Ctx = undefined>(
     if (!activeSavedViewId) return;
     if (savedViews.some((view) => view.id === activeSavedViewId)) return;
 
-    setActiveSavedViewId(null);
-    setViewBaseline(
-      prepareViewConfig(
-        structuredClone(config),
-        displayColumns,
-        dataColumns,
-        defaultFilterColumnId,
-      ),
+    const defaultConfig = prepareViewConfig(
+      createPreparedDefaultViewConfig(displayColumns),
+      displayColumns,
+      dataColumns,
+      defaultFilterColumnId,
     );
-  }, [activeSavedViewId, savedViews, config, displayColumns, dataColumns, defaultFilterColumnId]);
+    setActiveSavedViewId(null);
+    setConfig((current) => {
+      const nextConfig = mergeViewConfigWithPinnedColumn(
+        defaultConfig,
+        current.pinnedColumnIds,
+        displayColumns,
+      );
+      persistTableViewStateNow(nextConfig, null);
+      return nextConfig;
+    });
+    setViewBaseline(structuredClone(defaultConfig));
+  }, [
+    activeSavedViewId,
+    savedViews,
+    displayColumns,
+    dataColumns,
+    defaultFilterColumnId,
+    persistTableViewStateNow,
+  ]);
 
   const activeFilterCount = useMemo(
     () => countActiveFilterRules(config.filterRules),
@@ -541,28 +576,28 @@ export function useTableView<T, Ctx = undefined>(
     if (!deleteViewConfirm) return;
 
     const viewId = deleteViewConfirm.id;
-    const removed = savedViews.find((view) => view.id === viewId);
-    const isActive = removed != null && removed.id === activeSavedViewId;
+    const clearsActiveView = activeSavedViewId === viewId;
+    const nextViews = savedViews.filter((view) => view.id !== viewId);
 
-    setSavedViews((current) => {
-      const next = current.filter((view) => view.id !== viewId);
-      void syncViewsToServer(next).catch(() => {
-        alert('No se pudo eliminar la vista en el servidor.');
-      });
-      return next;
+    void syncViewsToServer(nextViews).catch(() => {
+      alert('No se pudo eliminar la vista en el servidor.');
     });
+    setSavedViews(nextViews);
 
-    if (isActive) {
+    if (clearsActiveView) {
       const defaultConfig = prepareViewConfig(
         createPreparedDefaultViewConfig(displayColumns),
         displayColumns,
         dataColumns,
         defaultFilterColumnId,
       );
-      setActiveSavedViewId(null);
-      setConfig((current) =>
-        mergeViewConfigWithPinnedColumn(defaultConfig, current.pinnedColumnIds, displayColumns),
+      const nextConfig = mergeViewConfigWithPinnedColumn(
+        defaultConfig,
+        config.pinnedColumnIds,
+        displayColumns,
       );
+      setActiveSavedViewId(null);
+      setConfig(nextConfig);
       setDraftConfig((current) =>
         modalOpen
           ? structuredClone(
@@ -575,6 +610,7 @@ export function useTableView<T, Ctx = undefined>(
           : null,
       );
       setViewBaseline(structuredClone(defaultConfig));
+      persistTableViewStateNow(nextConfig, null);
     }
 
     setDeleteViewConfirm(null);
@@ -588,6 +624,7 @@ export function useTableView<T, Ctx = undefined>(
     defaultFilterColumnId,
     modalOpen,
     syncViewsToServer,
+    persistTableViewStateNow,
   ]);
 
   const updateColumnLayout = useCallback(

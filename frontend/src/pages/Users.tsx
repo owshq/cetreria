@@ -3,10 +3,12 @@ import { addMonths, subMonths } from 'date-fns';
 import { useSearchParams } from 'react-router';
 import { useCloseAllPopups, usePopupEscape } from '@/context/PopupStackContext';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import UserActivitiesPanel from '@/components/UserActivitiesPanel';
 import UserScheduleEditor, {
   ScheduleHolidayModeToolbarButton,
   ScheduleShiftLegend,
 } from '@/components/UserScheduleEditor';
+import { useWorkspaceFeatureSettings } from '@/context/WorkspaceFeatureSettingsContext';
 import { formatSchedulePeriodLabel } from '@/lib/schedulePeriod';
 import calendarStyles from './Calendar.module.css';
 import { usersService, authService } from '@/api';
@@ -35,7 +37,7 @@ import {
   USERS_VIEW_PAGE_KEY,
 } from '@/lib/userTableView';
 import { matchesTableSearch } from '@/lib/tableViews';
-import { renderUserCell } from '@/lib/userViewCells';
+import { renderUserCell, type UserPanelMode } from '@/lib/userViewCells';
 import ui from '@/styles/shared.module.css';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import ModalHeader from '@/components/ModalHeader';
@@ -71,6 +73,8 @@ export default function UsersManagement({
 
   const currentUser = authService.getCurrentUser();
   const closeAllPopups = useCloseAllPopups();
+  const { shiftSchedulingEnabled } = useWorkspaceFeatureSettings();
+  const userPanelMode: UserPanelMode = shiftSchedulingEnabled ? 'schedule' : 'activities';
 
   const { config, buildRows, updateColumnLayout } = useTableView(
     USERS_VIEW_PAGE_KEY,
@@ -157,7 +161,6 @@ export default function UsersManagement({
         updates.roleLabel = formData.roleLabel.trim() || DEFAULT_USER_ROLE_LABEL;
       }
       if (formData.password) updates.password = formData.password;
-      updates.maxVacationDays = normalizeMaxVacationDays(formData.maxVacationDays);
       const updated = await usersService.update(editingUser, updates);
       if (updated.id === currentUser?.id) {
         authService.syncSessionUser(updated);
@@ -303,7 +306,8 @@ export default function UsersManagement({
     onCancelRoleEdit: cancelRoleEdit,
     roleEditCancelledRef,
     onEdit: handleEdit,
-    onOpenSchedule: setScheduleUser,
+    userPanelMode,
+    onOpenUserPanel: setScheduleUser,
     onDelete: handleDelete,
     passwordOverrides,
     revealedPasswordUserIds,
@@ -377,11 +381,14 @@ export default function UsersManagement({
                         {visibleColumns.map((column, columnIndex) => (
                           <td
                             key={column.id}
-                            className={resolveTableDataCellClassName(
-                              column,
-                              columnIndex,
-                              visibleColumns,
-                              config,
+                            className={cx(
+                              resolveTableDataCellClassName(
+                                column,
+                                columnIndex,
+                                visibleColumns,
+                                config,
+                              ),
+                              column.id === 'actions' && styles.actionsCell,
                             )}
                             style={resolveTableDataCellStyle(column, visibleColumns, config)}
                           >
@@ -417,7 +424,7 @@ export default function UsersManagement({
         <ModalOverlay>
           <div className={`${ui.modal} ${ui.modalLg}`}>
             <ModalHeader
-              title={`Horario — ${scheduleUser.name}`}
+              title={`${userPanelMode === 'schedule' ? 'Horario' : 'Actividades'} — ${scheduleUser.name}`}
               onClose={closeScheduleModal}
             />
             <div className={ui.modalScroll}>
@@ -441,26 +448,36 @@ export default function UsersManagement({
                     <ChevronRight size={18} />
                   </button>
                 </div>
-                <div className={styles.scheduleModalToolbarActions}>
-                  <ScheduleShiftLegend compact className={styles.scheduleModalToolbarLegend} />
-                  <ScheduleHolidayModeToolbarButton
-                    active={scheduleHolidayMode}
-                    onToggle={() => setScheduleHolidayMode((value) => !value)}
-                  />
-                </div>
+                {userPanelMode === 'schedule' ? (
+                  <div className={styles.scheduleModalToolbarActions}>
+                    <ScheduleShiftLegend compact className={styles.scheduleModalToolbarLegend} />
+                    <ScheduleHolidayModeToolbarButton
+                      active={scheduleHolidayMode}
+                      onToggle={() => setScheduleHolidayMode((value) => !value)}
+                    />
+                  </div>
+                ) : null}
               </div>
-              <UserScheduleEditor
-                userId={scheduleUser.id}
-                userName={scheduleUser.name}
-                embedded
-                toolbarControlled
-                currentDate={scheduleModalDate}
-                onPeriodChange={handleScheduleModalPeriodChange}
-                maxVacationDays={scheduleUser.maxVacationDays}
-                isAdmin
-                holidayMode={scheduleHolidayMode}
-                onHolidayModeChange={setScheduleHolidayMode}
-              />
+              {userPanelMode === 'schedule' ? (
+                <UserScheduleEditor
+                  userId={scheduleUser.id}
+                  userName={scheduleUser.name}
+                  embedded
+                  toolbarControlled
+                  currentDate={scheduleModalDate}
+                  onPeriodChange={handleScheduleModalPeriodChange}
+                  maxVacationDays={scheduleUser.maxVacationDays}
+                  isAdmin
+                  holidayMode={scheduleHolidayMode}
+                  onHolidayModeChange={setScheduleHolidayMode}
+                />
+              ) : (
+                <UserActivitiesPanel
+                  userId={scheduleUser.id}
+                  userName={scheduleUser.name}
+                  currentDate={scheduleModalDate}
+                />
+              )}
             </div>
             <ModalFooter>
               <ModalActions>
@@ -535,22 +552,24 @@ export default function UsersManagement({
                     />
                   </div>
                 )}
-                <div className={ui.field}>
-                  <label className={ui.label}>Días máx. de vacaciones al año</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={366}
-                    value={formData.maxVacationDays}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        maxVacationDays: normalizeMaxVacationDays(e.target.value),
-                      })
-                    }
-                  />
-                  <span className={styles.fieldNote}>0 = no puede marcar vacaciones en el calendario.</span>
-                </div>
+                {!editingUser && (
+                  <div className={ui.field}>
+                    <label className={ui.label}>Días máx. de vacaciones al año</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={366}
+                      value={formData.maxVacationDays}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          maxVacationDays: normalizeMaxVacationDays(e.target.value),
+                        })
+                      }
+                    />
+                    <span className={styles.fieldNote}>0 = no puede marcar vacaciones en el calendario.</span>
+                  </div>
+                )}
               </div>
               </div>
               <ModalFooter>

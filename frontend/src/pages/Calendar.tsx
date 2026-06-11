@@ -204,7 +204,6 @@ export default function Calendar() {
     readInitialTeamUserId(searchParams, !!isAdmin, currentUserId),
   );
   const [searchTerm, setSearchTerm] = useState('');
-  const [gapBannerExpanded, setGapBannerExpanded] = useState(false);
   const [calendarAvailabilityMode, setCalendarAvailabilityMode] = useState(false);
   const shiftColors = useShiftColorPalette();
   const [toolbarOptionsMenu, setToolbarOptionsMenu] = useState<{ x: number; y: number } | null>(null);
@@ -217,10 +216,10 @@ export default function Calendar() {
   const isMobile = !useMediaQuery('(min-width: 768px)');
   const [tablePageRef, navMobileHidden] = useHideOnScrollDown(isMobile && !loading);
   const [mainContentMeasureRef, isMainContentNarrow] = useElementWidthBelow(677, !isMobile && !loading);
+  const isCalendarCompact = isMobile || isMainContentNarrow;
   const calendarBodyRef = useRef<HTMLDivElement>(null);
   const isScrollPeriodView =
     displayMode === 'calendar' && (viewMode === 'week' || viewMode === 'day');
-  const isMonthCalendarView = displayMode === 'calendar' && viewMode === 'month';
   const [visibleScrollDate, setVisibleScrollDate] = useState(() => new Date());
   const periodAnchorDate = isScrollPeriodView ? visibleScrollDate : currentDate;
 
@@ -565,6 +564,7 @@ export default function Calendar() {
         viewerIsAdmin: isAdmin,
         activityTypes,
         operatorUserId: currentUserId,
+        workerSignaturesEnabled,
       },
     );
     return formatActivityAssociationGapBanner(
@@ -574,6 +574,7 @@ export default function Calendar() {
       {
         signatureSubjectLabel: gapBannerSignatureSubjectLabel,
         viewerIsAdmin: isAdmin,
+        workerSignaturesEnabled,
       },
     );
   }, [
@@ -589,6 +590,7 @@ export default function Calendar() {
     gapBannerSignatureSubjectLabel,
     isAdmin,
     activityTypes,
+    workerSignaturesEnabled,
   ]);
 
   const associationGapItems = useMemo(
@@ -603,6 +605,7 @@ export default function Calendar() {
           viewerIsAdmin: isAdmin,
           activityTypes,
           operatorUserId: currentUserId,
+          workerSignaturesEnabled,
         },
       ),
     [
@@ -614,16 +617,9 @@ export default function Calendar() {
       isAdmin,
       activityTypes,
       currentUserId,
+      workerSignaturesEnabled,
     ],
   );
-
-  useEffect(() => {
-    setGapBannerExpanded(false);
-  }, [
-    associationGapBanner?.rangeLabel,
-    associationGapItems.length,
-    displayMode,
-  ]);
 
   const tableExportActivities = useMemo(() => {
     if (displayMode !== 'table') return [];
@@ -868,6 +864,13 @@ export default function Calendar() {
     return resolved?.color ?? '#737373';
   };
 
+  const getEventDayLabel = (event: CalendarEvent) => {
+    const activity = findActivityForEvent(event, recentActivities);
+    const clientId = activity?.clientId ?? event.clientId;
+    const client = clientId ? clientsMap.get(clientId) : undefined;
+    return client?.name ?? event.title ?? 'Actividad';
+  };
+
   const handleCalendarDayAvailability = useCallback(
     (day: Date) => {
       if (!canUseCalendarAvailability || calendarAvailability.saving) return;
@@ -1028,39 +1031,66 @@ export default function Calendar() {
           </span>
         </div>
         <div className={styles.events}>
-          {dayEvents.map((event) => {
-            const activity = findActivityForEvent(event, recentActivities);
+          {options.mode === 'month' && isCalendarCompact ? (
+            dayEvents.length > 0 ? (
+              <div className={styles.monthDayDots} aria-label={`${dayEvents.length} actividades`}>
+                {dayEvents.slice(0, 4).map((event) => (
+                  <button
+                    key={event.id}
+                    type="button"
+                    className={styles.monthDayDot}
+                    style={{ backgroundColor: getEventColor(event) }}
+                    title={getEventDayLabel(event)}
+                    aria-label={getEventDayLabel(event)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openCalendarEvent(event);
+                    }}
+                  />
+                ))}
+                {dayEvents.length > 4 ? (
+                  <span className={styles.monthDayDotMore} aria-hidden>
+                    +{dayEvents.length - 4}
+                  </span>
+                ) : null}
+              </div>
+            ) : null
+          ) : (
+            dayEvents.map((event) => {
+              const activity = findActivityForEvent(event, recentActivities);
 
-            return (
-            <CalendarEventButton
-              key={event.id}
-              event={event}
-              activity={activity}
-              clientsMap={clientsMap}
-              activityTypes={activityTypes}
-              documentsByActivity={documentsByActivity}
-              assigneesById={assigneesById}
-              events={events}
-              onClick={(e) => {
-                e.stopPropagation();
-                openCalendarEvent(event);
-              }}
-              className={cx(styles.eventBtn, isActivityPast({ event }) && ui.pastActivity)}
-              style={{ '--type-color': getEventColor(event) } as React.CSSProperties}
-            >
-              <CalendarEventBody
-                event={event}
-                activity={activity}
-                clientsMap={clientsMap}
-                activityTypes={activityTypes}
-                documentsByActivity={documentsByActivity}
-                assigneesById={assigneesById}
-                events={events}
-                timeClassName={styles.eventTime}
-              />
-            </CalendarEventButton>
-            );
-          })}
+              return (
+                <CalendarEventButton
+                  key={event.id}
+                  event={event}
+                  activity={activity}
+                  clientsMap={clientsMap}
+                  activityTypes={activityTypes}
+                  documentsByActivity={documentsByActivity}
+                  assigneesById={assigneesById}
+                  events={events}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openCalendarEvent(event);
+                  }}
+                  className={cx(styles.eventBtn, isActivityPast({ event }) && ui.pastActivity)}
+                  style={{ '--type-color': getEventColor(event) } as React.CSSProperties}
+                >
+                  <CalendarEventBody
+                    event={event}
+                    activity={activity}
+                    clientsMap={clientsMap}
+                    activityTypes={activityTypes}
+                    documentsByActivity={documentsByActivity}
+                    assigneesById={assigneesById}
+                    events={events}
+                    timeClassName={styles.eventTime}
+                    compact={options.mode === 'month'}
+                  />
+                </CalendarEventButton>
+              );
+            })
+          )}
         </div>
         {renderCalendarDayShiftFooter(day)}
       </div>
@@ -1245,8 +1275,22 @@ export default function Calendar() {
 
   const showMobilePeriodNavRow = isMobile && (displayMode === 'table' || showPeriodNav);
   const showMobileGapBanner = Boolean(associationGapBanner && isMobile);
+  const showDesktopGapBanner = Boolean(associationGapBanner && !isMobile);
   const pinMobileGapBannerToCalendar =
     showMobileGapBanner && displayMode === 'calendar' && viewMode === 'month';
+  const desktopGapBanner = showDesktopGapBanner ? (
+    <div className={styles.calendarContentGapBanner}>
+      <ActivityAssociationGapBanner
+        content={associationGapBanner!}
+        items={associationGapItems}
+        events={events}
+        clientsMap={clientsMap}
+        activityTypes={activityTypes}
+        documentsByActivity={documentsByActivity}
+        assigneesById={assigneesById}
+      />
+    </div>
+  ) : null;
   const mobilePeriodNavLabel = sidebarPeriodLabel;
   const mobilePeriodNavClassName =
     displayMode === 'table' ? styles.periodTitleNavTable : styles.periodTitleNavToolbar;
@@ -1292,7 +1336,6 @@ export default function Calendar() {
       className={cx(
         styles.activitiesNav,
         filtersModalOpen && styles.activitiesNavFiltersOpen,
-        gapBannerExpanded && styles.activitiesNavGapExpanded,
         !showTeamSecondaryNav && !filtersModalOpen && styles.activitiesNavCollapsed,
       )}
       aria-label={filtersModalOpen ? 'Vistas y filtros' : 'Actividades del equipo'}
@@ -1312,18 +1355,15 @@ export default function Calendar() {
         </>
       ) : showTeamSecondaryNav ? (
         <>
-          {!gapBannerExpanded ? (
-            <div className={styles.activitiesNavHeader}>
-              <p className={styles.activitiesNavTitle}>{secondaryNavTitle}</p>
-              <SecondaryNavToggle
-                expanded
-                onToggle={toggleSecondaryNav}
-                controlsId="activities-secondary-nav"
-                className={styles.activitiesNavToggle}
-              />
-            </div>
-          ) : null}
-          {!gapBannerExpanded ? (
+          <div className={styles.activitiesNavHeader}>
+            <p className={styles.activitiesNavTitle}>{secondaryNavTitle}</p>
+            <SecondaryNavToggle
+              expanded
+              onToggle={toggleSecondaryNav}
+              controlsId="activities-secondary-nav"
+              className={styles.activitiesNavToggle}
+            />
+          </div>
           <div className={styles.activitiesNavScrollBody} {...scrollRegionProps}>
             {showDisplayModeInSidebar ? (
               <div className={styles.activitiesNavMainViewToggle}>{displayModeToggle}</div>
@@ -1413,23 +1453,7 @@ export default function Calendar() {
               />
             ) : null}
           </div>
-          ) : null}
-          {associationGapBanner && !isMobile && !gapBannerExpanded ? (
-            <SidebarFooter variant="secondary" className={styles.activitiesNavGapFooter}>
-              <ActivityAssociationGapBanner
-                placement="sidebar"
-                content={associationGapBanner}
-                items={associationGapItems}
-                events={events}
-                clientsMap={clientsMap}
-                activityTypes={activityTypes}
-                documentsByActivity={documentsByActivity}
-                assigneesById={assigneesById}
-                onExpandedChange={setGapBannerExpanded}
-              />
-            </SidebarFooter>
-          ) : null}
-          {!gapBannerExpanded && displayMode === 'calendar' && shiftSchedulingEnabled ? (
+          {displayMode === 'calendar' && shiftSchedulingEnabled ? (
             <SidebarFooter variant="secondary" className={styles.activitiesNavAvailabilityFooter}>
               {calendarAvailabilityMode ? (
                 <ScheduleShiftLegend
@@ -1442,24 +1466,6 @@ export default function Calendar() {
                 disabled={isAllTeam}
                 onToggle={() => setCalendarAvailabilityMode((value) => !value)}
                 sidebar
-              />
-            </SidebarFooter>
-          ) : null}
-          {associationGapBanner && !isMobile && gapBannerExpanded ? (
-            <SidebarFooter
-              variant="secondary"
-              className={styles.activitiesNavGapFooterExpanded}
-            >
-              <ActivityAssociationGapBanner
-                placement="sidebar"
-                content={associationGapBanner}
-                items={associationGapItems}
-                events={events}
-                clientsMap={clientsMap}
-                activityTypes={activityTypes}
-                documentsByActivity={documentsByActivity}
-                assigneesById={assigneesById}
-                onExpandedChange={setGapBannerExpanded}
               />
             </SidebarFooter>
           ) : null}
@@ -1693,6 +1699,7 @@ export default function Calendar() {
                 tableController={tableController}
                 onDataChanged={loadData}
               />
+              {desktopGapBanner}
             </div>
           ) : (
           <div className={styles.calendarBodyStack}>
@@ -1711,7 +1718,7 @@ export default function Calendar() {
               className={cx(
                 ui.tableBody,
                 styles.calendarBody,
-                (isScrollPeriodView || isMonthCalendarView) && styles.calendarBodyFill,
+                isScrollPeriodView && styles.calendarBodyFill,
                 pinMobileGapBannerToCalendar && styles.calendarBodyWithPinnedGap,
               )}
             >
@@ -1779,7 +1786,12 @@ export default function Calendar() {
                           className={styles.calendarPeriodSection}
                         >
                           <div className={styles.calendarMainShell}>
-                            <div className={styles.weekCalendar}>
+                            <div
+                              className={cx(
+                                styles.weekCalendar,
+                                isCalendarCompact && styles.weekCalendarStacked,
+                              )}
+                            >
                               {periodDays.map((day, index) => (
                                 <div
                                   key={`${key}-${day.toISOString()}`}
@@ -1957,7 +1969,7 @@ export default function Calendar() {
         </div>
         ) : (
         <div className={styles.calendarMainShell}>
-          <div className={styles.monthCalendar}>
+          <div className={cx(styles.monthCalendar, isCalendarCompact && styles.monthCalendarCompact)}>
             {IOS_WEEKDAY_LABELS.map((day) => (
               <div key={day} className={styles.weekday}>
                 {day}
@@ -1977,6 +1989,7 @@ export default function Calendar() {
               </div>
             )}
             </div>
+            {desktopGapBanner}
           </div>
           )}
 
@@ -1992,15 +2005,6 @@ export default function Calendar() {
           }
         >
           <div className={styles.calendarNavMobileActions}>
-            {displayMode === 'calendar' ? (
-              <ScheduleAvailabilityModeToolbarButton
-                active={calendarAvailabilityMode}
-                disabled={isAllTeam}
-                onToggle={() => setCalendarAvailabilityMode((value) => !value)}
-                mobileFooter
-                className={styles.calendarNavMobileAvailabilityBtn}
-              />
-            ) : null}
             <button
               type="button"
               onClick={openNew}

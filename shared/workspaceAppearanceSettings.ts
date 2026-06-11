@@ -1,4 +1,10 @@
 import { isValidUuid } from './ids.js';
+import {
+  DEFAULT_WORKSPACE_HEADING_FONT_ID,
+  DEFAULT_WORKSPACE_SUBTITLE_FONT_ID,
+  normalizeWorkspaceHeadingFontId,
+  normalizeWorkspaceSubtitleFontId,
+} from './workspaceTypography.js';
 
 export type LoginBackgroundImageSource = 'external' | 'uploaded';
 
@@ -19,6 +25,8 @@ export type WorkspaceAppearanceSettings = {
   workspaceId: string;
   loginBackgroundImages: LoginBackgroundImage[];
   loginBackgroundIntervalMs: number;
+  headingFontId: string;
+  subtitleFontId: string;
 };
 
 export type PublicLoginBackgroundImage = {
@@ -31,6 +39,8 @@ export type PublicLoginBackgroundImage = {
 export type PublicLoginAppearance = {
   images: PublicLoginBackgroundImage[];
   intervalMs: number;
+  headingFontId: string;
+  subtitleFontId: string;
 };
 
 const unsplash = (photoId: string) =>
@@ -82,6 +92,8 @@ export function defaultWorkspaceAppearanceSettings(
     workspaceId,
     loginBackgroundImages: createDefaultLoginBackgroundImages(),
     loginBackgroundIntervalMs: DEFAULT_LOGIN_BACKGROUND_INTERVAL_MS,
+    headingFontId: DEFAULT_WORKSPACE_HEADING_FONT_ID,
+    subtitleFontId: DEFAULT_WORKSPACE_SUBTITLE_FONT_ID,
   };
 }
 
@@ -149,6 +161,8 @@ export function normalizeWorkspaceAppearanceSettings(
     workspaceId,
     loginBackgroundImages: images.length > 0 ? images : defaults.loginBackgroundImages,
     loginBackgroundIntervalMs: intervalMs,
+    headingFontId: normalizeWorkspaceHeadingFontId(raw.headingFontId),
+    subtitleFontId: normalizeWorkspaceSubtitleFontId(raw.subtitleFontId),
   };
 }
 
@@ -169,6 +183,8 @@ export function toPublicLoginAppearance(
 ): PublicLoginAppearance {
   return {
     intervalMs: settings.loginBackgroundIntervalMs,
+    headingFontId: settings.headingFontId,
+    subtitleFontId: settings.subtitleFontId,
     images: settings.loginBackgroundImages.map((image) => ({
       id: image.id,
       source: image.source,

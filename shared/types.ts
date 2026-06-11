@@ -123,6 +123,8 @@ export interface Client {
   createdAtPrecision?: 'day' | 'year';
   /** Campos personalizados: nombre de columna → valor. */
   customFields?: Record<string, string>;
+  /** Operarios asignados explicitamente por admin (ademas de actividades). */
+  assignedUserIds?: string[];
 }
 
 export interface DocumentBillingAddress {
@@ -218,7 +220,8 @@ export interface Activity {
   hours: number;
   /** Trabajadores con turno y tramo horario propios en esta actividad. */
   assigneeSlots?: ActivityAssigneeSlot[];
-  attachments: string[];
+  /** Archivos adjuntos (materiales, certificados, etc.) distintos de facturas/albaranes. */
+  attachments: import('./activityAttachments.js').ActivityAttachment[];
   createdAt: string;
   /** Partes de trabajo (horas reales + notas) por operario. */
   workReports?: import('./activityWorkReport.js').ActivityWorkReport[];
@@ -263,9 +266,13 @@ export interface Document {
   workspaceId: string;
   type: 'invoice' | 'delivery-note';
   number: string;
+  /** Nombre visible congelado (numero + contacto segun formato al crear o migrar). */
+  displayName?: string;
   clientId: string;
   /** Actividad a la que pertenece la factura o el albarán */
   activityId?: string;
+  /** Operario del albaran generado desde su informe de trabajo */
+  workerUserId?: string;
   date: string;
   items: DocumentLineItem[];
   /** Base imponible (suma de líneas) */

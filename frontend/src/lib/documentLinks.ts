@@ -1,6 +1,9 @@
 import { documentsService } from '@/api';
 import type { Document } from '@shared/types';
-import { validateActivityInvoiceRequiresDeliveryNote } from '@shared/types';
+import {
+  validateActivityInvoiceRequiresDeliveryNote,
+  validateSingleActivityInvoice,
+} from '@shared/types';
 
 /** Sincroniza facturas/albaranes vinculados a una actividad. */
 export async function syncActivityDocumentLinks(
@@ -15,6 +18,15 @@ export async function syncActivityDocumentLinks(
   );
   if (linkError) {
     throw new Error(linkError);
+  }
+
+  const singleInvoiceError = validateSingleActivityInvoice(
+    clientDocuments,
+    activityId,
+    selectedDocumentIds,
+  );
+  if (singleInvoiceError) {
+    throw new Error(singleInvoiceError);
   }
 
   const selected = new Set(selectedDocumentIds);

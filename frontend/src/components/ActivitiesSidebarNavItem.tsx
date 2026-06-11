@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useRef } from 'react';
 import type {
   Activity,
   ActivityType,
@@ -10,10 +10,7 @@ import type {
 import { resolveActivityType } from '@shared/types';
 import ActivityPreviewPopover from '@/components/ActivityPreviewPopover';
 import StatusDot from '@/components/StatusDot';
-import { authService } from '@/api';
-import { useActivityModal } from '@/context/ActivityModalContext';
 import { useActivityPreviewHover } from '@/hooks/useActivityPreviewHover';
-import { buildActivityDocumentsModalOptions } from '@/lib/activityDocumentModalOptions';
 import { getActivitySidebarListLines, type ActivityPreviewMeta } from '@/lib/activityPreview';
 import { cx } from '@/lib/cx';
 import ui from '@/styles/shared.module.css';
@@ -46,7 +43,6 @@ export default function ActivitiesSidebarNavItem({
   past,
   onSelect,
 }: ActivitiesSidebarNavItemProps) {
-  const { openEdit, openEditByActivity } = useActivityModal();
   const itemRef = useRef<HTMLDivElement>(null);
   const {
     previewOpen,
@@ -54,26 +50,12 @@ export default function ActivitiesSidebarNavItem({
     handleMouseLeave,
     handleFocus,
     handleBlur,
-    closePreview,
   } = useActivityPreviewHover();
 
   const { clientName, summary, metaLine } = getActivitySidebarListLines(meta, activityTypes);
   const typeColor = meta.typeRef
     ? (resolveActivityType(meta.typeRef, activityTypes)?.color ?? '#a3a3a3')
     : null;
-
-  const handleAssociateDocument = useCallback(() => {
-    closePreview();
-    if (activity) {
-      openEditByActivity(
-        activity,
-        events,
-        buildActivityDocumentsModalOptions(authService.getCurrentUser(), activity, event),
-      );
-      return;
-    }
-    openEdit(event, { editMode: true, focusSection: 'documents' });
-  }, [activity, closePreview, event, events, openEdit, openEditByActivity]);
 
   return (
     <div
@@ -113,7 +95,6 @@ export default function ActivitiesSidebarNavItem({
         documentsByActivity={documentsByActivity}
         assigneesById={assigneesById}
         events={events}
-        onAssociateDocument={handleAssociateDocument}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       />

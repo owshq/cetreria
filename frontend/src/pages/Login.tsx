@@ -24,6 +24,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
+  const [credentialHelpOpen, setCredentialHelpOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,13 +61,13 @@ export default function Login() {
       </button>
 
       <div className={ui.centerContent}>
-        <div className={ui.loginCard}>
-          <div className={ui.loginLogoSection}>
-            <BrandLogo tone="login" size="lg" />
-          </div>
+        <div className={ui.loginLogoSection}>
+          <BrandLogo tone="login" size="lg" />
+        </div>
 
+        <div className={ui.loginCard}>
           <div className={ui.loginCardBody}>
-            <form onSubmit={handleSubmit} className={ui.form}>
+            <form onSubmit={handleSubmit} className={ui.loginForm}>
               <div className={ui.field}>
                 <label htmlFor="email" className={ui.label}>
                   Email
@@ -111,6 +112,22 @@ export default function Login() {
               <button type="submit" className={ui.loginSubmitBtn} disabled={loading}>
                 {loading ? 'Entrando...' : 'Iniciar Sesión'}
               </button>
+
+              <div className={ui.loginFormFooter}>
+                <button
+                  type="button"
+                  className={ui.loginHelpBtn}
+                  onClick={() => setCredentialHelpOpen((prev) => !prev)}
+                  aria-expanded={credentialHelpOpen}
+                >
+                  ¿No recuerdas tus credenciales?
+                </button>
+                {credentialHelpOpen && (
+                  <p className={ui.loginHelpMessage} role="status">
+                    Contacta con Admin
+                  </p>
+                )}
+              </div>
             </form>
 
             {unlocked && (

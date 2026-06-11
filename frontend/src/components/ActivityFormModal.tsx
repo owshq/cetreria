@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router';
 import { usePopupEscape } from '@/context/PopupStackContext';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Download, Eye, FilePlus, Link2, PenLine, Plus, X } from 'lucide-react';
+import { AlertTriangle, FilePlus, FileText, Link2, PenLine, Plus, RefreshCw, X } from 'lucide-react';
 import {
   activitiesService,
   authService,
@@ -28,11 +28,13 @@ import {
   isShiftCode,
   type ShiftCode,
   type ActivityAssigneeSlot,
+  activityEventSpanCrossesMidnight,
   aggregateEventTimeRange,
   buildAssigneeSlotsFromLegacy,
   getAssigneeIdsFromSlots,
   hoursForAssigneeSlot,
   normalizeActivityAssigneeSlots,
+  resolveActivitySlotsForDisplay,
   totalHoursFromAssigneeSlots,
   buildActivityEventTitle,
   canEditActivity,
@@ -55,27 +57,47 @@ import {
   buildActivityWorkerSignature,
   isActivitySignedByWorker,
   canSubmitActivityWorkReport,
+  canEditActivityWorkReport,
   canEditActivityWorkReportExtraItems,
+  getDefaultWorkReportWorkedMinutes,
+  hoursMinutesToWorkedMinutes,
+  isActivityStarted,
   allAssigneesSubmittedWorkReports,
-  formatHoursMinutes,
   getActivityWorkReport,
+  getActivityWorkReportSurfaceStatus,
   getPendingWorkReportAssigneeIds,
+  getPendingDeliveryNoteAssigneeIds,
+  ACTIVITY_INVOICE_ZERO_HOUR_PRICE_WARNING,
+  deliveryNotesHaveZeroPricedHourLines,
   parseEventTypeIdFromTitle,
   resolveActivityType,
   activityTypeCreatesDeliveryNote,
   activityTypeUsesWorkReport,
   buildActivityDeliveryNotePreviewDocument,
+  findActivityDeliveryNoteForWorker,
+  listUnmatchedActivityDeliveryNotes,
   formatDocumentAmount,
   UNKNOWN_ACTIVITY_TYPE_LABEL,
-  workedMinutesToHours,
-  formatInvoiceDeliveryNoteMismatchBanner,
+  formatInvoiceActivityDeliveryNotesMismatchBanner,
   getActivityInvoiceWithoutDeliveryNoteBanner,
+  getInvoiceDeliveryNotesMismatchTooltip,
+  INVOICE_DELIVERY_NOTES_OUT_OF_SYNC_SUMMARY,
+  invoiceMatchesActivityDeliveryNotes,
+  resolveDeliveryNotesAggregateTotals,
   validateActivityInvoiceRequiresDeliveryNote,
 } from '@shared/types';
 import { ShiftStateBadge } from '@/components/UserScheduleEditor';
 import { useWorkspaceScheduleSettings } from '@/context/WorkspaceScheduleSettingsContext';
 import { useWorkspaceFeatureSettings } from '@/context/WorkspaceFeatureSettingsContext';
 import { getActivityEmoji } from '@/lib/activityIcons';
+import {
+  formatActivityScheduleEditHint,
+  formatActivityScheduleHoursLabel,
+} from '@/lib/activityScheduleHoursHint';
+import {
+  formatActivityCalendarDateRange,
+  formatActivityCalendarTimeRange,
+} from '@/lib/activityScheduleDisplay';
 import { formatDashboardJobsHours } from '@/lib/dashboardJobsMatrix';
 import { cx } from '@/lib/cx';
 import ui from '@/styles/shared.module.css';
@@ -86,26 +108,34 @@ import { useActivityTypes } from '@/context/ActivityTypesContext';
 import type { ActivityModalFocusSection } from '@/context/activityModalContext';
 import { useActivityModal } from '@/context/activityModalContext';
 import ActivityDocumentLinks from '@/components/ActivityDocumentLinks';
-import ActivityWorkReportPanel from '@/components/ActivityWorkReportPanel';
+import ActivityWorkReportPanel, {
+  ActivityWorkReportFormHeader,
+  EMPTY_WORKED_TIME,
+  splitWorkedMinutes,
+  type ActivityWorkReportActionsHandle,
+  type WorkedTimeDraft,
+} from '@/components/ActivityWorkReportPanel';
 import ActivityDeliveryNotePreviewModal from '@/components/ActivityDeliveryNotePreviewModal';
 import DocumentFormModal, { type DocumentCreationMode } from '@/components/DocumentFormModal';
 import ModalHeader from '@/components/ModalHeader';
-import { ModalActions, ModalFooter, modalBtnPrimary, modalBtnSecondary } from '@/components/ModalFooter';
+import { ModalActions, ModalFooter, modalBtnPrimary } from '@/components/ModalFooter';
 import ModalOverlay from '@/components/ModalOverlay';
+import ActivityAttachmentsPanel from '@/components/ActivityAttachmentsPanel';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { Select } from '@/components/forms';
 import SearchableSelect from '@/components/SearchableSelect';
 import { Input, Textarea } from '@/components/forms';
-import { canAssociateActivityDeliveryNote, activityHasLinkedDeliveryNote } from '@/lib/activityDocumentModalOptions';
-import { syncActivityDocumentLinks } from '@/lib/documentLinks';
 import {
-  downloadDocumentPdf,
-  openDocumentPdf,
-  openDocumentPdfLocally,
-} from '@/lib/documentPdf';
+  canCreateActivityDeliveryNote,
+  canAdminGenerateActivityInvoice,
+  canAdminUpdateActivityInvoiceFromDeliveryNotes,
+  activityHasLinkedDeliveryNote,
+} from '@/lib/activityDocumentModalOptions';
+import { syncActivityDocumentLinks } from '@/lib/documentLinks';
+import { openDocumentPdf, openDocumentPdfLocally } from '@/lib/documentPdf';
 import { navigationStateForReturn } from '@/lib/navigation';
 import {
-  getActivityDeliveryNotePreviewDisabledReason,
+  getActivityDeliveryNotePreviewViewDisabledReason,
   useActivityDeliveryNotePreview,
 } from '@/hooks/useActivityDeliveryNotePreview';
 import styles from '@/pages/Calendar.module.css';
@@ -279,17 +309,15 @@ function resolveSimpleAssigneeSlotsForSave(
   const ids = assignedTo.length > 0 ? assignedTo : [currentUserId];
   if (ids.length === 0) return null;
 
-  return ids.map((userId) => {
+  const slots: ActivityAssigneeSlot[] = [];
+  for (const userId of ids) {
     const row = assigneeSlots[userId];
-    const startTime = row?.startTime?.trim() || '09:00';
-    const endTime = row?.endTime?.trim() || '10:00';
-    return {
-      userId,
-      shift: 'L',
-      startTime,
-      endTime,
-    };
-  });
+    const startTime = row?.startTime?.trim() ?? '';
+    const endTime = row?.endTime?.trim() ?? '';
+    if (!isValidActivityTime(startTime) || !isValidActivityTime(endTime)) return null;
+    slots.push({ userId, shift: 'L', startTime, endTime });
+  }
+  return slots;
 }
 
 function linkedDocumentIdsForClient(
@@ -303,6 +331,23 @@ function linkedDocumentIdsForClient(
   });
 }
 
+function resolveAssigneeUsers(
+  userIds: string[],
+  users: UserAssignee[],
+  activity?: Activity | null,
+): UserAssignee[] {
+  return userIds.map((userId) => {
+    const known = users.find((user) => user.id === userId);
+    if (known) return known;
+    const report = activity ? getActivityWorkReport(activity, userId) : undefined;
+    return {
+      id: userId,
+      name: report?.userName?.trim() || 'Operario',
+      avatarUrl: undefined,
+    };
+  });
+}
+
 function defaultAssigneeSlot(
   userId: string,
   shiftsByUserId: Map<string, ShiftCode>,
@@ -313,6 +358,82 @@ function defaultAssigneeSlot(
     planned && ACTIVITY_PLANNING_SHIFT_CODES.includes(planned) ? planned : 'M';
   const { startTime, endTime } = shiftEventTimes[shift];
   return { shift, startTime, endTime };
+}
+
+function parseWorkedTimePart(raw: string, max: number): number {
+  const trimmed = raw.trim();
+  if (!trimmed) return 0;
+  const value = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(value) || value < 0) return 0;
+  return Math.min(max, value);
+}
+
+function timeToMinutesLocal(time: string): number | null {
+  if (!/^\d{2}:\d{2}$/.test(time)) return null;
+  const [h, m] = time.split(':').map((part) => Number.parseInt(part, 10));
+  if ([h, m].some((n) => Number.isNaN(n))) return null;
+  return h * 60 + m;
+}
+
+function minutesToTimeHHmm(totalMinutes: number): string {
+  const normalized = ((totalMinutes % (24 * 60)) + 24 * 60) % (24 * 60);
+  const h = Math.floor(normalized / 60);
+  const m = normalized % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function endTimeFromStartAndWorkedMinutes(
+  startTime: string,
+  workedMinutes: number,
+): string | null {
+  const start = timeToMinutesLocal(startTime);
+  if (start == null || workedMinutes <= 0) return null;
+  return minutesToTimeHHmm(start + workedMinutes);
+}
+
+function resolveWorkReportScheduleForUser(
+  userId: string,
+  activitySlots: ActivityAssigneeSlot[],
+  savedAssigneeSlots: ActivityAssigneeSlot[],
+  formAssigneeSlots: Record<string, AssigneeSlotForm>,
+  eventTimeRange: { startTime: string; endTime: string },
+  assignedUserIds: string[],
+): { startTime: string; endTime: string } {
+  const displaySlot = activitySlots.find((slot) => slot.userId === userId);
+  if (
+    displaySlot &&
+    isValidActivityTime(displaySlot.startTime) &&
+    isValidActivityTime(displaySlot.endTime)
+  ) {
+    return { startTime: displaySlot.startTime, endTime: displaySlot.endTime };
+  }
+
+  const saved = savedAssigneeSlots.find((slot) => slot.userId === userId);
+  if (saved && isValidActivityTime(saved.startTime) && isValidActivityTime(saved.endTime)) {
+    return { startTime: saved.startTime, endTime: saved.endTime };
+  }
+
+  if (assignedUserIds.length === 1 && assignedUserIds[0] === userId) {
+    const { startTime, endTime } = eventTimeRange;
+    if (isValidActivityTime(startTime) && isValidActivityTime(endTime)) {
+      return { startTime, endTime };
+    }
+  }
+
+  const row = formAssigneeSlots[userId];
+  if (row && isValidActivityTime(row.startTime) && isValidActivityTime(row.endTime)) {
+    return { startTime: row.startTime, endTime: row.endTime };
+  }
+
+  return { startTime: '', endTime: '' };
+}
+
+function workedTimeDraftFromSlot(
+  slot: Pick<ActivityAssigneeSlot, 'startTime' | 'endTime'>,
+): WorkedTimeDraft {
+  const slotHours = hoursForAssigneeSlot(slot);
+  if (slotHours <= 0) return EMPTY_WORKED_TIME;
+  return splitWorkedMinutes(Math.round(slotHours * 60));
 }
 
 function defaultFormData() {
@@ -351,8 +472,6 @@ export default function ActivityFormModal({
   onSaved,
   onActivityUpdated,
 }: ActivityFormModalProps) {
-  usePopupEscape(true, onClose);
-
   const navigate = useNavigate();
   const location = useLocation();
   const { notifyActivitySaved } = useActivityModal();
@@ -380,8 +499,10 @@ export default function ActivityFormModal({
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [documentModal, setDocumentModal] = useState<{
-    type: 'create' | 'duplicate';
+    type: 'create' | 'duplicate' | 'edit';
     creationMode?: DocumentCreationMode;
+    editingDoc?: Document;
+    reloadFromDeliveryNotes?: boolean;
   } | null>(null);
   const [duplicateSourceInvoice, setDuplicateSourceInvoice] = useState<Document | null>(null);
   const [saving, setSaving] = useState(false);
@@ -392,16 +513,23 @@ export default function ActivityFormModal({
   const [realWorkedTimeByUser, setRealWorkedTimeByUser] = useState<
     Record<string, RealWorkedTimeInput>
   >({});
+  const [workReportWorkedTimeByUser, setWorkReportWorkedTimeByUser] = useState<
+    Record<string, WorkedTimeDraft>
+  >({});
   const [signatureCancelConfirm, setSignatureCancelConfirm] = useState<
     | { scope: 'all' }
     | { scope: 'user'; userId: string; userName: string }
     | null
   >(null);
   const [savingSlotUserId, setSavingSlotUserId] = useState<string | null>(null);
+  const [editingSlotUserId, setEditingSlotUserId] = useState<string | null>(null);
   const [shiftsByUserId, setShiftsByUserId] = useState<Map<string, ShiftCode>>(new Map());
   const formSeedRef = useRef<string | null>(null);
+  const editModeSeedRef = useRef<string | null>(null);
   const activityEnrichedRef = useRef<string | null>(null);
   const isEditModeRef = useRef(false);
+  const persistedDuringCreateRef = useRef(false);
+  const workReportActionsRef = useRef<ActivityWorkReportActionsHandle | null>(null);
 
   const currentUser = authService.getCurrentUser();
   const isAdmin = currentUser?.role === 'admin';
@@ -453,7 +581,14 @@ export default function ActivityFormModal({
   }, [loadReferenceData]);
 
   useEffect(() => {
-    if (shiftSchedulingEnabled || eventToEdit || activityToEdit || duplicateFrom || !currentUser) {
+    if (
+      isAdmin ||
+      shiftSchedulingEnabled ||
+      eventToEdit ||
+      activityToEdit ||
+      duplicateFrom ||
+      !currentUser
+    ) {
       return;
     }
     setFormData((prev) => {
@@ -466,6 +601,7 @@ export default function ActivityFormModal({
       };
     });
   }, [
+    isAdmin,
     shiftSchedulingEnabled,
     eventToEdit,
     activityToEdit,
@@ -510,6 +646,7 @@ export default function ActivityFormModal({
     if (seed && seed !== formSeedRef.current) {
       formSeedRef.current = seed;
       activityEnrichedRef.current = null;
+      persistedDuringCreateRef.current = false;
       const preserveAssignees = isEditModeRef.current;
 
       if (eventToEdit) {
@@ -566,9 +703,10 @@ export default function ActivityFormModal({
         setResolvedActivityId(undefined);
         setLinkedDocumentIds([]);
         const slots = normalizeActivityAssigneeSlots(duplicateFrom, null, boundaries);
-        const assigneeIds = currentUser
-          ? [currentUser.id]
-          : getAssigneeIdsFromSlots(slots);
+        const assigneeIds =
+          currentUser && !isAdmin
+            ? [currentUser.id]
+            : getAssigneeIdsFromSlots(slots);
         const slotRecord = slotsToAssigneeFormRecord(slots);
         const assigneeSlots: Record<string, AssigneeSlotForm> = {};
         for (const userId of assigneeIds) {
@@ -596,18 +734,26 @@ export default function ActivityFormModal({
         setFormData((current) => (current.type ? current : { ...current, type: typeId }));
       }
     }
-  }, [eventToEdit, activityToEdit, duplicateFrom, activityTypes, currentUser, boundaries, shiftEventTimes]);
+  }, [eventToEdit, activityToEdit, duplicateFrom, activityTypes, currentUser, isAdmin, boundaries, shiftEventTimes]);
 
   useEffect(() => {
     isEditModeRef.current = isEditMode;
   }, [isEditMode]);
 
   useEffect(() => {
+    const seed =
+      getFormSeed(eventToEdit, activityToEdit, duplicateFrom) ??
+      `${directForm ? 'direct' : 'new'}:${initialDate ?? ''}`;
+
+    if (seed === editModeSeedRef.current) return;
+
+    editModeSeedRef.current = seed;
     setChangingType(false);
     setIsEditMode(initialEditMode);
     setLinkingDocumentsInView(false);
+    setEditingSlotUserId(null);
     setSaveError(null);
-  }, [eventToEdit, activityToEdit, duplicateFrom, directForm, initialEditMode]);
+  }, [eventToEdit, activityToEdit, duplicateFrom, directForm, initialEditMode, initialDate]);
 
   useEffect(() => {
     if (!initialFocusSection) return;
@@ -622,7 +768,7 @@ export default function ActivityFormModal({
       initialFocusSection === 'documents'
         ? isEditMode
           ? 'activity-section-documents'
-          : 'activity-view-work-report'
+          : 'activity-view-documents'
         : initialFocusSection === 'assignees'
           ? 'activity-section-assignees'
           : initialFocusSection === 'workReport'
@@ -679,10 +825,17 @@ export default function ActivityFormModal({
       activityEnrichedRef.current = eventToEdit.id;
       setLinkedActivity(activity);
       setResolvedActivityId(activity.id);
+      const slots = normalizeActivityAssigneeSlots(activity, eventToEdit, boundaries);
       setFormData((current) => ({
         ...current,
         type: activity.type || current.type,
         clientId: current.clientId || activity.clientId || eventToEdit.clientId || '',
+        ...(isEditModeRef.current
+          ? {}
+          : {
+              assignedTo: getAssigneeIdsFromSlots(slots),
+              assigneeSlots: slotsToAssigneeFormRecord(slots),
+            }),
       }));
     });
 
@@ -752,6 +905,7 @@ export default function ActivityFormModal({
   const selectedTypeEmoji = selectedType ? getActivityEmoji(selectedType.icon) : null;
   const activeActivity = linkedActivity ?? activityToEdit;
   const activeEvent = eventToEdit ?? linkedEvent;
+
   const activeActivityType = resolveActivityType(
     activeActivity?.type ?? formData.type,
     activityTypes,
@@ -760,6 +914,7 @@ export default function ActivityFormModal({
   const activeTypeUsesWorkReport = activityTypeUsesWorkReport(activeActivityType);
   const isExisting = Boolean(eventToEdit || activityToEdit || linkedActivity);
   const typeUsesWorkReport = isExisting ? activeTypeUsesWorkReport : selectedTypeUsesWorkReport;
+  const activityDetailsSectionTitle = typeUsesWorkReport ? 'Informe de Trabajo' : 'Evento';
   const canEdit = isExisting
     ? canEditActivity(currentUser, { activity: activeActivity, event: activeEvent })
     : true;
@@ -777,9 +932,10 @@ export default function ActivityFormModal({
       canEditActivityWorkReportExtraItems(currentUser, {
         activity: activeActivity,
         event: activeEvent,
+        documents: clientDocuments,
       }),
   );
-  const showViewMode = isExisting && !isEditMode;
+  const showViewMode = isExisting && !isEditMode && !persistedDuringCreateRef.current;
   const isEditing = isExisting && isEditMode;
   const isPastActivity = isExisting
     ? isActivityPast({ activity: activeActivity, event: activeEvent })
@@ -792,7 +948,26 @@ export default function ActivityFormModal({
       ? formatDistanceToNow(activityEndDate, { addSuffix: true, locale: es })
       : null;
 
+  const handleRequestClose = useCallback(() => {
+    if (isEditing) {
+      setSaveError(null);
+      setChangingType(false);
+      setLinkingDocumentsInView(false);
+      setEditingSlotUserId(null);
+      isEditModeRef.current = false;
+      formSeedRef.current = null;
+      setIsEditMode(false);
+      return;
+    }
+    onClose();
+  }, [isEditing, onClose]);
+
+  usePopupEscape(true, handleRequestClose);
+
   const activityIdForLinks = resolvedActivityId ?? eventToEdit?.activityId;
+  const canAssociateActivityDocuments = Boolean(
+    isAdmin && formData.clientId && activityIdForLinks,
+  );
 
   const openCreateDocument = useCallback((creationMode: DocumentCreationMode = 'generate') => {
     setDocumentModal({ type: 'create', creationMode });
@@ -874,6 +1049,74 @@ export default function ActivityFormModal({
     [shiftsByUserId, shiftEventTimes, boundaries],
   );
 
+  const applySimpleAssigneeTimeRange = useCallback(
+    (userId: string, patch: { startTime?: string; endTime?: string }) => {
+      setFormData((current) => {
+        const prev =
+          current.assigneeSlots[userId] ??
+          defaultAssigneeSlot(userId, shiftsByUserId, shiftEventTimes);
+        const startTime = patch.startTime ?? prev.startTime;
+        const endTime = patch.endTime ?? prev.endTime;
+        const nextSlot: AssigneeSlotForm = { ...prev, shift: 'L', startTime, endTime };
+        if (activeTypeUsesWorkReport) {
+          setWorkReportWorkedTimeByUser((prevWorked) => ({
+            ...prevWorked,
+            [userId]: workedTimeDraftFromSlot(nextSlot),
+          }));
+        }
+        return {
+          ...current,
+          assigneeSlots: {
+            ...current.assigneeSlots,
+            [userId]: nextSlot,
+          },
+        };
+      });
+    },
+    [activeTypeUsesWorkReport, shiftsByUserId, shiftEventTimes],
+  );
+
+  const applySimpleSharedTimeRange = useCallback(
+    (patch: { startTime?: string; endTime?: string }) => {
+      setFormData((current) => {
+        const assignedIds =
+          current.assignedTo.length > 0
+            ? current.assignedTo
+            : currentUser
+              ? [currentUser.id]
+              : [];
+        if (assignedIds.length !== 1 || !currentUser) return current;
+
+        const userId = assignedIds[0]!;
+        const prev =
+          current.assigneeSlots[userId] ??
+          defaultAssigneeSlot(userId, shiftsByUserId, shiftEventTimes);
+        const startTime = patch.startTime ?? prev.startTime;
+        const endTime = patch.endTime ?? prev.endTime;
+        const nextSlot: AssigneeSlotForm = {
+          ...prev,
+          shift: 'L',
+          startTime,
+          endTime,
+        };
+        if (activeTypeUsesWorkReport) {
+          setWorkReportWorkedTimeByUser((prevWorked) => ({
+            ...prevWorked,
+            [userId]: workedTimeDraftFromSlot(nextSlot),
+          }));
+        }
+        return {
+          ...current,
+          assigneeSlots: {
+            ...current.assigneeSlots,
+            [userId]: nextSlot,
+          },
+        };
+      });
+    },
+    [activeTypeUsesWorkReport, currentUser, shiftsByUserId, shiftEventTimes],
+  );
+
   const applyAssigneeShift = useCallback(
     (userId: string, shift: ShiftCode | '') => {
       if (!shift || !isShiftCode(shift)) {
@@ -890,9 +1133,27 @@ export default function ActivityFormModal({
     (userId: string, selected: boolean) => {
       setFormData((current) => {
         if (selected) {
-          const slot =
+          let slot =
             current.assigneeSlots[userId] ??
             defaultAssigneeSlot(userId, shiftsByUserId, shiftEventTimes);
+          if (!shiftSchedulingEnabled) {
+            const referenceId = current.assignedTo[0];
+            const reference = referenceId
+              ? current.assigneeSlots[referenceId]
+              : currentUser
+                ? current.assigneeSlots[currentUser.id]
+                : null;
+            if (reference) {
+              slot = {
+                ...slot,
+                shift: 'L',
+                startTime: reference.startTime,
+                endTime: reference.endTime,
+              };
+            } else {
+              slot = { ...slot, shift: 'L' };
+            }
+          }
           return {
             ...current,
             assignedTo: current.assignedTo.includes(userId)
@@ -909,12 +1170,36 @@ export default function ActivityFormModal({
         };
       });
     },
-    [shiftsByUserId, shiftEventTimes],
+    [shiftsByUserId, shiftEventTimes, shiftSchedulingEnabled, currentUser],
   );
 
+  const savedAssigneeSlots = useMemo(
+    () =>
+      activeActivity
+        ? normalizeActivityAssigneeSlots(activeActivity, activeEvent, boundaries)
+        : [],
+    [activeActivity, activeEvent, boundaries],
+  );
+
+  const savedAssigneeIds = useMemo(
+    () => getAssigneeIdsFromSlots(savedAssigneeSlots),
+    [savedAssigneeSlots],
+  );
+
+  const effectiveAssigneeIds = useMemo(() => {
+    if (isEditMode || !isExisting) return formData.assignedTo;
+    return savedAssigneeIds.length > 0 ? savedAssigneeIds : formData.assignedTo;
+  }, [isEditMode, isExisting, formData.assignedTo, savedAssigneeIds]);
+
   const activitySlots = useMemo(
-    () => formSlotsToActivitySlots(formData.assignedTo, formData.assigneeSlots),
-    [formData.assignedTo, formData.assigneeSlots],
+    () =>
+      resolveActivitySlotsForDisplay(
+        effectiveAssigneeIds,
+        formData.assigneeSlots,
+        savedAssigneeSlots,
+        boundaries,
+      ),
+    [effectiveAssigneeIds, formData.assigneeSlots, savedAssigneeSlots, boundaries],
   );
 
   const totalActivityHours = useMemo(
@@ -932,8 +1217,68 @@ export default function ActivityFormModal({
     [eventTimeRange],
   );
 
-  const totalExceedsCalendarSpan =
-    activitySlots.length > 0 && totalActivityHours > calendarSpanHours + 0.001;
+  const showAssigneesEditSection = shiftSchedulingEnabled || isExisting || isAdmin;
+
+  useEffect(() => {
+    if (isEditMode || !isExisting || savedAssigneeSlots.length === 0) return;
+
+    const savedIds = getAssigneeIdsFromSlots(savedAssigneeSlots);
+    const savedSlotsRecord = slotsToAssigneeFormRecord(savedAssigneeSlots);
+
+    setFormData((current) => {
+      const idsMatch =
+        current.assignedTo.length === savedIds.length &&
+        savedIds.every((id) => current.assignedTo.includes(id));
+      if (idsMatch) return current;
+
+      return {
+        ...current,
+        assignedTo: savedIds,
+        assigneeSlots: { ...savedSlotsRecord, ...current.assigneeSlots },
+      };
+    });
+  }, [isEditMode, isExisting, savedAssigneeSlots]);
+
+  useEffect(() => {
+    if (!isEditMode || !isExisting) return;
+    if (formData.assignedTo.length > 0) return;
+
+    const slots =
+      savedAssigneeSlots.length > 0
+        ? savedAssigneeSlots
+        : activeActivity
+          ? normalizeActivityAssigneeSlots(activeActivity, activeEvent, boundaries)
+          : activeEvent
+            ? buildAssigneeSlotsFromLegacy(activeEvent, activeActivity, boundaries)
+            : [];
+
+    if (slots.length === 0) {
+      if (!activeActivity?.userId) return;
+      const slot = defaultAssigneeSlot(activeActivity.userId, shiftsByUserId, shiftEventTimes);
+      setFormData((current) => ({
+        ...current,
+        assignedTo: [activeActivity.userId],
+        assigneeSlots: { ...current.assigneeSlots, [activeActivity.userId]: slot },
+      }));
+      return;
+    }
+
+    setFormData((current) => ({
+      ...current,
+      assignedTo: getAssigneeIdsFromSlots(slots),
+      assigneeSlots: { ...slotsToAssigneeFormRecord(slots), ...current.assigneeSlots },
+    }));
+  }, [
+    isEditMode,
+    isExisting,
+    formData.assignedTo.length,
+    savedAssigneeSlots,
+    activeActivity,
+    activeEvent,
+    boundaries,
+    shiftsByUserId,
+    shiftEventTimes,
+  ]);
 
   const handleLinkedDocumentsChange = useCallback(
     (ids: string[]) => {
@@ -950,7 +1295,7 @@ export default function ActivityFormModal({
       }
       setDocumentLinkError(null);
       setLinkedDocumentIds(ids);
-      if (showViewMode) {
+      if (showViewMode && isAdmin) {
         void persistDocumentLinks(ids);
       }
     },
@@ -987,14 +1332,176 @@ export default function ActivityFormModal({
     [],
   );
 
+  const resolveActivitySaveDraft = useCallback(():
+    | { error: string }
+    | {
+        activityPatch: {
+          clientId: string;
+          date: string;
+          type: string;
+          description: string;
+          hours: number;
+          assigneeSlots: ActivityAssigneeSlot[];
+          userId: string;
+        };
+        eventPayload: {
+          title: string;
+          description: string;
+          date: string;
+          startTime: string;
+          endTime: string;
+          assignedTo: string[];
+          clientId: string;
+        };
+        assigneeSlotsToSave: ActivityAssigneeSlot[];
+      } => {
+    if (!currentUser || !formData.type) {
+      return { error: 'Selecciona el tipo de actividad.' };
+    }
+    if (!formData.clientId) {
+      return { error: 'Selecciona un contacto antes de vincular documentos.' };
+    }
+
+    const client = clientsMap.get(formData.clientId);
+    const title = buildActivityEventTitle(formData.type, activityTypes, client?.name);
+    if (isAdmin && formData.assignedTo.length === 0) {
+      return { error: 'Selecciona al menos un operario.' };
+    }
+    const assignedTo = isAdmin
+      ? formData.assignedTo
+      : shiftSchedulingEnabled
+        ? formData.assignedTo.length > 0
+          ? formData.assignedTo
+          : [currentUser.id]
+        : [currentUser.id];
+    const assigneeSlots = shiftSchedulingEnabled
+      ? resolveAssigneeSlotsForSave(
+          assignedTo,
+          formData.assigneeSlots,
+          shiftsByUserId,
+          shiftEventTimes,
+        )
+      : resolveSimpleAssigneeSlotsForSave(
+          assignedTo,
+          formData.assigneeSlots,
+          currentUser.id,
+        );
+    if (!assigneeSlots) {
+      return {
+        error: shiftSchedulingEnabled
+          ? 'Cada operario asignado debe tener un turno y un tramo horario.'
+          : 'Indica un tramo horario valido.',
+      };
+    }
+
+    const assigneeSlotsToSave = preserveAssigneeSlotSignatures(
+      assigneeSlots,
+      activeActivity?.assigneeSlots,
+    );
+    const { startTime, endTime } = aggregateEventTimeRange(assigneeSlotsToSave);
+    const hours = totalHoursFromAssigneeSlots(assigneeSlotsToSave);
+
+    return {
+      activityPatch: {
+        clientId: formData.clientId,
+        date: formData.date,
+        type: formData.type,
+        description: formData.description,
+        hours,
+        assigneeSlots: assigneeSlotsToSave,
+        userId: assigneeSlotsToSave[0]?.userId ?? currentUser.id,
+      },
+      eventPayload: {
+        title,
+        description: formData.description,
+        date: formData.date,
+        startTime,
+        endTime,
+        assignedTo,
+        clientId: formData.clientId,
+      },
+      assigneeSlotsToSave,
+    };
+  }, [
+    activeActivity?.assigneeSlots,
+    activityTypes,
+    clientsMap,
+    currentUser,
+    formData.assignedTo,
+    formData.assigneeSlots,
+    formData.clientId,
+    formData.date,
+    formData.description,
+    formData.type,
+    isAdmin,
+    shiftEventTimes,
+    shiftSchedulingEnabled,
+    shiftsByUserId,
+  ]);
+
+  const ensureActivityPersisted = useCallback(async (): Promise<Activity | null> => {
+    if (activeActivity) return activeActivity;
+
+    const draft = resolveActivitySaveDraft();
+    if ('error' in draft) {
+      setSaveError(draft.error);
+      return null;
+    }
+
+    if (!currentUser) return null;
+
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const savedActivity = await activitiesService.create({
+        ...draft.activityPatch,
+        attachments: [],
+      });
+      const persistedEvent = await eventsService.create({
+        ...draft.eventPayload,
+        createdBy: currentUser.id,
+        activityId: savedActivity.id,
+      });
+      persistedDuringCreateRef.current = true;
+      setLinkedActivity(savedActivity);
+      setResolvedActivityId(savedActivity.id);
+      setLinkedEvent(persistedEvent);
+      onActivityUpdated?.(savedActivity);
+      await notifyActivitySaved();
+      return savedActivity;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setSaveError(error.message);
+      } else if (error instanceof Error && error.message) {
+        setSaveError(error.message);
+      } else {
+        setSaveError('No se pudo guardar la actividad');
+      }
+      return null;
+    } finally {
+      setSaving(false);
+    }
+  }, [
+    activeActivity,
+    currentUser,
+    notifyActivitySaved,
+    onActivityUpdated,
+    resolveActivitySaveDraft,
+  ]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser || !formData.type || showViewMode || saving) return;
 
     const client = clientsMap.get(formData.clientId);
     const title = buildActivityEventTitle(formData.type, activityTypes, client?.name);
-    const assignedTo =
-      shiftSchedulingEnabled || isAdmin
+    if (isAdmin && formData.assignedTo.length === 0) {
+      setSaveError('Selecciona al menos un operario.');
+      return;
+    }
+    const assignedTo = isAdmin
+      ? formData.assignedTo
+      : shiftSchedulingEnabled
         ? formData.assignedTo.length > 0
           ? formData.assignedTo
           : [currentUser.id]
@@ -1069,7 +1576,7 @@ export default function ActivityFormModal({
           null,
         );
 
-        if (formData.clientId) {
+        if (isAdmin && formData.clientId) {
           const linkError = validateActivityInvoiceRequiresDeliveryNote(
             clientDocuments,
             activityToEdit.id,
@@ -1128,6 +1635,23 @@ export default function ActivityFormModal({
           ...eventPayload,
           activityId,
         });
+      } else if (resolvedActivityId || linked?.id) {
+        activityId = resolvedActivityId ?? linked!.id;
+        savedActivity = await activitiesService.update(activityId, activityPatch);
+
+        if (linkedEvent) {
+          persistedEvent = await eventsService.update(linkedEvent.id, {
+            ...eventPayload,
+            activityId,
+          });
+        } else {
+          persistedEvent = await eventsService.create({
+            ...eventPayload,
+            createdBy: currentUser.id,
+            activityId,
+          });
+          setLinkedEvent(persistedEvent);
+        }
       } else {
         savedActivity = await activitiesService.create({
           clientId: formData.clientId,
@@ -1173,7 +1697,7 @@ export default function ActivityFormModal({
         });
       }
 
-      if (activityId && formData.clientId) {
+      if (isAdmin && activityId && formData.clientId) {
         const linkError = validateActivityInvoiceRequiresDeliveryNote(
           clientDocuments,
           activityId,
@@ -1268,22 +1792,84 @@ export default function ActivityFormModal({
   const canCreateDeliveryNote = Boolean(
     currentUser &&
       activeActivity &&
-      canAssociateActivityDeliveryNote(currentUser, activeActivity, linkedDocs, activeEvent),
+      canCreateActivityDeliveryNote(
+        currentUser,
+        activeActivity,
+        linkedDocs,
+        activityTypes,
+        activeEvent,
+      ),
   );
   const showSignatureFlow = workerSignaturesEnabled && !typeUsesWorkReport;
-  const linkedDeliveryNote =
-    linkedDocs.find((doc) => doc.type === 'delivery-note') ?? null;
+  const linkedDeliveryNotes = linkedDocs.filter((doc) => doc.type === 'delivery-note');
   const linkedInvoice = linkedDocs.find((doc) => doc.type === 'invoice') ?? null;
+
+  const openCreateInvoice = useCallback(() => {
+    setDocumentModal({ type: 'create', creationMode: 'generate' });
+  }, []);
+
+  const openUpdateInvoice = useCallback(() => {
+    if (!linkedInvoice) return;
+    setDocumentModal({
+      type: 'edit',
+      editingDoc: linkedInvoice,
+      reloadFromDeliveryNotes: true,
+    });
+  }, [linkedInvoice]);
+
+  const openEditInvoice = useCallback(() => {
+    if (!linkedInvoice) return;
+    setDocumentModal({
+      type: 'edit',
+      editingDoc: linkedInvoice,
+    });
+  }, [linkedInvoice]);
+
+  const canGenerateActivityInvoice = Boolean(
+    activeActivity &&
+      canAdminGenerateActivityInvoice(
+        currentUser,
+        activeActivity,
+        linkedDeliveryNotes,
+        linkedInvoice,
+        activeEvent,
+      ),
+  );
+  const canUpdateActivityInvoice = Boolean(
+    canAdminUpdateActivityInvoiceFromDeliveryNotes(
+      currentUser,
+      linkedInvoice,
+      linkedDeliveryNotes,
+    ),
+  );
+  const deliveryNotesAggregateTotals = useMemo(
+    () => resolveDeliveryNotesAggregateTotals(linkedDeliveryNotes),
+    [linkedDeliveryNotes],
+  );
+  const invoiceUpdateMismatchTooltip = useMemo(() => {
+    if (!linkedInvoice || linkedDeliveryNotes.length === 0) return null;
+    return getInvoiceDeliveryNotesMismatchTooltip(linkedInvoice, linkedDeliveryNotes);
+  }, [linkedInvoice, linkedDeliveryNotes]);
+
   const invoiceDeliveryMismatchBanner = useMemo(() => {
-    if (!isAdmin || !linkedInvoice || !linkedDeliveryNote) return null;
-    return formatInvoiceDeliveryNoteMismatchBanner(linkedInvoice, linkedDeliveryNote);
-  }, [isAdmin, linkedInvoice, linkedDeliveryNote]);
+    if (!isAdmin || !linkedInvoice || linkedDeliveryNotes.length === 0) return null;
+    return formatInvoiceActivityDeliveryNotesMismatchBanner(linkedInvoice, linkedDeliveryNotes);
+  }, [isAdmin, linkedInvoice, linkedDeliveryNotes]);
   const invoiceWithoutDeliveryNoteBanner = useMemo(() => {
     if (!isAdmin || !activityIdForLinks) return null;
     return getActivityInvoiceWithoutDeliveryNoteBanner(clientDocuments, activityIdForLinks);
   }, [isAdmin, activityIdForLinks, clientDocuments]);
   const linkedDocumentsExceptDeliveryNote = linkedDocs.filter(
-    (doc) => doc.type !== 'delivery-note',
+    (doc) => doc.type !== 'delivery-note' && doc.type !== 'invoice',
+  );
+  const showActivityDocumentsSection = Boolean(
+    activeActivity &&
+      (isAdmin ||
+        (!activeTypeUsesWorkReport && canManageDocuments) ||
+        (activeTypeUsesWorkReport &&
+          (activeTypeCreatesDeliveryNote ||
+            linkedDocumentsExceptDeliveryNote.length > 0 ||
+            linkedDeliveryNotes.length > 0))),
   );
   const allWorkReportsSubmitted = Boolean(
     activeActivity && allAssigneesSubmittedWorkReports(activeActivity, activeEvent),
@@ -1291,80 +1877,430 @@ export default function ActivityFormModal({
   const pendingWorkReportUserIds = activeActivity
     ? getPendingWorkReportAssigneeIds(activeActivity, activeEvent)
     : [];
-  const assignedUsers = users.filter((user) => formData.assignedTo.includes(user.id));
-  const pendingWorkReportNames = assignedUsers
-    .filter((user) => pendingWorkReportUserIds.includes(user.id))
-    .map((user) => user.name);
-
-  const draftDeliveryNote = useMemo(() => {
-    if (!activeActivity || !selectedClient || linkedDeliveryNote || !activeTypeCreatesDeliveryNote) {
-      return null;
+  const pendingDeliveryNoteUserIds = activeActivity
+    ? getPendingDeliveryNoteAssigneeIds(activeActivity, activeEvent, linkedDeliveryNotes)
+    : [];
+  const invoiceZeroHourPriceWarning = useMemo(
+    () =>
+      linkedDeliveryNotes.length > 0 && deliveryNotesHaveZeroPricedHourLines(linkedDeliveryNotes)
+        ? ACTIVITY_INVOICE_ZERO_HOUR_PRICE_WARNING
+        : null,
+    [linkedDeliveryNotes],
+  );
+  const assignedUsers = useMemo(
+    () => resolveAssigneeUsers(effectiveAssigneeIds, users, activeActivity),
+    [effectiveAssigneeIds, users, activeActivity],
+  );
+  const showPerAssigneeSlotSchedule =
+    shiftSchedulingEnabled || effectiveAssigneeIds.length > 1;
+  const simpleSharedTimeReadOnly =
+    !shiftSchedulingEnabled && effectiveAssigneeIds.length > 1;
+  const displayedEventTimeRange = eventTimeRange;
+  const displayedEventSpanCrossesMidnight = activityEventSpanCrossesMidnight(
+    displayedEventTimeRange,
+  );
+  const activityCalendarDateStr = activeEvent?.date ?? formData.date;
+  const displayedCalendarDateLabel = useMemo(
+    () =>
+      formatActivityCalendarDateRange(activityCalendarDateStr, displayedEventTimeRange),
+    [activityCalendarDateStr, displayedEventTimeRange],
+  );
+  const displayedCalendarTimeLabel = useMemo(
+    () =>
+      formatActivityCalendarTimeRange(activityCalendarDateStr, displayedEventTimeRange),
+    [activityCalendarDateStr, displayedEventTimeRange],
+  );
+  const scheduleHoursLabel = useMemo(
+    () =>
+      formatActivityScheduleHoursLabel(
+        totalActivityHours,
+        calendarSpanHours,
+        formatDashboardJobsHours,
+      ),
+    [totalActivityHours, calendarSpanHours],
+  );
+  const scheduleEditHint = useMemo(
+    () =>
+      formatActivityScheduleEditHint(
+        totalActivityHours,
+        calendarSpanHours,
+        displayedEventTimeRange,
+        displayedEventSpanCrossesMidnight,
+        formatDashboardJobsHours,
+      ),
+    [
+      totalActivityHours,
+      calendarSpanHours,
+      displayedEventTimeRange,
+      displayedEventSpanCrossesMidnight,
+    ],
+  );
+  const currentUserWorkReportTime = currentUser
+    ? (workReportWorkedTimeByUser[currentUser.id] ?? EMPTY_WORKED_TIME)
+    : EMPTY_WORKED_TIME;
+  const currentUserWorkReportSchedule = useMemo(() => {
+    if (!currentUser) {
+      return { startTime: '', endTime: '' };
     }
-    return buildActivityDeliveryNotePreviewDocument({
-      activity: activeActivity,
-      activityTypes,
-      client: selectedClient,
-      workspaceId: activeActivity.workspaceId,
+    return resolveWorkReportScheduleForUser(
+      currentUser.id,
+      activitySlots,
+      savedAssigneeSlots,
+      formData.assigneeSlots,
+      eventTimeRange,
+      effectiveAssigneeIds,
+    );
+  }, [
+    activitySlots,
+    currentUser,
+    effectiveAssigneeIds,
+    eventTimeRange,
+    formData.assigneeSlots,
+    savedAssigneeSlots,
+  ]);
+  const showWorkReportFormHeader = Boolean(
+    currentUser &&
+      activeActivity &&
+      (!isAdmin || effectiveAssigneeIds.includes(currentUser.id)) &&
+      (canEditActivityWorkReport(currentUser, {
+        activity: activeActivity,
+        event: activeEvent,
+        targetUserId: currentUser.id,
+        documents: clientDocuments,
+      }) ||
+        getActivityWorkReport(activeActivity, currentUser.id)?.status === 'submitted'),
+  );
+  const activityStartedForWorkReport = Boolean(
+    activeActivity &&
+      isActivityStarted({ activity: activeActivity, event: activeEvent }),
+  );
+
+  const handleWorkReportTimeChange = useCallback(
+    (draft: WorkedTimeDraft) => {
+      if (!currentUser) return;
+      setWorkReportWorkedTimeByUser((prev) => ({
+        ...prev,
+        [currentUser.id]: draft,
+      }));
+
+      const workedMinutes = hoursMinutesToWorkedMinutes(
+        parseWorkedTimePart(draft.hours, 24),
+        parseWorkedTimePart(draft.minutes, 59),
+      );
+
+      setFormData((current) => {
+        if (!current.assignedTo.includes(currentUser.id)) return current;
+        const prev =
+          current.assigneeSlots[currentUser.id] ??
+          defaultAssigneeSlot(currentUser.id, shiftsByUserId, shiftEventTimes);
+        const slots = resolveActivitySlotsForDisplay(
+          effectiveAssigneeIds,
+          current.assigneeSlots,
+          savedAssigneeSlots,
+          boundaries,
+        );
+        const slotSchedule = resolveWorkReportScheduleForUser(
+          currentUser.id,
+          slots,
+          savedAssigneeSlots,
+          current.assigneeSlots,
+          aggregateEventTimeRange(slots),
+          effectiveAssigneeIds,
+        );
+        const effectiveStartTime = isValidActivityTime(slotSchedule.startTime)
+          ? slotSchedule.startTime
+          : isValidActivityTime(prev.startTime)
+            ? prev.startTime
+            : defaultAssigneeSlot(currentUser.id, shiftsByUserId, shiftEventTimes).startTime;
+        const endTime =
+          workedMinutes > 0
+            ? endTimeFromStartAndWorkedMinutes(effectiveStartTime, workedMinutes) ?? prev.endTime
+            : prev.endTime;
+        return {
+          ...current,
+          assigneeSlots: {
+            ...current.assigneeSlots,
+            [currentUser.id]: {
+              ...prev,
+              shift: 'L',
+              startTime: effectiveStartTime,
+              endTime,
+            },
+          },
+        };
+      });
+    },
+    [
+      boundaries,
+      currentUser,
+      effectiveAssigneeIds,
+      savedAssigneeSlots,
+      shiftEventTimes,
+      shiftsByUserId,
+    ],
+  );
+
+  const handleWorkReportStartTimeChange = useCallback(
+    (startTime: string) => {
+      if (!currentUser || !isValidActivityTime(startTime)) return;
+      const draft = workReportWorkedTimeByUser[currentUser.id] ?? EMPTY_WORKED_TIME;
+      const workedMinutes = hoursMinutesToWorkedMinutes(
+        parseWorkedTimePart(draft.hours, 24),
+        parseWorkedTimePart(draft.minutes, 59),
+      );
+
+      setFormData((current) => {
+        if (!current.assignedTo.includes(currentUser.id)) return current;
+        const prev =
+          current.assigneeSlots[currentUser.id] ??
+          defaultAssigneeSlot(currentUser.id, shiftsByUserId, shiftEventTimes);
+        const endTime =
+          workedMinutes > 0
+            ? endTimeFromStartAndWorkedMinutes(startTime, workedMinutes) ?? prev.endTime
+            : prev.endTime;
+        return {
+          ...current,
+          assigneeSlots: {
+            ...current.assigneeSlots,
+            [currentUser.id]: { ...prev, shift: 'L', startTime, endTime },
+          },
+        };
+      });
+    },
+    [currentUser, shiftEventTimes, shiftsByUserId, workReportWorkedTimeByUser],
+  );
+
+  const persistActivityScheduleAfterWorkReport = useCallback(
+    async (activity: Activity): Promise<Activity> => {
+      if (!activeTypeUsesWorkReport || !currentUser) return activity;
+
+      const assigneeSlots = shiftSchedulingEnabled
+        ? resolveAssigneeSlotsForSave(
+            formData.assignedTo,
+            formData.assigneeSlots,
+            shiftsByUserId,
+            shiftEventTimes,
+          )
+        : resolveSimpleAssigneeSlotsForSave(
+            formData.assignedTo,
+            formData.assigneeSlots,
+            currentUser.id,
+          );
+      if (!assigneeSlots) return activity;
+
+      const savedSlots = normalizeActivityAssigneeSlots(activity, activeEvent, boundaries);
+      if (JSON.stringify(savedSlots) === JSON.stringify(assigneeSlots)) return activity;
+
+      const hours = totalHoursFromAssigneeSlots(assigneeSlots);
+      const updated = await activitiesService.update(activity.id, {
+        assigneeSlots,
+        hours,
+      });
+      setLinkedActivity(updated);
+
+      const eventId = activeEvent?.id ?? linkedEvent?.id;
+      if (eventId) {
+        const { startTime, endTime } = aggregateEventTimeRange(assigneeSlots);
+        const persistedEvent = await eventsService.update(eventId, {
+          startTime,
+          endTime,
+          assignedTo: formData.assignedTo,
+        });
+        setLinkedEvent(persistedEvent);
+      }
+
+      return updated;
+    },
+    [
+      activeEvent,
+      activeTypeUsesWorkReport,
+      boundaries,
+      currentUser,
+      formData.assignedTo,
+      formData.assigneeSlots,
+      linkedEvent?.id,
+      shiftEventTimes,
+      shiftSchedulingEnabled,
+      shiftsByUserId,
+    ],
+  );
+
+  useEffect(() => {
+    if (!activeActivity || !activeTypeUsesWorkReport || !activityStartedForWorkReport) return;
+
+    setWorkReportWorkedTimeByUser((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      for (const user of assignedUsers) {
+        const report = getActivityWorkReport(activeActivity, user.id);
+        if (report?.workedMinutes && report.workedMinutes > 0) {
+          const split = splitWorkedMinutes(report.workedMinutes);
+          const current = prev[user.id];
+          if (
+            !current ||
+            current.hours !== split.hours ||
+            current.minutes !== split.minutes
+          ) {
+            next[user.id] = split;
+            changed = true;
+          }
+          continue;
+        }
+
+        if (prev[user.id] !== undefined) continue;
+
+        const slot = activitySlots.find((item) => item.userId === user.id);
+        if (slot) {
+          const slotDraft = workedTimeDraftFromSlot(slot);
+          if (slotDraft.hours || slotDraft.minutes) {
+            next[user.id] = slotDraft;
+            changed = true;
+            continue;
+          }
+        }
+
+        const defaultMinutes = getDefaultWorkReportWorkedMinutes(
+          activeActivity,
+          activeEvent,
+          user.id,
+          boundaries,
+        );
+        next[user.id] =
+          defaultMinutes > 0 ? splitWorkedMinutes(defaultMinutes) : EMPTY_WORKED_TIME;
+        changed = true;
+      }
+
+      return changed ? next : prev;
     });
   }, [
     activeActivity,
-    activeTypeCreatesDeliveryNote,
-    activityTypes,
-    linkedDeliveryNote,
-    selectedClient,
+    activeEvent,
+    activeTypeUsesWorkReport,
+    activitySlots,
+    activityStartedForWorkReport,
+    assignedUsers,
+    boundaries,
   ]);
 
-  const deliveryNotePreviewContext = useMemo(
-    () =>
-      activeActivity && selectedClient
-        ? {
-            activity: activeActivity,
-            activityTypes,
-            client: selectedClient,
-            workspaceId: activeActivity.workspaceId,
-            existingDeliveryNote: linkedDeliveryNote,
-          }
-        : null,
-    [activeActivity, activityTypes, linkedDeliveryNote, selectedClient],
+  type ActivityDeliveryNoteRow = {
+    key: string;
+    label: string;
+    workerUserId?: string;
+    existingDeliveryNote: Document | null;
+    previewDocument: Document | null;
+    viewDisabledReason: string | null;
+    isPendingWorkReport: boolean;
+  };
+
+  const buildDeliveryNotePreviewContext = useCallback(
+    (row: Pick<ActivityDeliveryNoteRow, 'workerUserId' | 'existingDeliveryNote' | 'label'>) => {
+      if (!activeActivity || !selectedClient) return null;
+      return {
+        activity: activeActivity,
+        activityTypes,
+        client: selectedClient,
+        workspaceId: activeActivity.workspaceId,
+        event: activeEvent,
+        existingDeliveryNote: row.existingDeliveryNote,
+        workerUserId: row.workerUserId,
+        workerName: row.label,
+      };
+    },
+    [activeActivity, activeEvent, activityTypes, selectedClient],
   );
 
-  const draftDeliveryNoteDisabledReason = useMemo(() => {
-    if (!deliveryNotePreviewContext) return null;
-    return getActivityDeliveryNotePreviewDisabledReason(
-      deliveryNotePreviewContext,
-      draftDeliveryNote,
+  const activityDeliveryNoteRows = useMemo((): ActivityDeliveryNoteRow[] => {
+    if (!activeActivity || !selectedClient || !activeTypeCreatesDeliveryNote) {
+      return [];
+    }
+
+    const rows: ActivityDeliveryNoteRow[] = assignedUsers.map((user) => {
+      const existingDeliveryNote =
+        findActivityDeliveryNoteForWorker(
+          activeActivity.id,
+          user.id,
+          linkedDeliveryNotes,
+          activeActivity,
+        ) ?? null;
+      const previewContext = {
+        activity: activeActivity,
+        activityTypes,
+        client: selectedClient,
+        workspaceId: activeActivity.workspaceId,
+        event: activeEvent,
+        existingDeliveryNote,
+        workerUserId: user.id,
+        workerName: user.name,
+      };
+      const previewDocument = buildActivityDeliveryNotePreviewDocument(previewContext);
+      const viewDisabledReason = getActivityDeliveryNotePreviewViewDisabledReason(
+        previewContext,
+        previewDocument,
+      );
+      return {
+        key: user.id,
+        label: user.name,
+        workerUserId: user.id,
+        existingDeliveryNote,
+        previewDocument,
+        viewDisabledReason,
+        isPendingWorkReport: pendingWorkReportUserIds.includes(user.id),
+      };
+    });
+
+    const resolvedDeliveryNoteIds = new Set(
+      rows
+        .map((row) => row.existingDeliveryNote?.id)
+        .filter((id): id is string => Boolean(id)),
     );
-  }, [deliveryNotePreviewContext, draftDeliveryNote]);
-
-  const openDraftDeliveryNotePreview = useCallback(async () => {
-    if (!deliveryNotePreviewContext || draftDeliveryNoteDisabledReason) return;
-    try {
-      await deliveryNotePreview.openPreview(deliveryNotePreviewContext);
-    } catch (error) {
-      setSaveError(
-        error instanceof Error ? error.message : 'No se pudo abrir el albarán.',
-      );
+    const legacyDeliveryNotes = listUnmatchedActivityDeliveryNotes(
+      activeActivity.id,
+      linkedDeliveryNotes,
+      resolvedDeliveryNoteIds,
+    );
+    for (const doc of legacyDeliveryNotes) {
+      const label = doc.workerUserId
+        ? (users.find((user) => user.id === doc.workerUserId)?.name ?? 'Operario')
+        : (doc.number || 'Albaran');
+      rows.push({
+        key: doc.id,
+        label,
+        workerUserId: doc.workerUserId,
+        existingDeliveryNote: doc,
+        previewDocument: doc,
+        viewDisabledReason: null,
+        isPendingWorkReport: false,
+      });
     }
+
+    return rows;
   }, [
-    deliveryNotePreview,
-    deliveryNotePreviewContext,
-    draftDeliveryNoteDisabledReason,
+    activeActivity,
+    activeEvent,
+    activeTypeCreatesDeliveryNote,
+    activityTypes,
+    assignedUsers,
+    linkedDeliveryNotes,
+    pendingWorkReportUserIds,
+    selectedClient,
+    users,
   ]);
 
-  const downloadDraftDeliveryNote = useCallback(async () => {
-    if (!deliveryNotePreviewContext || draftDeliveryNoteDisabledReason) return;
-    try {
-      await deliveryNotePreview.downloadPreview(deliveryNotePreviewContext);
-    } catch (error) {
-      setSaveError(
-        error instanceof Error ? error.message : 'No se pudo descargar el albarán.',
-      );
-    }
-  }, [
-    deliveryNotePreview,
-    deliveryNotePreviewContext,
-    draftDeliveryNoteDisabledReason,
-  ]);
+  const openDeliveryNotePreview = useCallback(
+    async (row: ActivityDeliveryNoteRow) => {
+      const context = buildDeliveryNotePreviewContext(row);
+      if (!context || row.viewDisabledReason) return;
+      try {
+        await deliveryNotePreview.openPreview(context);
+      } catch (error) {
+        setSaveError(
+          error instanceof Error ? error.message : 'No se pudo abrir el albaran.',
+        );
+      }
+    },
+    [buildDeliveryNotePreviewContext, deliveryNotePreview],
+  );
 
   const openLinkedDocument = useCallback(
     async (doc: Document) => {
@@ -1410,6 +2346,167 @@ export default function ActivityFormModal({
     return (
       <div className={styles.activityDocMismatchBanner} role="alert">
         <p className={styles.activityDocMismatchBannerText}>{invoiceDeliveryMismatchBanner}</p>
+        {canUpdateActivityInvoice ? (
+          <div className={styles.activityViewDocActions}>
+            <button
+              type="button"
+              className={ui.btnSecondary}
+              onClick={() => openUpdateInvoice()}
+            >
+              <RefreshCw size={16} aria-hidden />
+              Actualizar factura
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
+  const renderActivityInvoiceSection = () => {
+    if (!activeTypeCreatesDeliveryNote || !activeActivity || !isAdmin) return null;
+
+    const pendingAssignees = assignedUsers.filter((user) =>
+      pendingWorkReportUserIds.includes(user.id),
+    );
+    const pendingDeliveryNoteAssignees = assignedUsers.filter((user) =>
+      pendingDeliveryNoteUserIds.includes(user.id),
+    );
+    const invoiceInSync =
+      linkedInvoice &&
+      invoiceMatchesActivityDeliveryNotes(linkedInvoice, linkedDeliveryNotes);
+
+    return (
+      <div className={styles.activityViewDocGroup}>
+        <div className={styles.activityViewDeliveryNoteSectionIntro}>
+          <span className={styles.activityViewDocGroupTitle}>Factura</span>
+          <p className={styles.activityViewDeliveryNoteSectionHint}>
+            {allWorkReportsSubmitted
+              ? pendingDeliveryNoteAssignees.length > 0
+                ? 'Faltan albaranes de algunos operarios antes de poder facturar.'
+                : 'Suma de todos los albaranes de operarios. Solo el administrador puede emitirla.'
+              : 'Disponible cuando todos los operarios hayan enviado su informe de trabajo.'}
+          </p>
+          {!allWorkReportsSubmitted && pendingAssignees.length > 0 ? (
+            <p className={styles.activityViewDeliveryNoteSectionHint}>
+              Informes pendientes: {pendingAssignees.map((user) => user.name).join(', ')}.
+            </p>
+          ) : null}
+          {allWorkReportsSubmitted && pendingDeliveryNoteAssignees.length > 0 ? (
+            <p className={styles.activityViewDeliveryNoteSectionHint}>
+              Albaranes pendientes:{' '}
+              {pendingDeliveryNoteAssignees.map((user) => user.name).join(', ')}.
+            </p>
+          ) : null}
+        </div>
+
+        {linkedInvoice ? (
+          <div className={styles.activityViewDeliveryNoteCard}>
+            <div className={styles.activityViewDeliveryNoteCardMain}>
+              <span className={cx(ui.userAvatar, styles.assigneeAvatar)} aria-hidden>
+                🧾
+              </span>
+              <div className={styles.activityViewDeliveryNoteCardBody}>
+                <div className={styles.activityViewDeliveryNoteCardHeader}>
+                  <span className={styles.activityViewDeliveryNoteCardName}>
+                    {linkedInvoice.number}
+                  </span>
+                  <span
+                    className={cx(
+                      styles.activityViewDeliveryNoteStatus,
+                      invoiceInSync
+                        ? styles.activityViewDeliveryNoteStatusIssued
+                        : styles.activityViewDeliveryNoteStatusDraft,
+                    )}
+                  >
+                    {invoiceInSync ? 'Emitida' : 'Desactualizada'}
+                  </span>
+                </div>
+                <p className={styles.activityViewDeliveryNoteCardMeta}>
+                  {DOCUMENT_TYPE_LABELS.invoice} · {linkedInvoice.items.length} linea
+                  {linkedInvoice.items.length === 1 ? '' : 's'} · Total{' '}
+                  {formatDocumentAmount(linkedInvoice.total)}
+                </p>
+                {canUpdateActivityInvoice && invoiceUpdateMismatchTooltip ? (
+                  <p className={styles.activityViewDeliveryNoteCardMeta}>
+                    {INVOICE_DELIVERY_NOTES_OUT_OF_SYNC_SUMMARY}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            <div className={styles.activityViewDocActions}>
+              <button
+                type="button"
+                className={ui.btnSecondary}
+                onClick={() => openEditInvoice()}
+              >
+                <PenLine size={16} aria-hidden />
+                Editar factura
+              </button>
+              {canUpdateActivityInvoice ? (
+                <div className={styles.activityInvoiceActionRow}>
+                  <button
+                    type="button"
+                    className={ui.btnPrimary}
+                    onClick={() => openUpdateInvoice()}
+                  >
+                    <RefreshCw size={16} aria-hidden />
+                    Actualizar desde albaranes
+                  </button>
+                  {invoiceUpdateMismatchTooltip ? (
+                    <span className={styles.invoiceSyncTooltipWrap}>
+                      <button
+                        type="button"
+                        className={styles.invoiceSyncTooltipTrigger}
+                        aria-label={INVOICE_DELIVERY_NOTES_OUT_OF_SYNC_SUMMARY}
+                        title={invoiceUpdateMismatchTooltip}
+                      >
+                        <AlertTriangle size={16} aria-hidden />
+                      </button>
+                      <span className={styles.invoiceSyncTooltipBubble} role="tooltip">
+                        {invoiceUpdateMismatchTooltip}
+                      </span>
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+              <button
+                type="button"
+                className={ui.btnSecondary}
+                onClick={() => void openLinkedDocument(linkedInvoice)}
+              >
+                <FileText size={16} aria-hidden />
+                Abrir PDF
+              </button>
+            </div>
+          </div>
+        ) : canGenerateActivityInvoice ? (
+          <div className={styles.activityViewDeliveryNoteCard}>
+            <div className={styles.activityViewDeliveryNoteCardMain}>
+              <div className={styles.activityViewDeliveryNoteCardBody}>
+                <p className={styles.activityViewDeliveryNoteCardMeta}>
+                  {deliveryNotesAggregateTotals.lineCount} linea
+                  {deliveryNotesAggregateTotals.lineCount === 1 ? '' : 's'} de{' '}
+                  {linkedDeliveryNotes.length} albaran
+                  {linkedDeliveryNotes.length === 1 ? '' : 'es'}
+                </p>
+                <p className={styles.activityViewDeliveryNoteCardMeta}>
+                  Total estimado {formatDocumentAmount(deliveryNotesAggregateTotals.total)}
+                </p>
+                {invoiceZeroHourPriceWarning ? (
+                  <p className={styles.activityViewDeliveryNoteCardMeta} role="status">
+                    {invoiceZeroHourPriceWarning}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            <div className={styles.activityViewDocActions}>
+              <button type="button" className={ui.btnPrimary} onClick={() => openCreateInvoice()}>
+                <FilePlus size={16} aria-hidden />
+                Generar factura
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   };
@@ -1453,140 +2550,181 @@ export default function ActivityFormModal({
     </div>
   );
 
-  const renderActivityDeliveryNoteSection = () => {
-    const activityTypeLabel = activeActivityType?.name;
+  const renderActivityDeliveryNoteRow = (row: ActivityDeliveryNoteRow) => {
+    const persisted = Boolean(row.existingDeliveryNote);
+    const summaryDocument = row.existingDeliveryNote ?? row.previewDocument;
+    const hasLineItems = Boolean(summaryDocument?.items.length);
+    const canPreview = !row.viewDisabledReason;
+    const viewDisabled = !canPreview || deliveryNotePreview.previewLoading;
+    const statusLabel = persisted
+      ? 'Emitido'
+      : hasLineItems
+        ? 'Borrador'
+        : 'Informe pendiente';
+    const statusTone = persisted
+      ? styles.activityViewDeliveryNoteStatusIssued
+      : hasLineItems
+        ? styles.activityViewDeliveryNoteStatusDraft
+        : styles.activityViewDeliveryNoteStatusPending;
+
     return (
-      <div className={styles.activityViewDeliveryNoteCard}>
-        <div>
-          <span className={ui.fontMedium}>Albaran</span>
-          <p className={styles.activityViewEmpty}>
-            Documento que se va generando al completar los informes de trabajo
-            {activityTypeLabel ? ` (${activityTypeLabel})` : ''}.
-          </p>
+      <div key={row.key} className={styles.activityViewDeliveryNoteCard}>
+        <div className={styles.activityViewDeliveryNoteCardMain}>
+          <span className={cx(ui.userAvatar, styles.assigneeAvatar)} aria-hidden>
+            {getUserInitials(row.label)}
+          </span>
+          <div className={styles.activityViewDeliveryNoteCardInfo}>
+            <div className={styles.activityViewDeliveryNoteCardHeader}>
+              <span className={styles.activityViewDeliveryNoteCardTitle}>{row.label}</span>
+              <span className={cx(styles.activityViewDeliveryNoteStatus, statusTone)}>
+                {statusLabel}
+              </span>
+            </div>
+            {summaryDocument && (persisted || hasLineItems) ? (
+              <p className={styles.activityViewDeliveryNoteCardMeta}>
+                {persisted ? (
+                  <>
+                    <span className={styles.activityViewDeliveryNoteCardNumber}>
+                      {summaryDocument.number}
+                    </span>
+                    <span>{DOCUMENT_TYPE_LABELS[summaryDocument.type]}</span>
+                  </>
+                ) : (
+                  <span>Borrador segun informe de trabajo</span>
+                )}
+                {hasLineItems ? (
+                  <>
+                    <span className={styles.activityViewDeliveryNoteCardDot} aria-hidden>
+                      ·
+                    </span>
+                    <span>
+                      {summaryDocument.items.length} linea
+                      {summaryDocument.items.length === 1 ? '' : 's'}
+                    </span>
+                    <span className={styles.activityViewDeliveryNoteCardDot} aria-hidden>
+                      ·
+                    </span>
+                    <span>
+                      Total {persisted ? '' : 'estimado '}
+                      {formatDocumentAmount(summaryDocument.total)}
+                    </span>
+                  </>
+                ) : null}
+              </p>
+            ) : (
+              <p className={styles.activityViewDeliveryNoteCardMeta}>
+                Falta informe de trabajo.
+              </p>
+            )}
+          </div>
         </div>
-        {pendingWorkReportNames.length > 0 ? (
-          <p className={styles.activityViewEmpty}>
-            Faltan informes de trabajo: {pendingWorkReportNames.join(', ')}.
-          </p>
-        ) : null}
-        {draftDeliveryNoteDisabledReason ? (
-          <p className={styles.activityViewEmpty}>{draftDeliveryNoteDisabledReason}</p>
-        ) : draftDeliveryNote ? (
-          <p className={styles.activityViewEmpty}>
-            {draftDeliveryNote.items.length} línea
-            {draftDeliveryNote.items.length === 1 ? '' : 's'} · Total estimado{' '}
-            {formatDocumentAmount(draftDeliveryNote.total)}
-          </p>
-        ) : allWorkReportsSubmitted ? (
-          <p className={styles.activityViewEmpty}>
-            Informes completos. El albarán se generará automáticamente; también puedes crearlo
-            manualmente.
-          </p>
-        ) : (
-          <p className={styles.activityViewEmpty}>
-            Completa tu informe de trabajo para generar el albarán colectivo.
-          </p>
-        )}
-        <div className={styles.activityViewDocActions}>
-          <button
-            type="button"
-            className={ui.btnPrimary}
-            disabled={Boolean(draftDeliveryNoteDisabledReason) || deliveryNotePreview.previewLoading}
-            onClick={() => void openDraftDeliveryNotePreview()}
-          >
-            <Eye size={16} aria-hidden />
-            {deliveryNotePreview.previewLoading ? 'Abriendo…' : 'Ver albarán'}
-          </button>
-          <button
-            type="button"
-            className={ui.btnSecondary}
-            disabled={Boolean(draftDeliveryNoteDisabledReason) || deliveryNotePreview.previewLoading}
-            onClick={() => void downloadDraftDeliveryNote()}
-          >
-            <Download size={16} aria-hidden />
-            Descargar albarán
-          </button>
-          {allWorkReportsSubmitted && !draftDeliveryNote && canCreateDeliveryNote ? (
+        {canPreview ? (
+          <div className={styles.activityViewDocActions}>
             <button
               type="button"
-              className={ui.btnSecondary}
-              onClick={() => openCreateDocument('generate')}
+              className={persisted ? ui.btnSecondary : ui.btnPrimary}
+              disabled={viewDisabled}
+              onClick={() => void openDeliveryNotePreview(row)}
             >
-              <FilePlus size={16} aria-hidden />
-              Crear albarán
+              {deliveryNotePreview.previewLoading ? 'Abriendo…' : 'Ver albaran'}
             </button>
-          ) : null}
-        </div>
+            {persisted ? (
+              <button
+                type="button"
+                className={ui.btnSecondary}
+                onClick={() => void openLinkedDocument(row.existingDeliveryNote!)}
+              >
+                <FileText size={16} aria-hidden />
+                Abrir PDF
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     );
   };
 
-  const renderLinkedDeliveryNoteCard = () => {
-    if (!linkedDeliveryNote) return null;
+  const renderActivityDeliveryNoteSection = () => {
+    const activityTypeLabel = activeActivityType?.name;
+    const hasAnyDeliveryNoteDraft = activityDeliveryNoteRows.some(
+      (row) => row.existingDeliveryNote || (row.previewDocument?.items.length ?? 0) > 0,
+    );
+    const showDeliveryNoteRows = isPastActivity || hasAnyDeliveryNoteDraft;
     return (
-      <div className={styles.activityViewDeliveryNoteCard}>
-        <button
-          type="button"
-          className={styles.activityViewDocButton}
-          onClick={() => void openLinkedDocument(linkedDeliveryNote)}
-          title="Abrir albarán"
-        >
-          <span>
-            {linkedDeliveryNote.number} · {DOCUMENT_TYPE_LABELS[linkedDeliveryNote.type]}
-          </span>
-          <span className={styles.activityViewListMeta}>
-            {linkedDeliveryNote.total.toFixed(2)}€
-          </span>
-        </button>
-        <div className={styles.activityViewDocActions}>
-          <button
-            type="button"
-            className={ui.btnPrimary}
-            onClick={() => void downloadDocumentPdf(linkedDeliveryNote)}
-          >
-            <Download size={16} aria-hidden />
-            Descargar albarán
-          </button>
+      <div className={styles.activityViewDocGroup}>
+        <div className={styles.activityViewDeliveryNoteSectionIntro}>
+          <span className={styles.activityViewDocGroupTitle}>Albaranes por operario</span>
+          <p className={styles.activityViewDeliveryNoteSectionHint}>
+            Cada operario genera su albaran al enviar su informe de trabajo
+            {activityTypeLabel ? ` (${activityTypeLabel})` : ''}.
+          </p>
+          {!showDeliveryNoteRows ? (
+            <p className={styles.activityViewDeliveryNoteSectionHint}>
+              Los albaranes apareceran aqui cuando se envien los informes.
+            </p>
+          ) : null}
+        </div>
+        {showDeliveryNoteRows ? (
+          <div className={styles.activityViewDocGroupBody}>
+            {activityDeliveryNoteRows.map((row) => renderActivityDeliveryNoteRow(row))}
+          </div>
+        ) : null}
+        {allWorkReportsSubmitted &&
+        linkedDeliveryNotes.length === 0 &&
+        isAdmin &&
+        canCreateDeliveryNote ? (
           <button
             type="button"
             className={ui.btnSecondary}
-            onClick={() => void openLinkedDocument(linkedDeliveryNote)}
+            onClick={() => openCreateDocument('generate')}
           >
-            Ver PDF
+            <FilePlus size={16} aria-hidden />
+            Crear albaran manual
           </button>
-        </div>
+        ) : null}
       </div>
     );
   };
 
+  const renderActivityAttachmentsContent = () => (
+    <ActivityAttachmentsPanel
+      activity={activeActivity}
+      canEdit={canAssociateActivityDocuments}
+      disabled={saving}
+      ensureActivity={activeActivity ? undefined : ensureActivityPersisted}
+      onActivityUpdated={(activity) => {
+        setLinkedActivity(activity);
+        onActivityUpdated?.(activity);
+      }}
+      onError={setSaveError}
+    />
+  );
+
   const renderActivityViewDocumentsContent = () => {
+    if (!activeTypeUsesWorkReport) {
+      return renderActivityAttachmentsContent();
+    }
+
     if (activeTypeUsesWorkReport && activeActivity) {
       return (
         <div className={styles.activityViewDocSummary}>
           {renderInvoiceDeliveryMismatchBanner()}
-          {linkedDeliveryNote ? (
-            renderLinkedDeliveryNoteCard()
-          ) : activeTypeCreatesDeliveryNote ? (
-            renderActivityDeliveryNoteSection()
-          ) : null}
+          {activeTypeCreatesDeliveryNote ? renderActivityDeliveryNoteSection() : null}
+          {activeTypeCreatesDeliveryNote ? renderActivityInvoiceSection() : null}
           {linkedDocumentsExceptDeliveryNote.length > 0
             ? renderLinkedDocumentsList(linkedDocumentsExceptDeliveryNote)
             : null}
-          {canManageDocuments &&
-          isAdmin &&
-          formData.clientId &&
-          activityIdForLinks &&
-          !linkingDocumentsInView ? (
+          {canAssociateActivityDocuments && !linkingDocumentsInView ? (
             <button
               type="button"
               className={ui.btnSecondary}
               onClick={() => setLinkingDocumentsInView(true)}
             >
               <Link2 size={16} aria-hidden />
-              Asociar más documentos
+              Añadir Documento
             </button>
           ) : null}
-          {canManageDocuments && isAdmin && linkingDocumentsInView
+          {canAssociateActivityDocuments && linkingDocumentsInView
             ? renderDocumentLinker({
                 disabled: syncingDocLinks,
                 onCreateDocument: openCreateDocument,
@@ -1599,84 +2737,6 @@ export default function ActivityFormModal({
       );
     }
 
-    if (canManageDocuments && formData.clientId && activityIdForLinks) {
-      if (!hasLinkedDocuments && !linkingDocumentsInView) {
-        return (
-          <div className={styles.activityViewDocEmpty}>
-            <p className={styles.activityViewEmpty}>
-              Sin documentos vinculados a esta actividad.
-            </p>
-            {canCreateDeliveryNote ? (
-              <button
-                type="button"
-                className={ui.btnPrimary}
-                onClick={() => openCreateDocument('generate')}
-              >
-                <FilePlus size={16} aria-hidden />
-                Crear albarán
-              </button>
-            ) : (
-              <button
-                type="button"
-                className={ui.btnPrimary}
-                onClick={() => setLinkingDocumentsInView(true)}
-              >
-                <Link2 size={16} aria-hidden />
-                Vincular documentos
-              </button>
-            )}
-          </div>
-        );
-      }
-      if (hasLinkedDocuments && !linkingDocumentsInView) {
-        return (
-          <div className={styles.activityViewDocSummary}>
-            {renderInvoiceDeliveryMismatchBanner()}
-            {renderLinkedDocumentsList()}
-            <div className={styles.activityViewDocActions}>
-              {canCreateDeliveryNote ? (
-                <button
-                  type="button"
-                  className={ui.btnPrimary}
-                  onClick={() => openCreateDocument('generate')}
-                >
-                  <FilePlus size={16} aria-hidden />
-                  Crear albarán
-                </button>
-              ) : null}
-              <button
-                type="button"
-                className={canCreateDeliveryNote ? ui.btnSecondary : ui.btnPrimary}
-                onClick={() => setLinkingDocumentsInView(true)}
-              >
-                <Link2 size={16} aria-hidden />
-                Asociar más documentos
-              </button>
-            </div>
-          </div>
-        );
-      }
-      return renderDocumentLinker({
-        disabled: syncingDocLinks,
-        onCreateDocument: openCreateDocument,
-        onDuplicateInvoice: isAdmin ? openDuplicateInvoice : undefined,
-        showDoneButton: hasLinkedDocuments,
-        showSyncMessage: true,
-      });
-    }
-    if (canManageDocuments && !formData.clientId) {
-      return (
-        <p className={styles.activityViewEmpty}>
-          Asigna un contacto a la actividad para vincular documentos.
-        </p>
-      );
-    }
-    if (linkedDeliveryNote) {
-      return renderLinkedDeliveryNoteCard();
-    }
-    if (hasLinkedDocuments) {
-      return renderLinkedDocumentsList();
-    }
     return <p className={styles.activityViewEmpty}>Sin documentos vinculados</p>;
   };
 
@@ -1841,14 +2901,6 @@ export default function ActivityFormModal({
         }),
     );
 
-  const savedAssigneeSlots = useMemo(
-    () =>
-      activeActivity
-        ? normalizeActivityAssigneeSlots(activeActivity, activeEvent, boundaries)
-        : [],
-    [activeActivity, activeEvent, boundaries],
-  );
-
   const assigneeSlotHasUnsavedChanges = useCallback(
     (userId: string) => {
       const saved = savedAssigneeSlots.find((item) => item.userId === userId);
@@ -1933,6 +2985,7 @@ export default function ActivityFormModal({
           assigneeSlots: slotsToAssigneeFormRecord(slots),
         }));
         await notifyActivitySaved();
+        setEditingSlotUserId((current) => (current === userId ? null : current));
       } catch (error) {
         setSaveError(
           error instanceof ApiError
@@ -2024,232 +3077,186 @@ export default function ActivityFormModal({
     signatureCancelConfirm,
   ]);
 
-  const renderActivityView = () => (
-    <div className={styles.formSections}>
-      <section className={ui.pageSection} aria-labelledby="activity-view-type">
-        <h2 id="activity-view-type" className={ui.pageSectionTitle}>
-          Actividad
-        </h2>
-        <div className={ui.card}>
-          <div className={styles.sectionCardBody}>
-            {selectedType && selectedTypeEmoji && (
-              <div className={styles.selectedTypeBar}>
-                <div className={styles.selectedTypeInfo}>
-                  <span
-                    className={cx(ui.activityEmojiBox, styles.selectedTypeIcon)}
-                    style={{ '--type-color': selectedType.color } as React.CSSProperties}
-                  >
-                    <span aria-hidden style={{ fontSize: '0.875rem', lineHeight: 1 }}>{selectedTypeEmoji}</span>
-                  </span>
-                  <span>{selectedType.name}</span>
-                </div>
-              </div>
-            )}
-            <div className={styles.activityViewField}>
-              <span className={styles.activityViewLabel}>Descripción</span>
-              <p className={styles.activityViewDescription}>
-                {formData.description || '—'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+  const renderActivityViewAssigneeAvatars = () => {
+    if (assignedUsers.length === 0) {
+      return (
+        <span className={styles.activityViewScheduleAssigneesEmpty}>
+          Sin operarios
+        </span>
+      );
+    }
 
-      <section className={ui.pageSection} aria-labelledby="activity-view-contact">
-        <h2 id="activity-view-contact" className={ui.pageSectionTitle}>
-          Contacto
-        </h2>
-        <div className={ui.card}>
-          <div className={styles.sectionCardBody}>
-            {formData.clientId ? (
-              <button
-                type="button"
-                className={styles.activityViewClientButton}
-                onClick={handleOpenClientProfile}
-                title={`Ver perfil de ${clientName}`}
-              >
-                <span className={styles.activityViewClientInfo}>
-                  <span className={styles.activityViewClientName}>{clientName}</span>
-                  {selectedClient?.email ? (
-                    <span className={styles.activityViewClientEmail}>{selectedClient.email}</span>
-                  ) : null}
-                </span>
-              </button>
-            ) : (
-              <span className={styles.activityViewValue}>{clientName}</span>
-            )}
-          </div>
-        </div>
-      </section>
+    return (
+      <ul
+        className={cx(styles.assigneeAvatarList, styles.activityViewScheduleAssignees)}
+        aria-label="Operarios asignados"
+      >
+        {assignedUsers.map((user) => (
+          <li key={user.id}>
+            <span
+              className={cx(ui.userAvatar, styles.assigneeListAvatar)}
+              title={user.name}
+              aria-label={user.name}
+            >
+              {getUserInitials(user.name)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
 
-      <section className={ui.pageSection} aria-labelledby="activity-view-schedule">
-        <h2 id="activity-view-schedule" className={ui.pageSectionTitle}>
-          Fecha y horario
-        </h2>
-        <div className={ui.card}>
-          <div className={styles.sectionCardBody}>
-            <div className={styles.activityViewGrid}>
-              <div className={styles.activityViewField}>
-                <span className={styles.activityViewLabel}>Fecha</span>
-                <span className={styles.activityViewValue}>
-                  {format(parseISO(formData.date), "d 'de' MMMM yyyy", { locale: es })}
-                </span>
-              </div>
-              <div className={styles.activityViewField}>
-                <span className={styles.activityViewLabel}>Horario en calendario</span>
-                <div className={styles.activityViewScheduleValue}>
-                  <span className={styles.activityViewValue}>
-                    {eventTimeRange.startTime} – {eventTimeRange.endTime}
-                  </span>
-                  {activitySlots.length > 0 ? (
-                    <span className={styles.activityHoursHint}>
-                      · {formatDashboardJobsHours(totalActivityHours)}h totales
-                    </span>
-                  ) : null}
-                  {totalExceedsCalendarSpan ? (
-                    <span className={styles.activityViewScheduleWarning}>
-                      Excede el tramo del calendario
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+  const renderActivityViewAssignees = () => {
+    if (activeTypeUsesWorkReport) {
+      return null;
+    }
 
-      <section className={ui.pageSection} aria-labelledby="activity-view-assignees">
-        <h2 id="activity-view-assignees" className={ui.pageSectionTitle}>
-          {shiftSchedulingEnabled ? 'Asignación' : 'Operario'}
-        </h2>
-        <div className={cx(ui.card, styles.assigneeListCard)}>
-          {assignedUsers.length > 0 ? (
-            <ul className={styles.assigneeList} aria-label="Operarios asignados">
-              {canClearAllSignatures ? (
-                <li className={styles.assigneeListAdminBar}>
-                  <button
-                    type="button"
-                    className={styles.assigneeCancelSignatureBtn}
-                    disabled={saving}
-                    onClick={() => setSignatureCancelConfirm({ scope: 'all' })}
-                  >
-                    Eliminar todas las firmas
-                  </button>
-                </li>
-              ) : null}
-              {assignedUsers.map((user) => {
-                const slot = activitySlots.find((item) => item.userId === user.id);
-                const slotHours = slot ? hoursForAssigneeSlot(slot) : null;
-                const assigneeStatus =
-                  signatureSource != null
-                    ? getWorkerHoursStatus(
-                        signatureSource,
-                        activeEvent,
-                        user.id,
-                        boundaries,
-                      )
-                    : null;
-                const isOwnRow = currentUser?.id === user.id;
-                const workerSignature = workerSignatureForAssignee(
-                  user.id,
-                  slot,
-                  legacySignature,
-                  slotSignatures.length > 0,
-                );
-                const canSignRow =
-                  isOwnRow && assigneeStatus?.canSignNow && viewerHasSignature;
-                const awaitingSlotEndRow = isOwnRow && assigneeStatus?.awaitingSlotEnd;
-                const needsProfileRow =
-                  isOwnRow &&
-                  assigneeStatus?.needsSignature &&
-                  !viewerHasSignature &&
-                  !awaitingSlotEndRow;
-                const activityDateStr =
-                  activeEvent?.date ?? signatureSource?.date ?? formData.date;
-                const slotEndLabel =
-                  slot && activityDateStr
-                    ? (() => {
-                        const end = getAssigneeSlotEndDateTime(activityDateStr, slot);
-                        return end
-                          ? format(end, "d 'de' MMMM yyyy 'a las' HH:mm", { locale: es })
-                          : null;
-                      })()
-                    : null;
-                const canCancelRowSignature = Boolean(
-                  activeActivity &&
-                    currentUser &&
-                    workerSignature &&
-                    canCancelWorkerSignature(currentUser, {
-                      activity: activeActivity,
-                      event: activeEvent,
-                      targetUserId: user.id,
-                    }),
-                );
-                const showHours =
-                  assigneeStatus != null && assigneeStatus.assignedHours > 0;
-                const realWorkedTime =
-                  realWorkedTimeByUser[user.id] ?? EMPTY_REAL_WORKED_TIME;
-                const confirmedRealWorkedHours = parseRealWorkedTimeInput(
-                  realWorkedTime.hours,
-                  realWorkedTime.minutes,
-                );
-                const workReport = activeActivity
-                  ? getActivityWorkReport(activeActivity, user.id)
+    const assigneeFieldLabel = shiftSchedulingEnabled ? 'Asignación' : 'Operario';
+
+    return (
+    <div className={styles.activityViewField} aria-labelledby="activity-view-assignees">
+      <span id="activity-view-assignees" className={styles.activityViewLabel}>
+        {assigneeFieldLabel}
+      </span>
+      <div className={styles.assigneeListCard}>
+        {assignedUsers.length > 0 ? (
+          <ul className={styles.assigneeList} aria-label="Operarios asignados">
+            {canClearAllSignatures ? (
+              <li className={styles.assigneeListAdminBar}>
+                <button
+                  type="button"
+                  className={styles.assigneeCancelSignatureBtn}
+                  disabled={saving}
+                  onClick={() => setSignatureCancelConfirm({ scope: 'all' })}
+                >
+                  Eliminar todas las firmas
+                </button>
+              </li>
+            ) : null}
+            {assignedUsers.map((user) => {
+              const slot = activitySlots.find((item) => item.userId === user.id);
+              const slotHours = slot ? hoursForAssigneeSlot(slot) : null;
+              const assigneeStatus =
+                signatureSource != null
+                  ? getWorkerHoursStatus(
+                      signatureSource,
+                      activeEvent,
+                      user.id,
+                      boundaries,
+                    )
                   : null;
-                const workReportHoursLabel =
-                  workReport?.status === 'submitted'
-                    ? formatHoursMinutes(workedMinutesToHours(workReport.workedMinutes))
-                    : null;
-                const canEditRowSlotHours = Boolean(
+              const isOwnRow = currentUser?.id === user.id;
+              const workerSignature = workerSignatureForAssignee(
+                user.id,
+                slot,
+                legacySignature,
+                slotSignatures.length > 0,
+              );
+              const canSignRow =
+                isOwnRow && assigneeStatus?.canSignNow && viewerHasSignature;
+              const awaitingSlotEndRow = isOwnRow && assigneeStatus?.awaitingSlotEnd;
+              const needsProfileRow =
+                isOwnRow &&
+                assigneeStatus?.needsSignature &&
+                !viewerHasSignature &&
+                !awaitingSlotEndRow;
+              const activityDateStr =
+                activeEvent?.date ?? signatureSource?.date ?? formData.date;
+              const slotEndLabel =
+                slot && activityDateStr
+                  ? (() => {
+                      const end = getAssigneeSlotEndDateTime(activityDateStr, slot);
+                      return end
+                        ? format(end, "d 'de' MMMM yyyy 'a las' HH:mm", { locale: es })
+                        : null;
+                    })()
+                  : null;
+              const canCancelRowSignature = Boolean(
+                activeActivity &&
+                  currentUser &&
+                  workerSignature &&
+                  canCancelWorkerSignature(currentUser, {
+                    activity: activeActivity,
+                    event: activeEvent,
+                    targetUserId: user.id,
+                  }),
+              );
+              const showHours =
+                assigneeStatus != null && assigneeStatus.assignedHours > 0;
+              const realWorkedTime =
+                realWorkedTimeByUser[user.id] ?? EMPTY_REAL_WORKED_TIME;
+              const confirmedRealWorkedHours = parseRealWorkedTimeInput(
+                realWorkedTime.hours,
+                realWorkedTime.minutes,
+              );
+              const workReport = activeActivity
+                ? getActivityWorkReport(activeActivity, user.id)
+                : null;
+              const canEditRowSlotHours = Boolean(
+                showPerAssigneeSlotSchedule &&
                   !activeTypeUsesWorkReport &&
-                    activeActivity &&
-                    currentUser &&
-                    canEditAssigneeSlotHours(currentUser, {
-                      activity: activeActivity,
-                      event: activeEvent,
-                      targetUserId: user.id,
-                    }),
-                );
-                const editSlot =
-                  formData.assigneeSlots[user.id] ??
-                  (slot
-                    ? {
-                        shift: slot.shift,
-                        startTime: slot.startTime,
-                        endTime: slot.endTime,
-                      }
-                    : defaultAssigneeSlot(user.id, shiftsByUserId, shiftEventTimes));
-                const draftSlotHours =
-                  isValidActivityTime(editSlot.startTime) &&
-                  isValidActivityTime(editSlot.endTime)
-                    ? hoursForAssigneeSlot({
-                        startTime: editSlot.startTime,
-                        endTime: editSlot.endTime,
-                      })
-                    : null;
-                const hasUnsavedSlotChanges = assigneeSlotHasUnsavedChanges(user.id);
-                const isSavingRowSlot = savingSlotUserId === user.id;
+                  activeActivity &&
+                  currentUser &&
+                  canEditAssigneeSlotHours(currentUser, {
+                    activity: activeActivity,
+                    event: activeEvent,
+                    targetUserId: user.id,
+                  }),
+              );
+              const editSlot =
+                formData.assigneeSlots[user.id] ??
+                (slot
+                  ? {
+                      shift: slot.shift,
+                      startTime: slot.startTime,
+                      endTime: slot.endTime,
+                    }
+                  : defaultAssigneeSlot(user.id, shiftsByUserId, shiftEventTimes));
+              const draftSlotHours =
+                isValidActivityTime(editSlot.startTime) &&
+                isValidActivityTime(editSlot.endTime)
+                  ? hoursForAssigneeSlot({
+                      startTime: editSlot.startTime,
+                      endTime: editSlot.endTime,
+                    })
+                  : null;
+              const hasUnsavedSlotChanges = assigneeSlotHasUnsavedChanges(user.id);
+              const isSavingRowSlot = savingSlotUserId === user.id;
+              const showInlineSlotEditor =
+                canEditRowSlotHours &&
+                (!showViewMode ||
+                  !slot ||
+                  editingSlotUserId === user.id ||
+                  hasUnsavedSlotChanges);
+              const compactAssigneeRow =
+                !(showHours && showSignatureFlow) && !canCancelRowSignature;
 
-                return (
-                  <li
-                    key={user.id}
+              return (
+                <li
+                  key={user.id}
+                  className={cx(
+                    styles.assigneeListItem,
+                    workerSignature && styles.assigneeListItemSigned,
+                  )}
+                >
+                  <div
                     className={cx(
-                      styles.assigneeListItem,
-                      workerSignature && styles.assigneeListItemSigned,
+                      styles.assigneeListRow,
+                      compactAssigneeRow && styles.assigneeListRowCompact,
                     )}
                   >
-                    <div className={styles.assigneeListRow}>
-                      <div className={styles.assigneeListPrimary}>
-                        <span
-                          className={cx(ui.userAvatar, styles.assigneeListAvatar)}
-                          aria-hidden
-                        >
-                          {getUserInitials(user.name)}
-                        </span>
-                        <div className={styles.assigneeListMeta}>
-                          <span className={styles.assigneeListName}>{user.name}</span>
-                          {slot || canEditRowSlotHours ? (
-                            canEditRowSlotHours ? (
+                    <div className={styles.assigneeListPrimary}>
+                      <span
+                        className={cx(ui.userAvatar, styles.assigneeListAvatar)}
+                        aria-hidden
+                      >
+                        {getUserInitials(user.name)}
+                      </span>
+                      <div className={styles.assigneeListMeta}>
+                        <span className={styles.assigneeListName}>{user.name}</span>
+                        {showPerAssigneeSlotSchedule ? (
+                          slot || canEditRowSlotHours ? (
+                            showInlineSlotEditor ? (
                               <div className={styles.assigneeListScheduleEdit}>
                                 {shiftSchedulingEnabled &&
                                 editSlot.shift &&
@@ -2274,7 +3281,7 @@ export default function ActivityFormModal({
                                     }
                                     aria-label={`Inicio del tramo de ${user.name}`}
                                   />
-                                  <span aria-hidden>–</span>
+                                  <span aria-hidden>-</span>
                                   <Input
                                     id={`activity-view-slot-end-${user.id}`}
                                     type="time"
@@ -2303,278 +3310,402 @@ export default function ActivityFormModal({
                                   >
                                     {isSavingRowSlot ? 'Guardando…' : 'Guardar tramo'}
                                   </button>
+                                ) : showViewMode && editingSlotUserId === user.id ? (
+                                  <button
+                                    type="button"
+                                    className={styles.assigneeEditSlotBtn}
+                                    disabled={isSavingRowSlot || saving}
+                                    onClick={() => setEditingSlotUserId(null)}
+                                  >
+                                    Cancelar
+                                  </button>
                                 ) : null}
                               </div>
-                            ) : (
-                              <span className={styles.assigneeListSchedule}>
-                                {shiftSchedulingEnabled ? (
-                                  <ShiftStateBadge
-                                    shift={slot!.shift}
-                                    compact
-                                    title={SHIFT_META[slot!.shift].tooltip}
-                                  />
-                                ) : null}
-                                <span>
-                                  {slot!.startTime} – {slot!.endTime}
-                                  {activeTypeUsesWorkReport &&
-                                  workReport?.status === 'submitted' &&
-                                  workReportHoursLabel ? (
-                                    <span className={styles.assigneeListScheduleMuted}>
-                                      {' '}
-                                      · real {workReportHoursLabel}
-                                    </span>
-                                  ) : slotHours != null ? (
-                                    <span className={styles.assigneeListScheduleMuted}>
-                                      {' '}
-                                      · tramo {formatDashboardJobsHours(slotHours)}h
-                                    </span>
+                            ) : slot ? (
+                              <div className={styles.assigneeListScheduleEdit}>
+                                <span className={styles.assigneeListSchedule}>
+                                  {shiftSchedulingEnabled ? (
+                                    <ShiftStateBadge
+                                      shift={slot.shift}
+                                      compact
+                                      title={SHIFT_META[slot.shift].tooltip}
+                                    />
                                   ) : null}
+                                  <span>
+                                    {slot.startTime} - {slot.endTime}
+                                    {slotHours != null ? (
+                                      <span className={styles.assigneeListScheduleMuted}>
+                                        {' '}
+                                        · tramo {formatDashboardJobsHours(slotHours)}h
+                                      </span>
+                                    ) : null}
+                                  </span>
                                 </span>
-                              </span>
-                            )
+                                {canEditRowSlotHours ? (
+                                  <button
+                                    type="button"
+                                    className={styles.assigneeEditSlotBtn}
+                                    disabled={saving}
+                                    onClick={() => setEditingSlotUserId(user.id)}
+                                  >
+                                    Editar tramo
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : null
                           ) : (
                             <span className={styles.activityViewShiftMissing}>Sin tramo</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {showHours && showSignatureFlow ? (
-                        <div
-                          className={styles.assigneeListHours}
-                          aria-label={`Horas de ${user.name}`}
-                        >
-                          <div className={styles.assigneeHourStat}>
-                            <span className={styles.assigneeHourStatLabel}>Asign.</span>
-                            <span className={styles.assigneeHourStatValue}>
-                              {formatDashboardJobsHours(assigneeStatus.assignedHours)}h
-                            </span>
-                          </div>
-                          <div
-                            className={cx(
-                              styles.assigneeHourStat,
-                              assigneeStatus.isSigned && styles.assigneeHourStatSigned,
-                              assigneeStatus.awaitingSlotEnd && styles.assigneeHourStatAwaiting,
-                              assigneeStatus.canSignNow && styles.assigneeHourStatPending,
-                            )}
-                          >
-                            <span className={styles.assigneeHourStatLabel}>Firm.</span>
-                            <span className={styles.assigneeHourStatValue}>
-                              {formatDashboardJobsHours(assigneeStatus.signedHours)}h
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <span className={styles.assigneeListHoursPlaceholder} aria-hidden />
-                      )}
-
-                      <div className={styles.assigneeListActions}>
-                        {canCancelRowSignature ? (
-                          <button
-                            type="button"
-                            className={styles.assigneeCancelSignatureBtn}
-                            disabled={saving}
-                            onClick={() =>
-                              setSignatureCancelConfirm({
-                                scope: 'user',
-                                userId: user.id,
-                                userName: user.name,
-                              })
-                            }
-                          >
-                            Cancelar firma
-                          </button>
+                          )
                         ) : null}
                       </div>
                     </div>
 
-                    {workerSignature && showSignatureFlow ? (
-                      <div className={styles.assigneeSignatureStrip}>
-                        <img
-                          src={workerSignature.imageDataUrl}
-                          alt=""
-                          className={styles.assigneeSignatureThumb}
-                        />
-                        <span className={styles.assigneeSignatureStripMeta}>
-                          Firmado{' '}
-                          {format(parseISO(workerSignature.signedAt), "d MMM yyyy, HH:mm", {
-                            locale: es,
-                          })}
-                        </span>
-                      </div>
-                    ) : null}
-
-                    {awaitingSlotEndRow && showSignatureFlow ? (
-                      <p className={styles.assigneeListFootnote}>
-                        {slotEndLabel
-                          ? `Podrás firmar cuando finalice tu tramo (${slotEndLabel}).`
-                          : 'Podrás firmar cuando finalice la fecha y hora de tu tramo asignado.'}
-                      </p>
-                    ) : null}
-                    {canSignRow && showSignatureFlow ? (
-                      <div className={styles.assigneeSignPanel}>
-                        <div className={styles.assigneeRealHoursField}>
-                          <span className={ui.label}>Tiempo real trabajado</span>
-                          <div className={styles.assigneeRealHoursInputs}>
-                            <div className={styles.assigneeRealHoursInputGroup}>
-                              <label
-                                className={styles.assigneeRealHoursInputLabel}
-                                htmlFor={`activity-real-hours-h-${user.id}`}
-                              >
-                                Horas
-                              </label>
-                              <Input
-                                id={`activity-real-hours-h-${user.id}`}
-                                type="number"
-                                min={0}
-                                max={24}
-                                step={1}
-                                inputMode="numeric"
-                                value={realWorkedTime.hours}
-                                onChange={(e) =>
-                                  setRealWorkedTimeByUser((prev) => ({
-                                    ...prev,
-                                    [user.id]: {
-                                      ...(prev[user.id] ?? EMPTY_REAL_WORKED_TIME),
-                                      hours: sanitizeRealWorkedHoursInput(e.target.value),
-                                    },
-                                  }))
-                                }
-                              />
-                            </div>
-                            <div className={styles.assigneeRealHoursInputGroup}>
-                              <label
-                                className={styles.assigneeRealHoursInputLabel}
-                                htmlFor={`activity-real-minutes-${user.id}`}
-                              >
-                                Minutos
-                              </label>
-                              <Input
-                                id={`activity-real-minutes-${user.id}`}
-                                type="number"
-                                min={0}
-                                max={59}
-                                step={1}
-                                inputMode="numeric"
-                                value={realWorkedTime.minutes}
-                                onChange={(e) =>
-                                  setRealWorkedTimeByUser((prev) => ({
-                                    ...prev,
-                                    [user.id]: {
-                                      ...(prev[user.id] ?? EMPTY_REAL_WORKED_TIME),
-                                      minutes: sanitizeRealWorkedMinutesInput(e.target.value),
-                                    },
-                                  }))
-                                }
-                              />
-                            </div>
-                          </div>
-                          {slotHours != null ? (
-                            <p className={styles.assigneeSignHint}>
-                              Tramo asignado: {formatDashboardJobsHours(slotHours)}h. Indica horas
-                              y minutos reales; con 0h 0m no se puede firmar.
-                            </p>
-                          ) : (
-                            <p className={styles.assigneeSignHint}>
-                              Indica horas y minutos reales; con 0h 0m no se puede firmar.
-                            </p>
-                          )}
+                    {showHours && showSignatureFlow ? (
+                      <div
+                        className={styles.assigneeListHours}
+                        aria-label={`Horas de ${user.name}`}
+                      >
+                        <div className={styles.assigneeHourStat}>
+                          <span className={styles.assigneeHourStatLabel}>Asign.</span>
+                          <span className={styles.assigneeHourStatValue}>
+                            {formatDashboardJobsHours(assigneeStatus.assignedHours)}h
+                          </span>
                         </div>
+                        <div
+                          className={cx(
+                            styles.assigneeHourStat,
+                            assigneeStatus.isSigned && styles.assigneeHourStatSigned,
+                            assigneeStatus.awaitingSlotEnd && styles.assigneeHourStatAwaiting,
+                            assigneeStatus.canSignNow && styles.assigneeHourStatPending,
+                          )}
+                        >
+                          <span className={styles.assigneeHourStatLabel}>Firm.</span>
+                          <span className={styles.assigneeHourStatValue}>
+                            {formatDashboardJobsHours(assigneeStatus.signedHours)}h
+                          </span>
+                        </div>
+                      </div>
+                    ) : compactAssigneeRow ? null : (
+                      <span className={styles.assigneeListHoursPlaceholder} aria-hidden />
+                    )}
+
+                    {canCancelRowSignature ? (
+                      <div className={styles.assigneeListActions}>
                         <button
                           type="button"
-                          className={cx(ui.btnPrimary, ui.btnText)}
-                          disabled={saving || confirmedRealWorkedHours <= 0}
-                          onClick={() => void handleSignMyHours(confirmedRealWorkedHours)}
+                          className={styles.assigneeCancelSignatureBtn}
+                          disabled={saving}
+                          onClick={() =>
+                            setSignatureCancelConfirm({
+                              scope: 'user',
+                              userId: user.id,
+                              userName: user.name,
+                            })
+                          }
                         >
-                          <PenLine size={16} aria-hidden />
-                          Firmar mis horas
+                          Cancelar firma
                         </button>
                       </div>
-                    ) : needsProfileRow ? (
-                      <div className={styles.assigneeSignPanel}>
-                        <p className={styles.assigneeSignHint}>
-                          Guarda tu firma manuscrita en Ajustes para confirmar tus horas.
-                        </p>
-                        <button
-                          type="button"
-                          className={ui.btnSecondary}
-                          onClick={() => navigate('/settings?tab=signature')}
-                        >
-                          Ir a Ajustes → Firma
-                        </button>
-                      </div>
-                    ) : activeTypeUsesWorkReport && activeActivity && isPastActivity ? (
-                      workReport?.status === 'submitted' ? (
-                        <p className={styles.assigneeListFootnote}>
-                          Informe enviado
-                          {workReportHoursLabel ? `: ${workReportHoursLabel}` : ''}.
-                        </p>
-                      ) : (
-                        <p className={styles.assigneeListFootnote}>
-                          {isAdmin && !isOwnRow
-                            ? `${user.name} debe completar su informe de trabajo cuando acceda a la actividad.`
-                            : isOwnRow
-                              ? 'Completa tu informe de trabajo en la sección de abajo.'
-                              : 'Pendiente de informe de trabajo.'}
-                        </p>
-                      )
-                    ) : assigneeStatus?.needsSignature && !isOwnRow && showSignatureFlow ? (
-                      <p className={styles.assigneeListFootnote}>
-                        {isAdmin
-                          ? `${user.name} debe firmar sus horas cuando acceda a la actividad.`
-                          : 'Pendiente de firma.'}
-                      </p>
                     ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className={cx(styles.activityViewEmpty, styles.assigneeListEmpty)}>
-              Sin usuarios asignados
-            </p>
-          )}
+                  </div>
+
+                  {workerSignature && showSignatureFlow ? (
+                    <div className={styles.assigneeSignatureStrip}>
+                      <img
+                        src={workerSignature.imageDataUrl}
+                        alt=""
+                        className={styles.assigneeSignatureThumb}
+                      />
+                      <span className={styles.assigneeSignatureStripMeta}>
+                        Firmado{' '}
+                        {format(parseISO(workerSignature.signedAt), "d MMM yyyy, HH:mm", {
+                          locale: es,
+                        })}
+                      </span>
+                    </div>
+                  ) : null}
+
+                  {awaitingSlotEndRow && showSignatureFlow ? (
+                    <p className={styles.assigneeListFootnote}>
+                      {slotEndLabel
+                        ? `Podrás firmar cuando finalice tu tramo (${slotEndLabel}).`
+                        : 'Podrás firmar cuando finalice la fecha y hora de tu tramo asignado.'}
+                    </p>
+                  ) : null}
+                  {canSignRow && showSignatureFlow ? (
+                    <div className={styles.assigneeSignPanel}>
+                      <div className={styles.assigneeRealHoursField}>
+                        <span className={ui.label}>Tiempo real trabajado</span>
+                        <div className={styles.assigneeRealHoursInputs}>
+                          <div className={styles.assigneeRealHoursInputGroup}>
+                            <label
+                              className={styles.assigneeRealHoursInputLabel}
+                              htmlFor={`activity-real-hours-h-${user.id}`}
+                            >
+                              Horas
+                            </label>
+                            <Input
+                              id={`activity-real-hours-h-${user.id}`}
+                              type="number"
+                              min={0}
+                              max={24}
+                              step={1}
+                              inputMode="numeric"
+                              value={realWorkedTime.hours}
+                              onChange={(e) =>
+                                setRealWorkedTimeByUser((prev) => ({
+                                  ...prev,
+                                  [user.id]: {
+                                    ...(prev[user.id] ?? EMPTY_REAL_WORKED_TIME),
+                                    hours: sanitizeRealWorkedHoursInput(e.target.value),
+                                  },
+                                }))
+                              }
+                            />
+                          </div>
+                          <div className={styles.assigneeRealHoursInputGroup}>
+                            <label
+                              className={styles.assigneeRealHoursInputLabel}
+                              htmlFor={`activity-real-minutes-${user.id}`}
+                            >
+                              Minutos
+                            </label>
+                            <Input
+                              id={`activity-real-minutes-${user.id}`}
+                              type="number"
+                              min={0}
+                              max={59}
+                              step={1}
+                              inputMode="numeric"
+                              value={realWorkedTime.minutes}
+                              onChange={(e) =>
+                                setRealWorkedTimeByUser((prev) => ({
+                                  ...prev,
+                                  [user.id]: {
+                                    ...(prev[user.id] ?? EMPTY_REAL_WORKED_TIME),
+                                    minutes: sanitizeRealWorkedMinutesInput(e.target.value),
+                                  },
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+                        {slotHours != null ? (
+                          <p className={styles.assigneeSignHint}>
+                            Tramo asignado: {formatDashboardJobsHours(slotHours)}h. Indica horas
+                            y minutos reales; con 0h 0m no se puede firmar.
+                          </p>
+                        ) : (
+                          <p className={styles.assigneeSignHint}>
+                            Indica horas y minutos reales; con 0h 0m no se puede firmar.
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className={cx(ui.btnPrimary, ui.btnText)}
+                        disabled={saving || confirmedRealWorkedHours <= 0}
+                        onClick={() => void handleSignMyHours(confirmedRealWorkedHours)}
+                      >
+                        <PenLine size={16} aria-hidden />
+                        Firmar mis horas
+                      </button>
+                    </div>
+                  ) : needsProfileRow ? (
+                    <div className={styles.assigneeSignPanel}>
+                      <p className={styles.assigneeSignHint}>
+                        Guarda tu firma manuscrita en Ajustes para confirmar tus horas.
+                      </p>
+                      <button
+                        type="button"
+                        className={ui.btnSecondary}
+                        onClick={() => navigate('/settings?tab=signature')}
+                      >
+                        Ir a Ajustes → Firma
+                      </button>
+                    </div>
+                  ) : activeTypeUsesWorkReport && activeActivity && isPastActivity ? (
+                    workReport?.status === 'submitted' ? null : (
+                      <p className={styles.assigneeListFootnote}>
+                        {isAdmin && !isOwnRow
+                          ? `${user.name} debe completar su informe de trabajo cuando acceda a la actividad.`
+                          : isOwnRow
+                            ? 'Completa tu informe de trabajo en la seccion de abajo.'
+                            : 'Pendiente de informe de trabajo.'}
+                      </p>
+                    )
+                  ) : assigneeStatus?.needsSignature && !isOwnRow && showSignatureFlow ? (
+                    <p className={styles.assigneeListFootnote}>
+                      {isAdmin
+                        ? `${user.name} debe firmar sus horas cuando acceda a la actividad.`
+                        : 'Pendiente de firma.'}
+                    </p>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className={cx(styles.activityViewEmpty, styles.assigneeListEmpty)}>
+            Sin usuarios asignados
+          </p>
+        )}
+      </div>
+    </div>
+    );
+  };
+
+  const renderActivityView = () => (
+    <div className={styles.formSections}>
+      <section className={ui.pageSection} aria-labelledby="activity-view-type">
+        <h2 id="activity-view-type" className={ui.pageSectionTitle}>
+          {activityDetailsSectionTitle}
+        </h2>
+        <div className={ui.card}>
+          <div className={styles.sectionCardBody}>
+            {selectedType && selectedTypeEmoji && (
+              <div className={styles.selectedTypeBar}>
+                <div className={styles.selectedTypeInfo}>
+                  <span
+                    className={cx(ui.activityEmojiBox, styles.selectedTypeIcon)}
+                    style={{ '--type-color': selectedType.color } as React.CSSProperties}
+                  >
+                    <span aria-hidden style={{ fontSize: '0.875rem', lineHeight: 1 }}>{selectedTypeEmoji}</span>
+                  </span>
+                  <span>{selectedType.name}</span>
+                </div>
+              </div>
+            )}
+            <div className={styles.activityViewField}>
+              <span className={styles.activityViewLabel}>Descripción</span>
+              <p className={styles.activityViewDescription}>
+                {formData.description || '—'}
+              </p>
+            </div>
+            <div
+              className={cx(
+                styles.activityViewGrid,
+                styles.activityViewGridSingle,
+              )}
+            >
+              <div className={styles.activityViewField}>
+                <span className={styles.activityViewLabel}>Contacto</span>
+                {formData.clientId ? (
+                  <button
+                    type="button"
+                    className={styles.activityViewClientButton}
+                    onClick={handleOpenClientProfile}
+                    title={`Ver perfil de ${clientName}`}
+                  >
+                    <span className={styles.activityViewClientInfo}>
+                      <span className={styles.activityViewClientName}>{clientName}</span>
+                      {selectedClient?.email ? (
+                        <span className={styles.activityViewClientEmail}>{selectedClient.email}</span>
+                      ) : null}
+                    </span>
+                  </button>
+                ) : (
+                  <span className={styles.activityViewValue}>{clientName}</span>
+                )}
+              </div>
+            </div>
+            <div className={styles.activityViewField} aria-labelledby="activity-view-schedule">
+              <span id="activity-view-schedule" className={styles.activityViewLabel}>
+                Fecha y hora
+              </span>
+              <div className={styles.activityViewScheduleValue}>
+                <span className={styles.activityViewValue}>
+                  {displayedCalendarDateLabel}
+                </span>
+                <span className={styles.activityViewScheduleMetaSep} aria-hidden="true">
+                  ·
+                </span>
+                {activeTypeUsesWorkReport ? renderActivityViewAssigneeAvatars() : null}
+                <span className={styles.activityViewValue}>
+                  {displayedEventSpanCrossesMidnight ? (
+                    displayedCalendarTimeLabel
+                  ) : (
+                    <>
+                      {displayedEventTimeRange.startTime}
+                      <span aria-hidden="true"> - </span>
+                      {displayedEventTimeRange.endTime}
+                    </>
+                  )}
+                </span>
+                {activitySlots.length > 0 ? (
+                  <span
+                    className={styles.activityHoursHint}
+                    title={scheduleHoursLabel.title}
+                  >
+                    · {scheduleHoursLabel.label}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            {renderActivityViewAssignees()}
+          </div>
         </div>
       </section>
+
 
       {activeTypeUsesWorkReport && activeActivity ? (
         <section
           className={ui.pageSection}
           id="activity-view-work-report"
-          aria-labelledby="activity-view-work-report-title"
+          aria-labelledby={
+            showWorkReportFormHeader || (isAdmin && assignedUsers.length > 0)
+              ? 'activity-view-work-report-title'
+              : undefined
+          }
         >
-          <h2 id="activity-view-work-report-title" className={ui.pageSectionTitle}>
-            Informe de Trabajo
-          </h2>
+          {showWorkReportFormHeader && currentUser ? (
+            <div className={styles.activityWorkReportSectionTop}>
+              <ActivityWorkReportFormHeader
+                sectionTitleId="activity-view-work-report-title"
+                currentUser={currentUser}
+                status={getActivityWorkReportSurfaceStatus(activeActivity, currentUser.id)}
+                workedMinutes={
+                  getActivityWorkReport(activeActivity, currentUser.id)?.workedMinutes
+                }
+              />
+            </div>
+          ) : isAdmin && assignedUsers.length > 0 ? (
+            <h2 id="activity-view-work-report-title" className={ui.pageSectionTitle}>
+              Informes de trabajo
+            </h2>
+          ) : null}
           <div className={ui.card}>
             <ActivityWorkReportPanel
               activity={activeActivity}
               event={activeEvent}
-              users={assignedUsers}
               currentUser={currentUser}
               activityTypes={activityTypes}
               documents={clientDocuments}
+              assignees={assignedUsers}
+              clientEmail={selectedClient?.email}
+              activityCreatesDeliveryNote={activeTypeCreatesDeliveryNote}
               canManageExtraItems={canManageWorkReportExtraItems}
               disabled={saving}
-              onActivityUpdated={(activity) => {
-                setLinkedActivity(activity);
-                onActivityUpdated?.(activity);
+              formHeaderPlacement="section"
+              workedTimeDraft={currentUserWorkReportTime}
+              onWorkedTimeChange={handleWorkReportTimeChange}
+              startTime={currentUserWorkReportSchedule.startTime}
+              endTime={currentUserWorkReportSchedule.endTime}
+              onStartTimeChange={handleWorkReportStartTimeChange}
+              workReportActionsRef={workReportActionsRef}
+              onActivityUpdated={async (activity) => {
+                const synced = await persistActivityScheduleAfterWorkReport(activity);
+                setLinkedActivity(synced);
+                onActivityUpdated?.(synced);
               }}
               onDocumentsRefresh={refreshClientDocuments}
               onError={setSaveError}
             />
-            <div
-              id="activity-view-documents"
-              className={styles.activityViewWorkReportDocuments}
-              aria-labelledby="activity-view-documents-title"
-            >
-              <h3 id="activity-view-documents-title" className={styles.activityViewWorkReportDocumentsTitle}>
-                Documentos
-              </h3>
-              <div className={styles.sectionCardBody}>{renderActivityViewDocumentsContent()}</div>
-            </div>
           </div>
         </section>
-      ) : !activeTypeUsesWorkReport && activeActivity && canManageDocuments ? (
+      ) : null}
+
+      {showActivityDocumentsSection ? (
         <section
           className={ui.pageSection}
           id="activity-view-documents"
@@ -2706,7 +3837,7 @@ export default function ActivityFormModal({
         aria-modal="true"
         aria-labelledby="activity-modal-title"
       >
-        <ModalHeader title={modalTitle} titleId="activity-modal-title" onClose={onClose}>
+        <ModalHeader title={modalTitle} titleId="activity-modal-title" onClose={handleRequestClose}>
           {activityPastAgo && (
             <span className={styles.activityPastAgo}>{activityPastAgo}</span>
           )}
@@ -2736,31 +3867,22 @@ export default function ActivityFormModal({
                 </p>
               )}
             </div>
-            <ModalFooter>
-              <ModalActions>
-                {canEdit ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSaveError(null);
-                        setIsEditMode(true);
-                      }}
-                      className={modalBtnPrimary}
-                    >
-                      Editar
-                    </button>
-                    <button type="button" onClick={onClose} className={modalBtnSecondary}>
-                      Cerrar
-                    </button>
-                  </>
-                ) : (
-                  <button type="button" onClick={onClose} className={modalBtnPrimary}>
-                    Cerrar
+            {canEdit ? (
+              <ModalFooter>
+                <ModalActions>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSaveError(null);
+                      setIsEditMode(true);
+                    }}
+                    className={modalBtnPrimary}
+                  >
+                    Editar
                   </button>
-                )}
-              </ModalActions>
-            </ModalFooter>
+                </ModalActions>
+              </ModalFooter>
+            ) : null}
           </>
         ) : (
           <form onSubmit={handleSubmit} className={ui.modalForm}>
@@ -2780,7 +3902,7 @@ export default function ActivityFormModal({
                 <div className={styles.formSections}>
                   <section className={ui.pageSection} aria-labelledby="activity-section-details">
                     <h2 id="activity-section-details" className={ui.pageSectionTitle}>
-                      Actividad
+                      {activityDetailsSectionTitle}
                     </h2>
                     <div className={ui.card}>
                       <div className={styles.sectionCardBody}>
@@ -2857,6 +3979,18 @@ export default function ActivityFormModal({
                             {renderTypeGrid(true)}
                           </div>
                         )}
+                        <SearchableSelect
+                          id="activity-client"
+                          label="Buscar cliente"
+                          value={formData.clientId}
+                          onChange={(clientId) => {
+                            setFormData({ ...formData, clientId });
+                            setLinkedDocumentIds([]);
+                          }}
+                          options={clientOptions}
+                          placeholder="Buscar por nombre, email o teléfono…"
+                          required
+                        />
                         <div className={ui.field}>
                           <label className={ui.label} htmlFor="activity-date">
                             Fecha de la actividad *
@@ -2878,15 +4012,14 @@ export default function ActivityFormModal({
                               <Input
                                 id="activity-simple-start"
                                 type="time"
-                                value={
-                                  formData.assigneeSlots[currentUser.id]?.startTime ??
-                                  defaultAssigneeSlot(currentUser.id, new Map(), shiftEventTimes)
-                                    .startTime
-                                }
+                                value={displayedEventTimeRange.startTime}
                                 onChange={(e) =>
-                                  updateAssigneeSlot(currentUser.id, { startTime: e.target.value })
+                                  applySimpleSharedTimeRange({ startTime: e.target.value })
                                 }
+                                readOnly={simpleSharedTimeReadOnly}
+                                disabled={simpleSharedTimeReadOnly}
                                 required
+                                aria-readonly={simpleSharedTimeReadOnly}
                               />
                             </div>
                             <div className={ui.field}>
@@ -2896,63 +4029,53 @@ export default function ActivityFormModal({
                               <Input
                                 id="activity-simple-end"
                                 type="time"
-                                value={
-                                  formData.assigneeSlots[currentUser.id]?.endTime ??
-                                  defaultAssigneeSlot(currentUser.id, new Map(), shiftEventTimes)
-                                    .endTime
-                                }
+                                value={displayedEventTimeRange.endTime}
                                 onChange={(e) =>
-                                  updateAssigneeSlot(currentUser.id, { endTime: e.target.value })
+                                  applySimpleSharedTimeRange({ endTime: e.target.value })
                                 }
+                                readOnly={simpleSharedTimeReadOnly}
+                                disabled={simpleSharedTimeReadOnly}
                                 required
+                                aria-readonly={simpleSharedTimeReadOnly}
                               />
                             </div>
+                            {simpleSharedTimeReadOnly ? (
+                              <p
+                                className={cx(
+                                  ui.textSmall,
+                                  ui.textMuted,
+                                  styles.assigneeSlotGridHint,
+                                )}
+                              >
+                                {displayedEventSpanCrossesMidnight
+                                  ? 'Resumen automatico: inicio mas temprano y fin mas tarde (continua al dia siguiente).'
+                                  : 'Resumen automatico: inicio mas temprano y fin mas tarde de los operarios.'}
+                              </p>
+                            ) : null}
                           </div>
                         ) : null}
                         {(shiftSchedulingEnabled || formData.assignedTo.length > 0) && (
-                          <p className={cx(ui.textSmall, ui.textMuted, styles.activityHoursComputed)}>
-                            <strong>{totalActivityHours} h</strong>
-                            {shiftSchedulingEnabled ? (
-                              <span className={styles.activityHoursHint}>
-                                totales · calendario {eventTimeRange.startTime}–{eventTimeRange.endTime}
-                              </span>
-                            ) : (
-                              <span className={styles.activityHoursHint}> totales</span>
-                            )}
+                          <p
+                            className={cx(ui.textSmall, ui.textMuted, styles.activityHoursComputed)}
+                            title={scheduleEditHint.title}
+                          >
+                            <strong>
+                              {formatDashboardJobsHours(totalActivityHours)} h
+                            </strong>
+                            <span className={styles.activityHoursHint}>
+                              {scheduleEditHint.suffix}
+                            </span>
                           </p>
                         )}
                         <div className={ui.field}>
-                          <label className={ui.label}>Descripción del trabajo *</label>
+                          <label className={ui.label}>Descripción de la actividad</label>
                           <Textarea
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             rows={4}
-                            placeholder="Describe detalladamente el trabajo realizado..."
-                            required
+                            placeholder="Línea y descripción de la actividad"
                           />
                         </div>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section className={ui.pageSection} aria-labelledby="activity-section-contact">
-                    <h2 id="activity-section-contact" className={ui.pageSectionTitle}>
-                      Contacto
-                    </h2>
-                    <div className={ui.card}>
-                      <div className={styles.sectionCardBody}>
-                        <SearchableSelect
-                          id="activity-client"
-                          label="Buscar cliente"
-                          value={formData.clientId}
-                          onChange={(clientId) => {
-                            setFormData({ ...formData, clientId });
-                            setLinkedDocumentIds([]);
-                          }}
-                          options={clientOptions}
-                          placeholder="Buscar por nombre, email o teléfono…"
-                          required
-                        />
                       </div>
                     </div>
                   </section>
@@ -2968,47 +4091,32 @@ export default function ActivityFormModal({
                             Guarda la actividad para completar el informe de trabajo. Se generará un
                             albarán al finalizar.
                           </p>
-                        ) : !formData.clientId ? (
-                          <p className={cx(ui.textSmall, ui.textMuted)}>
-                            Selecciona un contacto para vincular facturas y albaranes a esta actividad.
-                          </p>
-                        ) : hasLinkedDocuments && !linkingDocumentsInView ? (
-                          <div className={styles.activityViewDocSummary}>
-                            {renderLinkedDocumentsList()}
-                            <button
-                              type="button"
-                              className={ui.btnPrimary}
-                              onClick={() => setLinkingDocumentsInView(true)}
-                            >
-                              <Link2 size={16} aria-hidden />
-                              Asociar más documentos
-                            </button>
-                          </div>
                         ) : (
-                          <>
-                            <p className={cx(ui.textSmall, ui.textMuted)}>
-                              Vincula facturas y albaranes del mismo contacto a esta actividad.
-                            </p>
-                            {renderDocumentLinker({
-                              disabled: syncingDocLinks,
-                              onCreateDocument: openCreateDocument,
-                              onDuplicateInvoice: isAdmin ? openDuplicateInvoice : undefined,
-                              showDoneButton: hasLinkedDocuments,
-                            })}
-                          </>
+                          <ActivityAttachmentsPanel
+                            activity={activeActivity}
+                            canEdit={canAssociateActivityDocuments}
+                            disabled={saving}
+                            ensureActivity={activeActivity ? undefined : ensureActivityPersisted}
+                            onActivityUpdated={(activity) => {
+                              setLinkedActivity(activity);
+                              onActivityUpdated?.(activity);
+                            }}
+                            onError={setSaveError}
+                          />
                         )}
                       </div>
                     </div>
                   </section>
 
-                  {shiftSchedulingEnabled ? (
+                  {showAssigneesEditSection ? (
                   <section className={ui.pageSection} aria-labelledby="activity-section-assignees">
                     <h2 id="activity-section-assignees" className={ui.pageSectionTitle}>
-                      Asignación
+                      {shiftSchedulingEnabled ? 'Asignación' : 'Operarios'}
                     </h2>
                     <div className={ui.card}>
                       <div className={styles.sectionCardBody}>
-                        {users.length > 0 ? (
+                        {shiftSchedulingEnabled ? (
+                          users.length > 0 ? (
                           <>
                             {canClearAllSignatures ? (
                               <div className={styles.assigneeListAdminBar}>
@@ -3198,14 +4306,131 @@ export default function ActivityFormModal({
                           </>
                         ) : (
                           <p className={cx(ui.textSmall, ui.textMuted)}>
-                            No se pudieron cargar los usuarios. Recarga la página o reinicia el servidor.
+                            No se pudieron cargar los usuarios. Recarga la pagina o reinicia el servidor.
+                          </p>
+                        )
+                        ) : users.length > 0 ? (
+                          isAdmin ? (
+                            <>
+                              {users.map((user) => {
+                                const selected = formData.assignedTo.includes(user.id);
+                                const slot =
+                                  formData.assigneeSlots[user.id] ??
+                                  defaultAssigneeSlot(user.id, shiftsByUserId, shiftEventTimes);
+                                const slotHours =
+                                  isValidActivityTime(slot.startTime) &&
+                                  isValidActivityTime(slot.endTime)
+                                    ? hoursForAssigneeSlot({
+                                        startTime: slot.startTime,
+                                        endTime: slot.endTime,
+                                      })
+                                    : null;
+                                return (
+                                  <div key={user.id}>
+                                    <label className={ui.checkboxRow}>
+                                      <input
+                                        type="checkbox"
+                                        checked={selected}
+                                        onChange={(e) => toggleAssignee(user.id, e.target.checked)}
+                                        className={ui.checkbox}
+                                      />
+                                      <span
+                                        className={cx(ui.userAvatar, styles.assigneeAvatar)}
+                                        aria-hidden
+                                      >
+                                        {getUserInitials(user.name)}
+                                      </span>
+                                      <span className={ui.textSmall}>{user.name}</span>
+                                    </label>
+                                    {selected && formData.assignedTo.length > 1 ? (
+                                      <div className={styles.assigneeSlotBlock}>
+                                        <div className={styles.assigneeSlotGrid}>
+                                          <div className={ui.field}>
+                                            <label
+                                              className={ui.label}
+                                              htmlFor={`activity-simple-start-${user.id}`}
+                                            >
+                                              Inicio *
+                                            </label>
+                                            <Input
+                                              id={`activity-simple-start-${user.id}`}
+                                              type="time"
+                                              value={slot.startTime}
+                                              onChange={(e) =>
+                                                applySimpleAssigneeTimeRange(user.id, {
+                                                  startTime: e.target.value,
+                                                })
+                                              }
+                                              required
+                                            />
+                                          </div>
+                                          <div className={ui.field}>
+                                            <label
+                                              className={ui.label}
+                                              htmlFor={`activity-simple-end-${user.id}`}
+                                            >
+                                              Fin *
+                                            </label>
+                                            <Input
+                                              id={`activity-simple-end-${user.id}`}
+                                              type="time"
+                                              value={slot.endTime}
+                                              onChange={(e) =>
+                                                applySimpleAssigneeTimeRange(user.id, {
+                                                  endTime: e.target.value,
+                                                })
+                                              }
+                                              required
+                                            />
+                                          </div>
+                                        </div>
+                                        {slotHours != null ? (
+                                          <p className={styles.assigneeSlotHours}>
+                                            <strong>{slotHours} h</strong> en este tramo
+                                          </p>
+                                        ) : null}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                );
+                              })}
+                            </>
+                          ) : assignedUsers.length > 0 ? (
+                            <ul className={styles.assigneeList} aria-label="Operarios asignados">
+                              {assignedUsers.map((user) => (
+                                <li key={user.id} className={styles.assigneeListItem}>
+                                  <div className={styles.assigneeListRow}>
+                                    <span
+                                      className={cx(ui.userAvatar, styles.assigneeListAvatar)}
+                                      aria-hidden
+                                    >
+                                      {getUserInitials(user.name)}
+                                    </span>
+                                    <div className={styles.assigneeListMeta}>
+                                      <span className={styles.assigneeListName}>{user.name}</span>
+                                    </div>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className={cx(ui.textSmall, ui.textMuted)}>
+                              No hay operarios asignados a esta actividad.
+                            </p>
+                          )
+                        ) : (
+                          <p className={cx(ui.textSmall, ui.textMuted)}>
+                            No se pudieron cargar los usuarios. Recarga la pagina o reinicia el servidor.
                           </p>
                         )}
                         <p className={cx(ui.textSmall, ui.textMuted)}>
-                          Cada operario registra su tramo (turno e inicio/fin). Las horas se confirman con
-                          firma desde la vista de la actividad; aquí solo puedes cancelar una firma ya
-                          registrada. Se actualiza la planificación ({shiftRangesLabel.morning}, etc. en
-                          Ajustes).
+                          {shiftSchedulingEnabled
+                            ? `Cada operario registra su tramo (turno e inicio/fin). Las horas se confirman con firma desde la vista de la actividad; aqui solo puedes cancelar una firma ya registrada. Se actualiza la planificacion (${shiftRangesLabel.morning}, etc. en Ajustes).`
+                            : isAdmin
+                              ? formData.assignedTo.length > 1
+                                ? 'Selecciona los operarios y define el tramo de cada uno. El horario de arriba resume automaticamente el inicio mas temprano y el fin mas tarde.'
+                                : 'Selecciona los operarios asignados. El horario de inicio y fin de la actividad se aplica a todos los seleccionados.'
+                              : 'Operarios asignados a esta actividad. El horario se edita arriba en Inicio y Fin.'}
                         </p>
                       </div>
                     </div>
@@ -3327,26 +4552,36 @@ export default function ActivityFormModal({
           externalActivityId={resolvedActivityId ?? eventToEdit?.activityId ?? ''}
           lockClientId
           defaultType={
-            isAdmin && (linkedDeliveryNote || activityHasLinkedDeliveryNote(linkedDocs))
+            isAdmin && activityHasLinkedDeliveryNote(linkedDocs)
               ? 'invoice'
               : 'delivery-note'
           }
           duplicateFrom={documentModal.type === 'duplicate' ? duplicateSourceInvoice : null}
+          editingDoc={documentModal.type === 'edit' ? documentModal.editingDoc ?? null : null}
+          initialReloadFromDeliveryNotes={documentModal.reloadFromDeliveryNotes}
+          linkedCalendarEvent={activeEvent}
           initialCreationMode={
             documentModal.type === 'create' ? (documentModal.creationMode ?? 'generate') : 'generate'
+          }
+          fixedDocType={
+            documentModal.type === 'edit' && documentModal.editingDoc?.type === 'invoice'
+              ? 'invoice'
+              : undefined
           }
         />
       )}
 
       <ActivityDeliveryNotePreviewModal
-        open={deliveryNotePreview.previewOpen && Boolean(deliveryNotePreview.previewUrl)}
-        url={deliveryNotePreview.previewUrl ?? ''}
+        open={deliveryNotePreview.previewOpen}
+        url={deliveryNotePreview.previewUrl}
         title={deliveryNotePreview.previewTitle}
         hint={deliveryNotePreview.previewHint}
         fileName={deliveryNotePreview.previewFileName}
+        loading={deliveryNotePreview.previewLoading}
+        error={deliveryNotePreview.previewError}
         persisted={deliveryNotePreview.previewPersisted}
         onClose={deliveryNotePreview.closePreview}
-        onDownload={() => void downloadDraftDeliveryNote()}
+        onDownload={() => void deliveryNotePreview.downloadActivePreview()}
       />
     </>
   );

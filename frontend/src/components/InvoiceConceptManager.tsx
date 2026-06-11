@@ -55,8 +55,6 @@ export default function InvoiceConceptManager({
   searchTerm: controlledSearchTerm,
   onSearchTermChange,
 }: Props) {
-  usePopupEscape(!embedded && Boolean(onClose), () => onClose?.());
-
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const searchTerm = controlledSearchTerm ?? internalSearchTerm;
   const setSearchTerm = onSearchTermChange ?? setInternalSearchTerm;
@@ -157,75 +155,117 @@ export default function InvoiceConceptManager({
 
   const isEditing = creating || editingId !== null;
 
-  const editForm = isEditing ? (
+  usePopupEscape(
+    (!embedded && Boolean(onClose)) || (embedded && isEditing),
+    () => {
+      if (embedded && isEditing) cancelEdit();
+      else onClose?.();
+    },
+  );
+
+  const formFields = (
+    <div className={ui.form}>
+      <div className={ui.field}>
+        <label className={ui.label} htmlFor="concept-label-input">
+          Nombre *
+        </label>
+        <Input
+          id="concept-label-input"
+          type="text"
+          value={draft.label}
+          onChange={(e) => setDraft({ ...draft, label: e.target.value })}
+          placeholder="Ej. Mano de obra, Material, Desplazamiento…"
+          required
+        />
+      </div>
+      <div className={conceptStyles.metaRow}>
+        <div className={ui.field}>
+          <label className={ui.label} htmlFor="concept-price-input">
+            Precio unitario
+          </label>
+          <Input
+            id="concept-price-input"
+            type="number"
+            min={0}
+            step={0.01}
+            value={draft.defaultPrice}
+            onChange={(e) => setDraft({ ...draft, defaultPrice: e.target.value })}
+            placeholder="0,00"
+          />
+        </div>
+        <div className={ui.field}>
+          <span className={ui.label}>Emoji</span>
+          <EmojiPicker
+            value={draft.emoji}
+            onChange={(emoji) => setDraft({ ...draft, emoji })}
+            ariaLabel="Emoji del concepto"
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const editActionButtons = (
+    <>
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={saving}
+        className={cx(modalBtnPrimary, styles.footerActionBtn)}
+      >
+        <Check size={18} />
+        Guardar
+      </button>
+      <button
+        type="button"
+        onClick={cancelEdit}
+        className={cx(modalBtnSecondary, styles.footerActionBtn)}
+      >
+        Cancelar
+      </button>
+    </>
+  );
+
+  const inlineEditForm = !embedded && isEditing ? (
     <div className={conceptStyles.editPanel}>
       <p className={conceptStyles.editPanelTitle}>
         {creating ? 'Nuevo concepto' : 'Editar concepto'}
       </p>
-      <div className={ui.form}>
-        <div className={ui.field}>
-          <label className={ui.label} htmlFor="concept-label-input">
-            Nombre *
-          </label>
-          <Input
-            id="concept-label-input"
-            type="text"
-            value={draft.label}
-            onChange={(e) => setDraft({ ...draft, label: e.target.value })}
-            placeholder="Ej. Mano de obra, Material, Desplazamiento…"
-            required
-          />
-        </div>
-        <div className={conceptStyles.metaRow}>
-          <div className={ui.field}>
-            <label className={ui.label} htmlFor="concept-price-input">
-              Precio unitario
-            </label>
-            <Input
-              id="concept-price-input"
-              type="number"
-              min={0}
-              step={0.01}
-              value={draft.defaultPrice}
-              onChange={(e) => setDraft({ ...draft, defaultPrice: e.target.value })}
-              placeholder="0,00"
-            />
-          </div>
-          <div className={ui.field}>
-            <span className={ui.label}>Emoji</span>
-            <EmojiPicker
-              value={draft.emoji}
-              onChange={(emoji) => setDraft({ ...draft, emoji })}
-              ariaLabel="Emoji del concepto"
-            />
-          </div>
-        </div>
-      </div>
-      <ModalActions className={conceptStyles.editPanelActions}>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className={cx(modalBtnPrimary, styles.footerActionBtn)}
-        >
-          <Check size={18} />
-          Guardar
-        </button>
-        <button
-          type="button"
-          onClick={cancelEdit}
-          className={cx(modalBtnSecondary, styles.footerActionBtn)}
-        >
-          Cancelar
-        </button>
-      </ModalActions>
+      {error && <p className={styles.error}>{error}</p>}
+      {formFields}
+      <ModalActions className={conceptStyles.editPanelActions}>{editActionButtons}</ModalActions>
     </div>
+  ) : null;
+
+  const embeddedEditModal = embedded && isEditing ? (
+    <ModalOverlay>
+      <div
+        className={cx(ui.modal, ui.modalMd, styles.managerModal)}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="invoice-concept-edit-title"
+      >
+        <ModalHeader
+          title={creating ? 'Nuevo concepto' : 'Editar concepto'}
+          titleId="invoice-concept-edit-title"
+          onClose={cancelEdit}
+          closeDisabled={saving}
+        />
+        <div className={ui.modalScroll}>
+          {error && <p className={ui.alertError}>{error}</p>}
+          {formFields}
+        </div>
+        <ModalFooter>
+          <ModalActions>{editActionButtons}</ModalActions>
+        </ModalFooter>
+      </div>
+    </ModalOverlay>
   ) : null;
 
   const scrollContent = (
     <>
       {!hideTitle && embedded && <h4 className={styles.embeddedTitle}>Gestionar conceptos</h4>}
-      {error && <p className={styles.error}>{error}</p>}
+      {error && !(embedded && isEditing) && <p className={styles.error}>{error}</p>}
 
       {concepts.length > 0 && !searchOutside && (
         <div className={ui.filtersRow} style={{ marginBottom: '0.75rem' }}>
@@ -238,7 +278,7 @@ export default function InvoiceConceptManager({
         </div>
       )}
 
-      {editForm}
+      {inlineEditForm}
 
       <div className={cx(styles.typeList, embedded && styles.typeListEmbedded)}>
         {filteredConcepts.length === 0 && !isEditing ? (
@@ -339,6 +379,7 @@ export default function InvoiceConceptManager({
     return (
       <>
         {layout}
+        {embeddedEditModal}
         {deleteConfirmDialog}
       </>
     );

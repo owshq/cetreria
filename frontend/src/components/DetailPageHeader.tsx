@@ -67,11 +67,7 @@ export default function DetailPageHeader({
                 <span className={styles.headerTitleMeta}>
                   {metaAuthor && (
                     <span className={styles.headerAuthor}>
-                      <UserAvatar
-                        user={metaAuthor}
-                        size="sm"
-                        className={styles.headerAuthorAvatar}
-                      />
+                      <UserAvatar user={metaAuthor} size="xs" />
                       <span className={styles.headerAuthorName}>{metaAuthor.name}</span>
                     </span>
                   )}

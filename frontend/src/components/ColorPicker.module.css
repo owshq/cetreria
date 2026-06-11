@@ -12,19 +12,72 @@
   border: 2px solid transparent;
   cursor: pointer;
   padding: 0;
+  flex-shrink: 0;
+}
+
+.colorSwatchCorporate {
+  box-shadow:
+    0 0 0 1px var(--stroke-gray-medium),
+    inset 0 0 0 2px color-mix(in srgb, white 70%, transparent);
 }
 
 .colorSwatchActive {
-  border-color: var(--app-accent, var(--color-text-primary));
-  box-shadow: 0 0 0 2px var(--color-bg-surface) inset;
+  border-color: var(--color-bg-surface);
+  box-shadow:
+    0 0 0 2px var(--color-text-primary),
+    0 0 0 3px var(--color-bg-surface);
 }
 
-.colorInput {
-  width: 2.25rem;
-  height: 2.25rem;
+.colorSwatchCorporate.colorSwatchActive {
+  box-shadow:
+    0 0 0 2px var(--color-text-primary),
+    0 0 0 3px var(--color-bg-surface),
+    inset 0 0 0 2px color-mix(in srgb, white 70%, transparent);
+}
+
+.colorCustom {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-left: 0.25rem;
+  border-left: 1px solid var(--stroke-gray);
+}
+
+.colorCustomPicker {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.colorCustomPreview {
+  display: block;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  border: 1px solid var(--stroke-gray-medium);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 40%, transparent);
+}
+
+.colorInputHidden {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.colorHexInput {
+  width: 6.75rem;
+  padding: 0.375rem 0.5rem;
   border: 1px solid var(--stroke-gray);
   border-radius: 0.375rem;
-  cursor: pointer;
-  background: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
 }

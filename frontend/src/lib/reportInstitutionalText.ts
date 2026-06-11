@@ -8,11 +8,22 @@ import {
 import { formatDocumentAmount, type DocumentConceptSummary } from '@shared/types';
 import type { ReportKind } from '@shared/types';
 
+export function isSingleDayReport(dateFrom: string, dateTo: string): boolean {
+  return dateFrom === dateTo;
+}
+
+export function getReportPeriodScopeLabel(dateFrom: string, dateTo: string): string {
+  return isSingleDayReport(dateFrom, dateTo) ? 'Informe del día' : 'Informe del periodo';
+}
+
 export type ReportBreakdownRow = {
   name: string;
   activities: number;
   hours: number;
+  /** Total documentos cuando no hay desglose por tipo (snapshots legacy). */
   documents: number;
+  deliveryNoteCount?: number;
+  invoiceCount?: number;
   paidAmount: number;
   /** Horas firmadas (desglose de operarios). */
   signedHours?: number;
@@ -27,7 +38,12 @@ export type TeamShiftBreakdownRow = {
   signedHours: number;
 };
 
-export type ReportNarrativeInput = {
+export type ReportFeatureFlags = {
+  workerSignaturesEnabled?: boolean;
+  shiftSchedulingEnabled?: boolean;
+};
+
+export type ReportNarrativeInput = ReportFeatureFlags & {
   reportKind: ReportKind;
   companyName: string;
   periodLabel: string;
@@ -58,15 +74,30 @@ export type ReportNarrativeInput = {
   teamShiftBreakdown?: TeamShiftBreakdownRow[];
 };
 
-const REPORT_SUBTITLE: Record<ReportKind, string> = {
+const REPORT_SUBTITLE: Record<Exclude<ReportKind, 'workers_global'>, string> = {
   general: 'Visión consolidada de operaciones, contactos y documentación',
-  contacts_global: 'Comparativa de dedicación y facturación por contacto',
+  contacts_global: 'Comparativa de dedicación y facturación por cliente',
   contact: 'Seguimiento individual de actividad y ciclo documental',
-  workers_global: 'Carga de trabajo, firmas, turnos y actividades por operario',
   worker: 'Productividad, cartera atendida y documentación del operario',
 };
 
-export function getReportSubtitle(kind: ReportKind): string {
+function buildWorkersGlobalSubtitle(flags?: ReportFeatureFlags): string {
+  const extra: string[] = [];
+  if (flags?.workerSignaturesEnabled) extra.push('firmas');
+  if (flags?.shiftSchedulingEnabled) extra.push('turnos');
+  if (extra.length === 0) return 'Carga de trabajo y actividades por operario';
+  return `Carga de trabajo, ${extra.join(', ')} y actividades por operario`;
+}
+
+function workersGlobalIntroScopeLine(input: ReportNarrativeInput): string {
+  const parts = ['actividades'];
+  if (input.shiftSchedulingEnabled) parts.push('horas por turno');
+  if (input.workerSignaturesEnabled) parts.push('estado de firmas (firmadas vs pendientes)');
+  return `Incluye ${parts.join(', ')}.`;
+}
+
+export function getReportSubtitle(kind: ReportKind, flags?: ReportFeatureFlags): string {
+  if (kind === 'workers_global') return buildWorkersGlobalSubtitle(flags);
   return REPORT_SUBTITLE[kind];
 }
 
@@ -249,22 +280,27 @@ export function buildReportIntroduction(input: ReportNarrativeInput): string[] {
     );
   } else if (input.reportKind === 'contacts_global') {
     bullets.push(
-      `${input.totalClients} contacto${input.totalClients === 1 ? '' : 's'} con actividad o documentación en el periodo.`,
-      'Permite comparar dedicación, documentos y facturación entre contactos.',
+      `${input.totalClients} cliente${input.totalClients === 1 ? '' : 's'} con actividad o documentación en el periodo.`,
+      'Permite comparar dedicación, documentos y facturación entre clientes.',
     );
   } else if (input.reportKind === 'contact') {
     bullets.push('Informe individual: evolución de dedicación, tipos de trabajo y ciclo documental.');
   } else if (input.reportKind === 'workers_global') {
     bullets.push(
       `${input.totalWorkers} operario${input.totalWorkers === 1 ? '' : 's'} con registro en el periodo.`,
-      'Incluye actividades, horas por turno y estado de firmas (firmadas vs pendientes).',
+      workersGlobalIntroScopeLine(input),
     );
     if (input.teamAssignedHours != null && input.teamAssignedHours > 0) {
-      bullets.push(
-        `Horas asignadas: ${input.teamAssignedHours} h · firmadas: ${input.teamSignedHours ?? 0} h · pendientes: ${input.teamPendingHours ?? 0} h.`,
-      );
+      if (input.workerSignaturesEnabled) {
+        bullets.push(
+          `Horas asignadas: ${input.teamAssignedHours} h · firmadas: ${input.teamSignedHours ?? 0} h · pendientes: ${input.teamPendingHours ?? 0} h.`,
+        );
+      } else {
+        bullets.push(`Horas registradas: ${input.teamAssignedHours} h.`);
+      }
     }
     if (
+      input.workerSignaturesEnabled &&
       input.teamSignedActivities != null &&
       (input.teamSignedActivities > 0 || (input.teamUnsignedActivities ?? 0) > 0)
     ) {
@@ -339,7 +375,11 @@ export function buildReportAnalysis(input: ReportNarrativeInput): string[] {
     if (workerTop) bullets.push(workerTop);
     const workerConc = breakdownConcentrationLine(input.workerBreakdown, 'operarios');
     if (workerConc) bullets.push(workerConc);
-    if (input.teamAssignedHours != null && input.teamAssignedHours > 0) {
+    if (
+      input.workerSignaturesEnabled &&
+      input.teamAssignedHours != null &&
+      input.teamAssignedHours > 0
+    ) {
       const signedShare = Math.round(
         ((input.teamSignedHours ?? 0) / input.teamAssignedHours) * 100,
       );
@@ -348,14 +388,15 @@ export function buildReportAnalysis(input: ReportNarrativeInput): string[] {
       );
     }
     const leadingShift = input.teamShiftBreakdown?.[0];
-    if (leadingShift && leadingShift.assignedHours > 0) {
+    if (input.shiftSchedulingEnabled && leadingShift && leadingShift.assignedHours > 0) {
       bullets.push(
         `Turno con más horas asignadas: ${leadingShift.shiftLabel} (${leadingShift.assignedHours} h).`,
       );
     }
     if (input.totalWorkers > 0 && (input.teamAssignedHours ?? 0) > 0) {
       const avg = ((input.teamAssignedHours ?? 0) / input.totalWorkers).toFixed(1);
-      bullets.push(`Media de carga asignada: ${avg} h por operario con actividad.`);
+      const loadLabel = input.workerSignaturesEnabled ? 'carga asignada' : 'horas registradas';
+      bullets.push(`Media de ${loadLabel}: ${avg} h por operario con actividad.`);
     }
   }
 
@@ -379,7 +420,7 @@ export function buildChart1Conclusions(input: ReportNarrativeInput): string[] {
 export function buildChart2Conclusions(input: ReportNarrativeInput): string[] {
   const titles: Record<ReportKind, string> = {
     general: 'Interpretación — contactos con mayor dedicación',
-    contacts_global: 'Interpretación — ranking de contactos',
+    contacts_global: 'Interpretación — ranking de clientes',
     contact: 'Interpretación — estado de la documentación',
     workers_global: 'Interpretación — ranking de operarios',
     worker: 'Interpretación — contactos atendidos por el operario',
@@ -418,25 +459,39 @@ export function buildReportConclusions(input: ReportNarrativeInput): string[] {
       break;
     case 'contacts_global':
       bullets.push(
-        'Compare contactos no solo por horas, sino por actividades, documentos y importe cobrado.',
-        'Priorice seguimiento en contactos con actividad pero sin facturación cerrada.',
-        'Acción recomendada: planificar revisión comercial en contactos con mayor volumen de borradores.',
+        'Compare clientes no solo por horas, sino por actividades, documentos y importe cobrado.',
+        'Priorice seguimiento en clientes con actividad pero sin facturación cerrada.',
+        'Acción recomendada: planificar revisión comercial en clientes con mayor volumen de borradores.',
       );
       break;
     case 'contact':
       bullets.push(
         'Mantenga coherencia entre dedicación registrada, tipos de actividad y ciclo documental.',
         'Revise borradores pendientes y documentos enviados sin cobro antes de cerrar el periodo.',
-        'Acción recomendada: confirmar próximas intervenciones y estado de cobros con el contacto.',
+        'Acción recomendada: confirmar próximas intervenciones y estado de cobros con el cliente.',
       );
       break;
-    case 'workers_global':
-      bullets.push(
-        'Evalúe equilibrio de carga entre operarios, firmas pendientes y distribución por turnos.',
-        'Detecte operarios con horas asignadas sin firmar o actividades sin cierre de jornada.',
-        'Acción recomendada: priorizar firmas pendientes y revisar turnos con mayor desviación asignado/firmado.',
-      );
+    case 'workers_global': {
+      const focusParts = ['equilibrio de carga entre operarios'];
+      if (input.workerSignaturesEnabled) focusParts.push('firmas pendientes');
+      if (input.shiftSchedulingEnabled) focusParts.push('distribución por turnos');
+      bullets.push(`Evalúe ${focusParts.join(', ')}.`);
+      if (input.workerSignaturesEnabled) {
+        bullets.push(
+          'Detecte operarios con horas asignadas sin firmar o actividades sin cierre de jornada.',
+        );
+        bullets.push(
+          'Acción recomendada: priorizar firmas pendientes y revisar turnos con mayor desviación asignado/firmado.',
+        );
+      } else if (input.shiftSchedulingEnabled) {
+        bullets.push('Compare dedicación entre turnos y operarios con mayor volumen de actividades.');
+        bullets.push('Acción recomendada: revisar turnos con mayor concentración de horas.');
+      } else {
+        bullets.push('Compare dedicación y documentación generada entre operarios.');
+        bullets.push('Acción recomendada: revisar operarios con mayor volumen y cierre documental pendiente.');
+      }
       break;
+    }
     case 'worker':
       bullets.push(
         'Valore productividad del operario en horas, contactos atendidos y documentación generada.',

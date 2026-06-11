@@ -1,4 +1,5 @@
-import type { Document, DocumentLineItem, InvoiceConceptSetting } from './types.js';
+import type { Activity, Document, DocumentLineItem, InvoiceConceptSetting } from './types.js';
+import { findActivityDeliveryNoteForWorker } from './activityWorkReport.js';
 import { isDateInRange } from './dateRange.js';
 import {
   computeDocumentTotals,
@@ -196,16 +197,27 @@ function mapToDocumentConceptOptions(
     );
 }
 
-export function aggregateInvoiceConcepts(
+/** Documentos vinculados a actividades por activityId (sin filtro por document.date). */
+export function documentsLinkedToActivities(
   documents: readonly Document[],
-  from: string,
-  to: string,
+  activities: readonly Pick<Activity, 'id'>[],
   clientScope: ClientScope = 'all',
-): DocumentConceptSummary[] {
-  const inRange = documents.filter(
-    (doc) => doc.type === 'invoice' && isDateInRange(doc.date, from, to),
+): Document[] {
+  const activityIds = new Set(activities.map((activity) => activity.id));
+  return documents.filter(
+    (document) =>
+      Boolean(document.activityId) &&
+      activityIds.has(document.activityId!) &&
+      matchesClientScope(document.clientId, clientScope),
   );
-  const periodDocuments = inRange.filter((doc) => matchesClientScope(doc.clientId, clientScope));
+}
+
+export function summarizeDocumentConcepts(
+  documents: readonly Document[],
+  types: readonly Document['type'][],
+): DocumentConceptSummary[] {
+  const typeSet = new Set(types);
+  const scopedDocuments = documents.filter((doc) => typeSet.has(doc.type));
 
   const map = new Map<
     string,
@@ -218,7 +230,7 @@ export function aggregateInvoiceConcepts(
     }
   >();
 
-  for (const doc of periodDocuments) {
+  for (const doc of scopedDocuments) {
     for (const item of doc.items) {
       const conceptText = getLineItemConceptText(item);
       const key = normalizeConceptKey(conceptText);
@@ -254,6 +266,109 @@ export function aggregateInvoiceConcepts(
       lineCount: data.lineCount,
     }))
     .sort((a, b) => b.totalAmount - a.totalAmount);
+}
+
+/** Conceptos de factura emitidos dentro del periodo (informes financieros). */
+export function aggregateDocumentConcepts(
+  documents: readonly Document[],
+  from: string,
+  to: string,
+  types: readonly Document['type'][],
+  clientScope: ClientScope = 'all',
+): DocumentConceptSummary[] {
+  const typeSet = new Set(types);
+  const periodDocuments = documents.filter(
+    (doc) =>
+      typeSet.has(doc.type) &&
+      isDateInRange(doc.date, from, to) &&
+      matchesClientScope(doc.clientId, clientScope),
+  );
+
+  return summarizeDocumentConcepts(periodDocuments, types);
+}
+
+export function aggregateInvoiceConcepts(
+  documents: readonly Document[],
+  from: string,
+  to: string,
+  clientScope: ClientScope = 'all',
+): DocumentConceptSummary[] {
+  return aggregateDocumentConcepts(documents, from, to, ['invoice'], clientScope);
+}
+
+export function aggregateDeliveryNoteConcepts(
+  documents: readonly Document[],
+  from: string,
+  to: string,
+  clientScope: ClientScope = 'all',
+): DocumentConceptSummary[] {
+  return aggregateDocumentConcepts(documents, from, to, ['delivery-note'], clientScope);
+}
+
+/** Conceptos facturados de documentos vinculados a actividades del periodo. */
+export function invoiceConceptsForActivities(
+  documents: readonly Document[],
+  activities: readonly Pick<Activity, 'id'>[],
+  clientScope: ClientScope = 'all',
+): DocumentConceptSummary[] {
+  const linkedInvoices = documentsLinkedToActivities(documents, activities, clientScope).filter(
+    (document) => document.type === 'invoice',
+  );
+  return summarizeDocumentConcepts(linkedInvoices, ['invoice']);
+}
+
+/** Conceptos pendientes/no facturados de albaranes vinculados a actividades del periodo. */
+export function deliveryNoteConceptsForActivities(
+  documents: readonly Document[],
+  activities: readonly Pick<Activity, 'id'>[],
+  clientScope: ClientScope = 'all',
+): DocumentConceptSummary[] {
+  const linkedNotes = documentsLinkedToActivities(documents, activities, clientScope).filter(
+    (document) => document.type === 'delivery-note',
+  );
+  return summarizeDocumentConcepts(linkedNotes, ['delivery-note']);
+}
+
+export type DeliveryNotesForActivitiesOptions = {
+  workerUserId?: string;
+  clientScope?: ClientScope;
+};
+
+/** Albaranes vinculados a actividades del periodo (eje activity.id). */
+export function deliveryNotesForActivities(
+  activities: readonly Activity[],
+  documents: readonly Document[],
+  options: DeliveryNotesForActivitiesOptions = {},
+): Document[] {
+  const { workerUserId, clientScope = 'all' } = options;
+  const notes: Document[] = [];
+  const seen = new Set<string>();
+
+  for (const activity of activities) {
+    const note = workerUserId
+      ? findActivityDeliveryNoteForWorker(activity.id, workerUserId, documents, activity)
+      : documentsLinkedToActivities(documents, [activity], clientScope).find(
+          (document) => document.type === 'delivery-note',
+        ) ?? null;
+
+    if (!note || seen.has(note.id)) continue;
+    if (!matchesClientScope(note.clientId, clientScope)) continue;
+    seen.add(note.id);
+    notes.push(note);
+  }
+
+  return notes.sort((left, right) => left.date.localeCompare(right.date));
+}
+
+/** Facturas vinculadas a actividades del periodo por activityId. */
+export function invoicesForActivities(
+  activities: readonly Pick<Activity, 'id'>[],
+  documents: readonly Document[],
+  clientScope: ClientScope = 'all',
+): Document[] {
+  return documentsLinkedToActivities(documents, activities, clientScope).filter(
+    (document) => document.type === 'invoice',
+  );
 }
 
 export function getTopInvoiceConcept(

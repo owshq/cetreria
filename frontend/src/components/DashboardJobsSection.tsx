@@ -516,6 +516,7 @@ export default function DashboardJobsSection({
         onGroupByChange={onChartGroupByChange ?? (() => {})}
         onValueMeasureChange={onChartValueMeasureChange ?? (() => {})}
         workerSignaturesEnabled={workerSignaturesEnabled}
+        shiftSchedulingEnabled={shiftSchedulingEnabled}
         className={styles.headerChartToggles}
       />
     ) : (
@@ -526,6 +527,7 @@ export default function DashboardJobsSection({
           onGroupByChange={onChartGroupByChange ?? (() => {})}
           onValueMeasureChange={onChartValueMeasureChange ?? (() => {})}
           workerSignaturesEnabled={workerSignaturesEnabled}
+          shiftSchedulingEnabled={shiftSchedulingEnabled}
         />
       </div>
     )
@@ -540,6 +542,12 @@ export default function DashboardJobsSection({
       onChartValueMeasureChange('hours');
     }
   }, [workerSignaturesEnabled, chartValueMeasure, onChartValueMeasureChange]);
+
+  useEffect(() => {
+    if (!shiftSchedulingEnabled && onChartGroupByChange && chartGroupBy === 'shift') {
+      onChartGroupByChange('team');
+    }
+  }, [shiftSchedulingEnabled, chartGroupBy, onChartGroupByChange]);
 
   const hasMatrixData = matrix.dates.length > 0 && matrix.rows.length > 0;
   const hasFilteredTableData = tableDates.length > 0 && filteredRows.length > 0;

@@ -1,4 +1,5 @@
 import type { Activity, CalendarEvent, Client, Document, DocumentTypeGroup, User } from './types.js';
+import { isClientExplicitlyAssignedToUser } from './clientAssignees.js';
 import {
   filterActivitiesAssignedToUser,
   filterDocumentsForActivities,
@@ -29,18 +30,18 @@ export function isDocumentTypePublicForOperators(
 }
 
 /**
- * Visibilidad de contactos para operarios: solo contactos ligados a actividades
- * en las que estan asignados (`canUserAccessClient` / `filterClientsForUser`).
- * Los grupos de contactos (`ClientGroup`) son taxonomia admin; no tienen isPublic
- * ni gobiernan ACL de operarios.
+ * Visibilidad de contactos para operarios: contactos con actividades asignadas
+ * o asignacion explicita (`assignedUserIds`) por admin.
  */
 export function canUserAccessClient(
   clientId: string,
   activities: readonly Activity[],
   events: readonly CalendarEvent[],
   user: ResourceAccessUser,
+  client?: Pick<Client, 'assignedUserIds'>,
 ): boolean {
   if (user.role === 'admin') return true;
+  if (client && isClientExplicitlyAssignedToUser(client, user.id)) return true;
   const assignedClientIds = getAssignedClientIdsForUser(activities, events, user.id);
   return assignedClientIds.includes(clientId);
 }
@@ -52,8 +53,11 @@ export function filterClientsForUser(
   user: ResourceAccessUser,
 ): Client[] {
   if (user.role === 'admin') return [...clients];
-  const allowedIds = new Set(getAssignedClientIdsForUser(activities, events, user.id));
-  return clients.filter((client) => allowedIds.has(client.id));
+  const activityClientIds = new Set(getAssignedClientIdsForUser(activities, events, user.id));
+  return clients.filter(
+    (client) =>
+      activityClientIds.has(client.id) || isClientExplicitlyAssignedToUser(client, user.id),
+  );
 }
 
 /** Operario: sin facturas; albaranes publicos del grupo o ligados a actividad asignada. */

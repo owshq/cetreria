@@ -1,3 +1,7 @@
+.actionsCell {
+  overflow: visible;
+}
+
 .fieldNote {
   display: block;
   margin-top: 0.25rem;

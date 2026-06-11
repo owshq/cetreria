@@ -6,6 +6,8 @@ import { migrateData } from './migrate.js';
 import { migrateDbHygiene } from './migrateDbHygiene.js';
 import { migrateWorkspaces } from './migrateWorkspaces.js';
 import { migrateHalconeriaUsers } from './migrateHalconeriaUsers.js';
+import { migrateDocumentDisplayNames } from './migrateDocumentDisplayNames.js';
+import { migrateDeliveryNoteWorkerUserIds } from './migrateDeliveryNoteWorkerUserIds.js';
 import { ensureActivityTypes } from './activityTypes.js';
 import { ensureDefaultClientGroups } from './clientGroups.js';
 import { ensureDefaultDocumentTypeGroupsForAllWorkspaces } from './documentTypeGroups.js';
@@ -35,6 +37,8 @@ export async function bootstrapDb(mode: BootstrapDbMode = 'default'): Promise<vo
   await migrateDbHygiene();
   await migrateWorkspaces();
   await migrateHalconeriaUsers();
+  await migrateDocumentDisplayNames();
+  await migrateDeliveryNoteWorkerUserIds();
   await ensureActivityTypes();
   await ensureDefaultClientGroups();
   await ensureDefaultDocumentTypeGroupsForAllWorkspaces();

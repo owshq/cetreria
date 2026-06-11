@@ -940,6 +940,24 @@ export function createEmptyViewState(displayColumns: DisplayColumnDef[]): Persis
   return { config: createDefaultViewConfig(displayColumns), activeSavedViewId: null };
 }
 
+/** Si la vista activa ya no existe, vuelve al estado por defecto (evita config huerfana). */
+export function resolvePersistedStateAgainstSavedViews(
+  persisted: PersistedTableViewState,
+  views: SavedTableView[],
+  displayColumns: DisplayColumnDef[],
+): PersistedTableViewState {
+  const activeSavedViewId = persisted.activeSavedViewId;
+  const savedViewMissing =
+    activeSavedViewId != null && !views.some((view) => view.id === activeSavedViewId);
+
+  if (!savedViewMissing) return persisted;
+
+  return {
+    config: createDefaultViewConfig(displayColumns),
+    activeSavedViewId: null,
+  };
+}
+
 export function parseRemoteViewState(
   rawConfig: unknown,
   activeSavedViewId: string | null,

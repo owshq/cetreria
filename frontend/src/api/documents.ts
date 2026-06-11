@@ -1,5 +1,6 @@
 import type { Document, DocumentsBootstrap, ElectronicInvoicingGateResult } from '@shared/types';
 import { apiFetch, apiFetchBlob, ApiError, getToken, getWorkspaceId } from './client';
+import { invalidateActivitiesCache } from './activities';
 import {
   getCachedResource,
   invalidateDocumentsBootstrapCache,
@@ -105,6 +106,7 @@ export const documentsService = {
   delete: (id: string): Promise<void> =>
     apiFetch(`/documents/${id}`, { method: 'DELETE' }).then((result) => {
       invalidateDocumentsCache();
+      invalidateActivitiesCache();
       return result;
     }),
 

@@ -20,7 +20,7 @@ export default function ContentLoading({
       aria-label={label}
     >
       <div className={styles.logoWrap}>
-        <BrandLogo tone="login" size="lg" className={styles.logo} />
+        <BrandLogo tone="loading" size="lg" className={styles.logo} />
       </div>
     </div>
   );

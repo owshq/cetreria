@@ -97,11 +97,13 @@ export default function ActivityAssociationGapBanner({
   const handleOpenActivity = (item: ActivityAssociationGapItem) => {
     const focusSection = item.lacksUsers
       ? ('assignees' as const)
-      : item.lacksWorkReport
+      : item.lacksWorkReport || item.actionableFocusWorkReport
         ? ('workReport' as const)
         : item.lacksInvoice || item.lacksDeliveryNote
           ? ('documents' as const)
-          : undefined;
+          : item.lacksSignature
+            ? ('assignees' as const)
+            : undefined;
 
     openEditByActivity(item.activity, events, {
       editMode: focusSection === 'assignees' || item.lacksInvoice,

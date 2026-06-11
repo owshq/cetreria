@@ -2,6 +2,7 @@ import type { DataStore } from './dataStore.js';
 import {
   countDocs,
   deleteDoc,
+  findByFieldInWorkspace,
   getById,
   insertDoc,
   listAll,
@@ -19,6 +20,7 @@ export function createJsonFileStore(): DataStore {
     insertDoc,
     updateDoc,
     deleteDoc,
+    findByFieldInWorkspace,
     countDocs,
     withTransaction(fn) {
       return withDbTransaction(() => fn(store));

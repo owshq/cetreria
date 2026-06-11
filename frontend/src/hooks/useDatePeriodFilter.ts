@@ -65,7 +65,9 @@ function readInitialPrefs(storageKey: string): DatePeriodPrefs | null {
   return readDatePeriodPrefs(storageKey);
 }
 
-export function useDatePeriodFilter(storageKey = DATE_PERIOD_FILTER_STORAGE_KEY) {
+export function useDatePeriodFilter(
+  storageKey: string = DATE_PERIOD_FILTER_STORAGE_KEY,
+) {
   const savedPrefs = useMemo(() => readInitialPrefs(storageKey), [storageKey]);
   const periodFiltersRef = useRef<HTMLDivElement>(null);
 

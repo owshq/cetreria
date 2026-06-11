@@ -24,6 +24,12 @@ import {
   canCreateDocumentTypeGroup,
   getCreatableDocumentTypeGroupTypes,
 } from '@shared/types';
+import { ApiError } from '@/api/client';
+import { useActivityTypes } from '@/context/ActivityTypesContext';
+import {
+  getDocumentActivityLinkError,
+  logDocumentActivityLinkBlock,
+} from '@/lib/documentActivityLink';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cx } from '@/lib/cx';
@@ -97,6 +103,7 @@ export default function Documents() {
   const { onActivitySaved } = useActivityModal();
   const currentUser = authService.getCurrentUser();
   const isAdmin = currentUser?.role === 'admin';
+  const { activityTypes } = useActivityTypes();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [documentTypeGroups, setDocumentTypeGroups] = useState<DocumentTypeGroup[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -443,10 +450,32 @@ export default function Documents() {
   };
 
   const handleLinkToActivity = useCallback(async (doc: Document, activityId: string) => {
+    const activity = activities.find((item) => item.id === activityId);
+    if (!activity) {
+      alert('Actividad no encontrada.');
+      return;
+    }
+
+    const linkError = getDocumentActivityLinkError(doc, activity, documents, activityTypes);
+    if (linkError) {
+      logDocumentActivityLinkBlock(doc, activity, linkError);
+      alert(linkError);
+      return;
+    }
+
     setActivityLinkMenu(null);
-    await documentsService.update(doc.id, { activityId });
-    await loadData();
-  }, []);
+    try {
+      await documentsService.update(doc.id, { activityId });
+      await loadData();
+    } catch (error) {
+      console.error('Error al vincular actividad:', error);
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : 'No se pudo vincular la actividad al documento.';
+      alert(message);
+    }
+  }, [activities, documents, activityTypes, loadData]);
 
   const activityLinkMenuItems = useMemo((): ContextMenuItem[] => {
     if (!activityLinkMenu) return [];
@@ -689,7 +718,7 @@ export default function Documents() {
             setShowGroupModal(true);
           }
         : undefined,
-    onEditGroup: handleEditGroup,
+    onEditGroup: isAdmin ? handleEditGroup : undefined,
     onDownloadGroup: handleDownloadGroup,
     onDeleteGroup: handleDeleteGroup,
     clients: clientsWithDocuments,
@@ -720,32 +749,65 @@ export default function Documents() {
     navigate('/settings?tab=financial-documents');
   }, [navigate]);
 
-  const toolbarOptionsItems: ContextMenuItem[] = useMemo(
-    () =>
-      isAdmin
-        ? [
-            {
-              id: 'financial-documents',
-              label: 'Documentos financieros',
-              icon: <FileCode size={16} />,
-              onSelect: handleOpenFinancialDocumentsSettings,
-            },
-            {
-              id: 'download-csv',
-              label: 'Descargar CSV',
-              icon: <ArrowDownToLine size={16} />,
-              disabled: filteredDocuments.length === 0,
-              onSelect: handleDownloadCsv,
-            },
-          ]
-        : [],
-    [
-      isAdmin,
-      handleOpenFinancialDocumentsSettings,
-      filteredDocuments.length,
-      handleDownloadCsv,
-    ],
-  );
+  const toolbarOptionsItems: ContextMenuItem[] = useMemo(() => {
+    if (!isAdmin) return [];
+
+    const items: ContextMenuItem[] = [];
+
+    if (activeDocumentTypeGroup) {
+      items.push(
+        {
+          id: 'edit-group',
+          label: 'Editar grupo',
+          icon: <Pencil size={16} />,
+          onSelect: () => handleEditGroup(activeDocumentTypeGroup),
+        },
+        {
+          id: 'download-group',
+          label: 'Descargar grupo',
+          icon: <ArrowDownToLine size={16} />,
+          disabled: documents.filter((doc) => doc.type === activeDocumentTypeGroup.documentType).length === 0,
+          onSelect: () => handleDownloadGroup(activeDocumentTypeGroup),
+        },
+        {
+          id: 'delete-group',
+          label: 'Eliminar grupo',
+          icon: <CircleMinus size={16} />,
+          danger: true,
+          onSelect: () => handleDeleteGroup(activeDocumentTypeGroup),
+        },
+        { kind: 'separator', id: 'group-actions-separator' },
+      );
+    }
+
+    items.push(
+      {
+        id: 'financial-documents',
+        label: 'Documentos financieros',
+        icon: <FileCode size={16} />,
+        onSelect: handleOpenFinancialDocumentsSettings,
+      },
+      {
+        id: 'download-csv',
+        label: 'Descargar CSV',
+        icon: <ArrowDownToLine size={16} />,
+        disabled: filteredDocuments.length === 0,
+        onSelect: handleDownloadCsv,
+      },
+    );
+
+    return items;
+  }, [
+    isAdmin,
+    activeDocumentTypeGroup,
+    documents,
+    handleEditGroup,
+    handleDownloadGroup,
+    handleDeleteGroup,
+    handleOpenFinancialDocumentsSettings,
+    filteredDocuments.length,
+    handleDownloadCsv,
+  ]);
 
   const {
     visibleItems: visibleRows,
@@ -1414,8 +1476,11 @@ export default function Documents() {
           setEditingGroup(null);
         }}
         onSaved={async (group) => {
+          const wasEdit = editingGroup !== null;
           await loadData();
-          setActiveTab(group.id);
+          if (!wasEdit) {
+            setActiveTab(group.id);
+          }
         }}
       />
 

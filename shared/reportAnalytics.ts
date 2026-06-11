@@ -13,6 +13,43 @@ export type DocumentMetrics = {
   draftAmount: number;
 };
 
+export type DocumentTypeMetrics = {
+  deliveryNoteCount: number;
+  invoiceCount: number;
+};
+
+export function countDocumentsByType(documents: readonly Document[]): DocumentTypeMetrics {
+  let deliveryNoteCount = 0;
+  let invoiceCount = 0;
+  for (const document of documents) {
+    if (document.type === 'invoice') {
+      invoiceCount += 1;
+    } else {
+      deliveryNoteCount += 1;
+    }
+  }
+  return { deliveryNoteCount, invoiceCount };
+}
+
+export function documentTypeMetricsForDocuments(
+  documents: readonly Document[],
+  clientScope: ClientScope = 'all',
+): DocumentTypeMetrics {
+  const scopedDocuments = documents.filter((document) =>
+    matchesClientScope(document.clientId, clientScope),
+  );
+  return countDocumentsByType(scopedDocuments);
+}
+
+export function documentTypeMetricsForRange(
+  documents: readonly Document[],
+  from: string,
+  to: string,
+  clientScope: ClientScope = 'all',
+): DocumentTypeMetrics {
+  return countDocumentsByType(getPeriodDocuments(documents, from, to, clientScope));
+}
+
 export function reportRangeFromMonthlyReport(report: MonthlyReport): { from: string; to: string } {
   if (report.periodFrom && report.periodTo) {
     return { from: report.periodFrom, to: report.periodTo };
@@ -42,6 +79,9 @@ export function getPeriodDocuments(
   );
 }
 
+/** Documentos emitidos dentro del periodo (filtro por document.date). */
+export const documentsIssuedInPeriod = getPeriodDocuments;
+
 /** Documentos vinculados a actividades concretas (p. ej. factura de una actividad del periodo). */
 export function getDocumentsLinkedToActivities(
   documents: readonly Document[],
@@ -51,6 +91,26 @@ export function getDocumentsLinkedToActivities(
   return documents.filter(
     (document) => document.activityId && activityIds.has(document.activityId),
   );
+}
+
+/** Metricas sobre un subconjunto de documentos ya filtrado (sin volver a filtrar por fecha). */
+export function documentMetricsForDocuments(
+  documents: readonly Document[],
+  clientScope: ClientScope = 'all',
+): DocumentMetrics {
+  const scopedDocuments = documents.filter((document) =>
+    matchesClientScope(document.clientId, clientScope),
+  );
+
+  return {
+    paid: scopedDocuments.filter((doc) => doc.status === 'paid').length,
+    sent: scopedDocuments.filter((doc) => doc.status === 'sent').length,
+    draft: scopedDocuments.filter((doc) => doc.status === 'draft').length,
+    total: scopedDocuments.length,
+    paidAmount: sumDocumentTotalByStatus(scopedDocuments, 'paid'),
+    sentAmount: sumDocumentTotalByStatus(scopedDocuments, 'sent'),
+    draftAmount: sumDocumentTotalByStatus(scopedDocuments, 'draft'),
+  };
 }
 
 /** Documentos asignados a actividades que aún no están pagados (borrador o enviado). */

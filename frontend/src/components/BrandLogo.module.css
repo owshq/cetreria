@@ -4,8 +4,8 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: var(--logo-box-max, var(--app-logo-size, 2.75rem));
-  height: var(--logo-box-max, var(--app-logo-size, 2.75rem));
+  width: var(--logo-box-max, var(--app-logo-size, 3rem));
+  height: var(--logo-box-max, var(--app-logo-size, 3rem));
   aspect-ratio: 1;
   padding: 0.25rem;
   background: #ffffff;
@@ -29,20 +29,34 @@
   box-shadow: none;
 }
 
+.logoBoxOnAccent {
+  width: auto;
+  height: auto;
+  aspect-ratio: unset;
+}
+
+.logoBoxOnAccent:not(.logoBoxCollapsed) {
+  max-width: calc(var(--layout-sidebar-width) - 3.5rem);
+}
+
+.logoBoxOnAccent.logoBoxCollapsed {
+  max-width: calc(var(--layout-sidebar-collapsed-width) - 0.5rem);
+}
+
 :global([data-theme='dark']) .logoBoxOnAccent {
   background: transparent;
 }
 
 .logoBoxSm {
-  --logo-box-max: 2rem;
+  --logo-box-max: 2.25rem;
 }
 
 .logoBoxMd {
-  --logo-box-max: 2.75rem;
+  --logo-box-max: 3rem;
 }
 
 .logoBoxLg {
-  --logo-box-max: 3.5rem;
+  --logo-box-max: 3.75rem;
 }
 
 .logo {
@@ -57,6 +71,16 @@
   object-fit: contain;
   object-position: center;
   transition: transform 0.2s ease;
+}
+
+.logoBoxOnAccent .logoOnAccentImage {
+  flex: 0 0 auto;
+  width: auto;
+  height: var(--app-logo-wordmark-height, var(--app-logo-size, 2.5rem));
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: none;
 }
 
 .logoBoxLogin {
@@ -90,13 +114,13 @@
   line-height: 0;
 }
 
-.logoBoxCollapsed {
+.logoBoxCollapsed:not(.logoBoxOnAccent) {
   width: min(
-    var(--logo-box-max, var(--app-logo-size, 2.75rem)),
+    var(--logo-box-max, var(--app-logo-size, 3rem)),
     calc(var(--layout-sidebar-collapsed-width) - 0.5rem)
   );
   height: min(
-    var(--logo-box-max, var(--app-logo-size, 2.75rem)),
+    var(--logo-box-max, var(--app-logo-size, 3rem)),
     calc(var(--layout-sidebar-collapsed-width) - 0.5rem)
   );
 }

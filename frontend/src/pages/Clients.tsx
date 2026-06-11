@@ -5,6 +5,7 @@ import {
   Plus,
   X,
   Mail,
+  Users,
   ArrowDownToLine,
   ArrowUpFromLine,
   CircleMinus,
@@ -15,9 +16,14 @@ import {
   Pencil,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { clientsService, clientGroupsService, authService } from '@/api';
-import type { Client, ClientGroup } from '@shared/types';
-import { clientCreatedAtToFormValues, customFieldsToEntries, entriesToCustomFields } from '@shared/types';
+import { clientsService, clientGroupsService, authService, usersService, activitiesService, eventsService } from '@/api';
+import type { Activity, CalendarEvent, Client, ClientGroup, UserAssignee } from '@shared/types';
+import {
+  clientCreatedAtToFormValues,
+  customFieldsToEntries,
+  entriesToCustomFields,
+  normalizeClientAssignedUserIds,
+} from '@shared/types';
 import { downloadClientsCsv } from '@/lib/clientCsv';
 import EmailComposeModal from '@/components/EmailComposeModal';
 import { buildClientsEmailDefaults, openClientsBulkEmail } from '@/lib/clientEmail';
@@ -37,6 +43,7 @@ import TableGroupRow from '@/components/TableGroupRow';
 import ConfigurableTable from '@/components/ConfigurableTable';
 import InfiniteScrollSentinel from '@/components/InfiniteScrollSentinel';
 import ClientImportModal from '@/components/ClientImportModal';
+import ClientAssignOperatorsModal from '@/components/ClientAssignOperatorsModal';
 import ClientGroupModal from '@/components/ClientGroupModal';
 import ClientFormSections, { type ClientFormData } from '@/components/ClientFormSections';
 import { SearchField } from '@/components/forms';
@@ -61,7 +68,17 @@ import {
   CLIENT_DISPLAY_COLUMNS,
   CLIENTS_VIEW_PAGE_KEY,
   CLIENT_TABLE_VIEW_COLUMNS,
+  buildClientTableViewColumns,
+  createClientTableContext,
+  EMPTY_CLIENT_TABLE_CONTEXT,
 } from '@/lib/clientTableView';
+import { filterClientsByOperator, getClientActivityOperatorIds } from '@/lib/clientOperatorFilter';
+import {
+  ACTIVITIES_ALL_USERS_ID,
+  isAllTeamUsers,
+  teamUserIdFromUrlParam,
+  teamUserIdToUrlParam,
+} from '@/lib/activitiesTeamFilter';
 import { matchesTableSearch } from '@/lib/tableViews';
 import { renderClientBoardCard, renderClientCell } from '@/lib/clientViewCells';
 import { cx } from '@/lib/cx';
@@ -92,6 +109,7 @@ function defaultClientForm(groupId = ''): ClientFormData {
     createdAt,
     createdAtPrecision,
     customFieldEntries: [],
+    assignedUserIds: [],
   };
 }
 
@@ -111,12 +129,19 @@ export default function Clients() {
   const { currentWorkspace } = useWorkspace();
   const currentUser = authService.getCurrentUser();
   const isAdmin = currentUser?.role === 'admin';
+  const currentUserId = currentUser?.id ?? '';
 
   const closeAllPopups = useCloseAllPopups();
   const [clients, setClients] = useState<Client[]>([]);
   const [groups, setGroups] = useState<ClientGroup[]>([]);
+  const [assignees, setAssignees] = useState<UserAssignee[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [operatorDataLoading, setOperatorDataLoading] = useState(isAdmin);
+  const [selectedOperatorId, setSelectedOperatorId] = useState(ACTIVITIES_ALL_USERS_ID);
   const [activeGroupId, setActiveGroupId] = useState<'all' | string>('all');
   const [showGroupModal, setShowGroupModal] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<ClientGroup | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -132,6 +157,7 @@ export default function Clients() {
   const [deleting, setDeleting] = useState(false);
   const [deletingGroup, setDeletingGroup] = useState(false);
   const [emailComposeClients, setEmailComposeClients] = useState<Client[] | null>(null);
+  const [assignOperatorsClients, setAssignOperatorsClients] = useState<Client[] | null>(null);
   const { collapsed: secondaryNavCollapsed, toggle: toggleSecondaryNav } =
     useSecondaryNavCollapsed('clients');
   const isMobile = !useMediaQuery('(min-width: 768px)');
@@ -173,6 +199,96 @@ export default function Clients() {
     };
   }, [currentWorkspace?.id]);
 
+  useEffect(() => {
+    if (!isAdmin || !currentWorkspace?.id) {
+      setAssignees([]);
+      setActivities([]);
+      setEvents([]);
+      setOperatorDataLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setOperatorDataLoading(true);
+
+    void Promise.all([
+      usersService.getAssignees(),
+      activitiesService.getAll(),
+      eventsService.getAll(),
+    ])
+      .then(([nextAssignees, nextActivities, nextEvents]) => {
+        if (cancelled) return;
+        setAssignees(nextAssignees);
+        setActivities(nextActivities);
+        setEvents(nextEvents);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setAssignees([]);
+        setActivities([]);
+        setEvents([]);
+      })
+      .finally(() => {
+        if (!cancelled) setOperatorDataLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, currentWorkspace?.id]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const fromUrl = teamUserIdFromUrlParam(searchParams.get('operatorId'));
+    if (!fromUrl) return;
+    if (isAllTeamUsers(fromUrl)) {
+      setSelectedOperatorId(fromUrl);
+      return;
+    }
+    if (assignees.some((user) => user.id === fromUrl)) {
+      setSelectedOperatorId(fromUrl);
+    }
+  }, [isAdmin, searchParams, assignees]);
+
+  useEffect(() => {
+    if (!isAdmin || assignees.length === 0) return;
+    if (isAllTeamUsers(selectedOperatorId)) return;
+    if (!assignees.some((user) => user.id === selectedOperatorId)) {
+      setSelectedOperatorId(ACTIVITIES_ALL_USERS_ID);
+    }
+  }, [isAdmin, assignees, selectedOperatorId]);
+
+  const selectOperator = (operatorId: string) => {
+    setSelectedOperatorId(operatorId);
+    setSelectedIds([]);
+    if (!isAdmin) return;
+    const next = new URLSearchParams(searchParams);
+    if (isAllTeamUsers(operatorId)) {
+      next.delete('operatorId');
+    } else {
+      next.set('operatorId', teamUserIdToUrlParam(operatorId));
+    }
+    setSearchParams(next, { replace: true });
+  };
+
+  const clientTableContext = useMemo(
+    () =>
+      isAdmin
+        ? createClientTableContext(assignees, activities, events, clients)
+        : EMPTY_CLIENT_TABLE_CONTEXT,
+    [isAdmin, assignees, activities, events, clients],
+  );
+
+  const clientTableColumns = useMemo(
+    () => (isAdmin ? buildClientTableViewColumns(assignees) : CLIENT_TABLE_VIEW_COLUMNS),
+    [isAdmin, assignees],
+  );
+
+  const editingClientAccessViaScheduleUserIds = useMemo(() => {
+    if (!editingClient) return [];
+    return getClientActivityOperatorIds(editingClient.id, activities, events);
+  }, [editingClient, activities, events]);
+
   const resetForm = () => {
     setFormData(defaultClientForm(resolveFormGroupId(groups, activeGroupId)));
   };
@@ -186,13 +302,18 @@ export default function Clients() {
     }
   }, [searchParams, setSearchParams, isAdmin]);
 
+  const operatorFilteredClients = useMemo(() => {
+    if (!isAdmin || isAllTeamUsers(selectedOperatorId)) return clients;
+    return filterClientsByOperator(clients, selectedOperatorId, activities, events, clients);
+  }, [isAdmin, clients, selectedOperatorId, activities, events]);
+
   const groupFilteredClients = useMemo(() => {
-    if (activeGroupId === 'all') return clients;
-    return clients.filter((client) => client.groupId === activeGroupId);
-  }, [clients, activeGroupId]);
+    if (activeGroupId === 'all') return operatorFilteredClients;
+    return operatorFilteredClients.filter((client) => client.groupId === activeGroupId);
+  }, [operatorFilteredClients, activeGroupId]);
 
   const searchedClients = groupFilteredClients.filter((client) =>
-    matchesTableSearch(client, searchTerm, CLIENT_TABLE_VIEW_COLUMNS, undefined),
+    matchesTableSearch(client, searchTerm, clientTableColumns, clientTableContext),
   );
 
   const {
@@ -225,8 +346,8 @@ export default function Clients() {
   } = useTableView(
     CLIENTS_VIEW_PAGE_KEY,
     CLIENT_DISPLAY_COLUMNS,
-    CLIENT_TABLE_VIEW_COLUMNS,
-    undefined,
+    clientTableColumns,
+    clientTableContext,
     'name',
   );
 
@@ -329,6 +450,19 @@ export default function Clients() {
     setDeleteConfirm({ ids: selectedClients.map((client) => client.id) });
   };
 
+  const openAssignOperatorsModal = (targets: Client[]) => {
+    if (!isAdmin || targets.length === 0 || assignees.length === 0) return;
+    setAssignOperatorsClients(targets);
+  };
+
+  const handleBulkAssignOperators = () => {
+    openAssignOperatorsModal(selectedClients);
+  };
+
+  const handleAssignOperatorsSaved = async () => {
+    await loadClients();
+  };
+
   const bulkActionCountLabel = `${selectedIds.length} seleccionado${selectedIds.length === 1 ? '' : 's'}`;
 
   const bulkActionButtons =
@@ -355,6 +489,16 @@ export default function Clients() {
         </button>
         {isAdmin && (
           <>
+            <button
+              type="button"
+              onClick={handleBulkAssignOperators}
+              className={ui.btnIcon}
+              title="Asignar operarios"
+              aria-label="Asignar operarios"
+              disabled={assignees.length === 0}
+            >
+              <Users size={16} />
+            </button>
             <button
               type="button"
               onClick={handleBulkDownload}
@@ -449,6 +593,7 @@ export default function Clients() {
       createdAt,
       createdAtPrecision,
       customFieldEntries: customFieldsToEntries(client.customFields),
+      assignedUserIds: normalizeClientAssignedUserIds(client.assignedUserIds),
     });
   };
 
@@ -477,11 +622,12 @@ export default function Clients() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) return;
-    const { customFieldEntries, logoUrl, ...clientPayload } = formData;
+    const { customFieldEntries, logoUrl, assignedUserIds, ...clientPayload } = formData;
     const payload = {
       ...clientPayload,
       logoUrl: logoUrl || undefined,
       customFields: entriesToCustomFields(customFieldEntries),
+      assignedUserIds: normalizeClientAssignedUserIds(assignedUserIds),
     };
 
     if (editingClient) {
@@ -530,6 +676,12 @@ export default function Clients() {
   const handleDeleteGroup = (group: ClientGroup) => {
     if (!isAdmin) return;
     setDeleteGroupConfirm(group);
+  };
+
+  const handleEditGroup = (group: ClientGroup) => {
+    if (!isAdmin) return;
+    setEditingGroup(group);
+    setShowGroupModal(true);
   };
 
   const executeDeleteGroup = async (contactsAction: 'move_to_all' | 'delete_contacts') => {
@@ -593,12 +745,21 @@ export default function Clients() {
     activeGroupId,
     onSelectGroup: handleSelectGroup,
     isAdmin,
-    onCreateGroup: () => setShowGroupModal(true),
+    onCreateGroup: () => {
+      setEditingGroup(null);
+      setShowGroupModal(true);
+    },
+    onEditGroup: handleEditGroup,
     onDownloadGroup: handleDownloadGroup,
     onDeleteGroup: handleDeleteGroup,
     savedViews,
     activeSavedViewId,
     onSelectView: loadView,
+    assignees: isAdmin ? assignees : [],
+    selectedOperatorId: isAdmin ? selectedOperatorId : ACTIVITIES_ALL_USERS_ID,
+    onSelectOperator: isAdmin ? selectOperator : undefined,
+    currentUserId,
+    operatorDataLoading: isAdmin ? operatorDataLoading : false,
   };
 
   if (loading) {
@@ -611,14 +772,14 @@ export default function Clients() {
               styles.clientsNav,
               secondaryNavCollapsed && styles.clientsNavCollapsed,
             )}
-            aria-label="Grupos de contactos"
+            aria-label="Grupos de clientes"
             aria-hidden={secondaryNavCollapsed ? true : undefined}
             aria-busy
           >
             {!secondaryNavCollapsed && (
               <>
                 <div className={styles.clientsNavHeader}>
-                  <p className={styles.clientsNavTitle}>Contactos</p>
+                  <p className={styles.clientsNavTitle}>Clientes</p>
                   <SecondaryNavToggle
                     expanded
                     onToggle={toggleSecondaryNav}
@@ -659,7 +820,7 @@ export default function Clients() {
     draftConfig,
     onDraftChange: updateDraft,
     displayColumns: CLIENT_DISPLAY_COLUMNS,
-    dataColumns: CLIENT_TABLE_VIEW_COLUMNS,
+    dataColumns: clientTableColumns,
     savedViews,
     onSaveView: saveView,
     onLoadView: loadView,
@@ -685,7 +846,7 @@ export default function Clients() {
           modalOpen && styles.clientsNavFiltersOpen,
           !showSecondaryNav && !modalOpen && styles.clientsNavCollapsed,
         )}
-        aria-label={modalOpen ? 'Vistas y filtros' : 'Grupos de contactos'}
+        aria-label={modalOpen ? 'Vistas y filtros' : 'Grupos de clientes'}
         aria-hidden={!showSecondaryNav && !modalOpen ? true : undefined}
       >
         {modalOpen ? (
@@ -702,7 +863,7 @@ export default function Clients() {
         ) : (
           <>
             <div className={styles.clientsNavHeader}>
-              <p className={styles.clientsNavTitle}>Contactos</p>
+              <p className={styles.clientsNavTitle}>Clientes</p>
               <SecondaryNavToggle
                 expanded
                 onToggle={toggleSecondaryNav}
@@ -1032,6 +1193,16 @@ export default function Clients() {
             ...(isAdmin
               ? [
                   {
+                    id: 'assign-operators',
+                    label: 'Operarios asignados',
+                    icon: <Users size={16} />,
+                    disabled: assignees.length === 0,
+                    onSelect: () => {
+                      openAssignOperatorsModal([actionMenu.client]);
+                      setActionMenu(null);
+                    },
+                  },
+                  {
                     id: 'edit',
                     label: 'Editar contacto',
                     icon: <Pencil size={16} />,
@@ -1099,6 +1270,16 @@ export default function Clients() {
         }}
       />
 
+      <ClientAssignOperatorsModal
+        open={assignOperatorsClients !== null && isAdmin}
+        clients={assignOperatorsClients ?? []}
+        assignees={assignees}
+        activities={activities}
+        events={events}
+        onClose={() => setAssignOperatorsClients(null)}
+        onSaved={handleAssignOperatorsSaved}
+      />
+
       <ClientImportModal
         open={showImportModal && isAdmin}
         clients={clients}
@@ -1109,10 +1290,16 @@ export default function Clients() {
 
       <ClientGroupModal
         open={showGroupModal && isAdmin}
-        onClose={() => setShowGroupModal(false)}
-        onCreated={async (group) => {
+        group={editingGroup}
+        onClose={() => {
+          setShowGroupModal(false);
+          setEditingGroup(null);
+        }}
+        onSaved={async (group) => {
           await loadGroups();
-          setActiveGroupId(group.id);
+          if (!editingGroup) {
+            setActiveGroupId(group.id);
+          }
         }}
       />
 
@@ -1143,6 +1330,10 @@ export default function Clients() {
                   formData={formData}
                   setFormData={setFormData}
                   groups={groups}
+                  assignees={assignees}
+                  accessViaScheduleUserIds={
+                    editingClient ? editingClientAccessViaScheduleUserIds : undefined
+                  }
                   idPrefix={editingClient ? 'edit-client' : 'client'}
                 />
               </div>

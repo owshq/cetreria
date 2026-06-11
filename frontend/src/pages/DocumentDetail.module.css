@@ -103,15 +103,15 @@
 }
 
 .pageHeaderMetaMainContent {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  min-width: 0;
 }
 
-.pageHeaderMetaMainContent p {
-  margin: 0;
+.pageHeaderMetaLine {
+  margin: 0.25rem 0 0;
   min-width: 0;
-  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pageHeaderMetaAside {
@@ -127,17 +127,11 @@
 }
 
 .activityMetaLink {
-  flex-shrink: 1;
-  min-width: 0;
-  max-width: min(24rem, 60%);
-  font-family: var(--font-heading);
-  font-size: 0.9375rem;
-  font-weight: 500;
-  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-text-faint);
   text-decoration: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .activityMetaLink:hover {
@@ -199,13 +193,7 @@
     display: none;
   }
 
-  .pageHeaderMetaMainContent {
-    flex-wrap: wrap;
-    row-gap: 0.25rem;
-  }
-
-  .activityMetaLink {
-    max-width: 100%;
-    flex-basis: 100%;
+  .pageHeaderMetaLine {
+    white-space: normal;
   }
 }

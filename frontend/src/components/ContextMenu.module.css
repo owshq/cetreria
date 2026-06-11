@@ -21,7 +21,7 @@
   border-radius: 0.4375rem;
   background: transparent;
   color: var(--color-text-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.875rem;
   font-weight: 500;
   letter-spacing: normal;
@@ -86,7 +86,7 @@
   margin: 0;
   border: none;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.875rem;
   font-weight: 500;
   letter-spacing: normal;

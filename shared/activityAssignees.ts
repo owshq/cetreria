@@ -7,7 +7,19 @@ import {
   type WorkspaceScheduleShiftBoundaries,
 } from './workspaceScheduleSettings.js';
 import type { ShiftCode } from './userSchedule.js';
-import { isShiftCode } from './userSchedule.js';
+import { ACTIVITY_PLANNING_SHIFT_CODES, isShiftCode } from './userSchedule.js';
+
+const ACTIVITY_TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+function isValidActivityTime(value: string): boolean {
+  return ACTIVITY_TIME_RE.test(value);
+}
+
+export type AssigneeSlotDraft = {
+  shift: ShiftCode | '';
+  startTime: string;
+  endTime: string;
+};
 
 export type ActivityAssigneeSlot = {
   userId: string;
@@ -75,6 +87,62 @@ export function totalHoursFromAssigneeSlots(slots: ActivityAssigneeSlot[]): numb
   return slots.reduce((sum, slot) => sum + hoursForAssigneeSlot(slot), 0);
 }
 
+/**
+ * Tramos efectivos para mostrar el horario del calendario: combina borradores del
+ * formulario con los tramos guardados en la actividad.
+ */
+export function resolveActivitySlotsForDisplay(
+  assignedUserIds: string[],
+  formSlotsByUserId: Record<string, AssigneeSlotDraft>,
+  savedSlots: ActivityAssigneeSlot[],
+  boundaries: Partial<WorkspaceScheduleShiftBoundaries> = {},
+): ActivityAssigneeSlot[] {
+  const userIds =
+    assignedUserIds.length > 0
+      ? assignedUserIds
+      : savedSlots.map((slot) => slot.userId);
+  if (userIds.length === 0) return [];
+
+  const slots: ActivityAssigneeSlot[] = [];
+
+  for (const userId of userIds) {
+    const draft = formSlotsByUserId[userId];
+    const saved = savedSlots.find((slot) => slot.userId === userId);
+
+    const startTime = (draft?.startTime ?? saved?.startTime ?? '').trim();
+    const endTime = (draft?.endTime ?? saved?.endTime ?? '').trim();
+
+    if (!isValidActivityTime(startTime) || !isValidActivityTime(endTime)) {
+      if (saved && isShiftCode(saved.shift)) {
+        slots.push(saved);
+      }
+      continue;
+    }
+
+    let shift: ShiftCode =
+      draft?.shift && isShiftCode(draft.shift) ? draft.shift : (saved?.shift ?? 'M');
+
+    if (!ACTIVITY_PLANNING_SHIFT_CODES.includes(shift)) {
+      const resolved = resolveActivityScheduleFromTimes(startTime, endTime, boundaries).shift;
+      if (resolved && ACTIVITY_PLANNING_SHIFT_CODES.includes(resolved)) {
+        shift = resolved;
+      } else if (
+        saved &&
+        isShiftCode(saved.shift) &&
+        ACTIVITY_PLANNING_SHIFT_CODES.includes(saved.shift)
+      ) {
+        shift = saved.shift;
+      } else {
+        shift = 'M';
+      }
+    }
+
+    slots.push({ userId, shift, startTime, endTime });
+  }
+
+  return slots;
+}
+
 function timeToMinutes(time: string): number | null {
   if (!/^\d{2}:\d{2}$/.test(time)) return null;
   const [h, m] = time.split(':').map((part) => Number.parseInt(part, 10));
@@ -119,6 +187,16 @@ export function aggregateEventTimeRange(
     startTime: `${pad(startH)}:${pad(startM)}`,
     endTime: `${pad(endH)}:${pad(endM)}`,
   };
+}
+
+/** true cuando el rango del calendario cruza medianoche (fin al dia siguiente). */
+export function activityEventSpanCrossesMidnight(range: {
+  startTime: string;
+  endTime: string;
+}): boolean {
+  const start = timeToMinutes(range.startTime);
+  const end = timeToMinutes(range.endTime);
+  return start != null && end != null && end <= start;
 }
 
 export function isActivitySignedByWorker(

@@ -14,6 +14,7 @@ import { DB_NAMES } from '../config.js';
 import { getById, updateDoc } from '../db/repository.js';
 import { getDocumentStorage } from '../storage/index.js';
 import { getWorkspaceBillingSettings } from './workspaceBillingSettings.js';
+import { getWorkspaceFeatureSettings } from './workspaceFeatureSettings.js';
 import { ensureDocumentVerifactuQrForRender } from './verifactu.js';
 
 const PDF_CONTENT_FIELDS = [
@@ -50,30 +51,23 @@ export function shouldRegenerateDocumentPdf(
 
 async function resolveDocumentPdfSigner(
   document: Document,
-  actingUser?: Pick<User, 'name' | 'signatureDataUrl'>,
 ): Promise<DocumentPdfSigner | null> {
-  if (document.activityId) {
-    const activity = await getById<Activity>(DB_NAMES.activities, document.activityId);
-    const signature = activity?.workerSignature;
-    if (signature?.imageDataUrl?.trim()) {
-      return {
-        userName: signature.userName,
-        imageDataUrl: signature.imageDataUrl,
-        signedAt: signature.signedAt,
-      };
-    }
+  const features = await getWorkspaceFeatureSettings(document.workspaceId);
+  if (!features.workerSignaturesEnabled || !document.activityId) {
+    return null;
   }
 
-  const imageDataUrl = actingUser?.signatureDataUrl?.trim();
-  if (imageDataUrl) {
-    return {
-      userName: actingUser?.name?.trim() || 'Usuario',
-      imageDataUrl,
-      signedAt: new Date().toISOString(),
-    };
+  const activity = await getById<Activity>(DB_NAMES.activities, document.activityId);
+  const signature = activity?.workerSignature;
+  if (!signature?.imageDataUrl?.trim()) {
+    return null;
   }
 
-  return null;
+  return {
+    userName: signature.userName,
+    imageDataUrl: signature.imageDataUrl,
+    signedAt: signature.signedAt,
+  };
 }
 
 export async function syncDocumentPdf(
@@ -95,7 +89,7 @@ export async function syncDocumentPdf(
   const storage = getDocumentStorage();
   const pdfKey = documentPdfKey(document);
   const company = await getWorkspaceBillingSettings(document.workspaceId);
-  const signer = await resolveDocumentPdfSigner(document, actingUser);
+  const signer = await resolveDocumentPdfSigner(document);
 
   const { document: docWithQr, shouldPersist } = await ensureDocumentVerifactuQrForRender(
     docForRender,

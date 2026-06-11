@@ -34,7 +34,7 @@ import {
 } from './documentVerifactuQr.js';
 
 /** Incrementar cuando cambie el diseno del PDF para regenerar documentos cacheados. */
-export const DOCUMENT_PDF_RENDER_VERSION = 15;
+export const DOCUMENT_PDF_RENDER_VERSION = 17;
 
 /** Marcador para documentos con archivo subido (no regenerar desde plantilla). */
 export const UPLOADED_DOCUMENT_FILE_VERSION = 0;
@@ -61,6 +61,28 @@ export function mimeTypeToExtension(mimeType?: string | null): string | null {
 
 export function isAllowedDocumentSourceMimeType(mimeType: string): boolean {
   return normalizeDocumentMimeType(mimeType) in MIME_TO_EXTENSION;
+}
+
+const EXTENSION_TO_MIME: Record<string, string> = {
+  pdf: 'application/pdf',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  heic: 'image/heic',
+  heif: 'image/heif',
+};
+
+/** Resuelve MIME de un archivo subido cuando el navegador no informa type (camara movil). */
+export function resolveDocumentSourceFileMimeType(file: {
+  type?: string;
+  name?: string;
+}): string {
+  const declared = file.type ? normalizeDocumentMimeType(file.type) : '';
+  if (declared && isAllowedDocumentSourceMimeType(declared)) return declared;
+  const ext = file.name?.split('.').pop()?.trim().toLowerCase() ?? '';
+  if (ext && EXTENSION_TO_MIME[ext]) return EXTENSION_TO_MIME[ext];
+  return 'image/jpeg';
 }
 
 export function isUploadedDocumentSource(
@@ -112,12 +134,36 @@ const TABLE_COLS: TableColumns = {
 };
 
 const TABLE_CELL_PAD = 2;
-const CONCEPT_MAX_WIDTH = TABLE_COLS.qty - TABLE_COLS.item - TABLE_CELL_PAD * 2 - 4;
+
+/** Limites visuales de columnas numericas (cabecera y cuerpo comparten anclas). */
+const TABLE_COLUMN_BOUNDS = {
+  qty: { start: TABLE_COLS.qty, end: TABLE_COLS.price },
+  price: { start: TABLE_COLS.price, end: TABLE_COLS.tax },
+  tax: { start: TABLE_COLS.tax, end: 172 },
+  total: { start: 172, end: TABLE_COLS.total },
+} as const;
+
+function tableColumnCenter(bounds: { start: number; end: number }): number {
+  return (bounds.start + bounds.end) / 2;
+}
+
+function tableColumnRight(bounds: { start: number; end: number }): number {
+  return bounds.end - TABLE_CELL_PAD;
+}
+
+const TABLE_ANCHORS = {
+  qty: tableColumnCenter(TABLE_COLUMN_BOUNDS.qty),
+  price: tableColumnRight(TABLE_COLUMN_BOUNDS.price),
+  tax: tableColumnCenter(TABLE_COLUMN_BOUNDS.tax),
+  total: tableColumnRight(TABLE_COLUMN_BOUNDS.total),
+} as const;
+
+const CONCEPT_MAX_WIDTH = TABLE_COLS.qty - TABLE_COLS.item - TABLE_CELL_PAD * 2;
 const CONCEPT_FONT_SIZE = 8.5;
 const DESC_FONT_SIZE = 7.5;
-const CONCEPT_LINE_LEADING = 1.12;
-const DESC_LINE_LEADING = 1.08;
-const DESC_GAP = 0.8;
+const CONCEPT_LINE_LEADING = 1.15;
+const DESC_LINE_LEADING = 1.12;
+const DESC_GAP = 1.1;
 const ITEM_ROW_PAD_TOP = 1.5;
 const ITEM_ROW_PAD_BOTTOM = 1.5;
 
@@ -342,10 +388,10 @@ function drawTableHeader(ctx: PdfContext) {
   pdf.setFontSize(7.5);
   pdf.setFont('helvetica', 'bold');
   pdf.text('DESCRIPCION', TABLE_COLS.item + TABLE_CELL_PAD, headerY + 5.5);
-  pdf.text('CANT.', TABLE_COLS.qty, headerY + 5.5, { align: 'center' });
-  pdf.text('P. UNIT.', TABLE_COLS.price, headerY + 5.5, { align: 'right' });
-  pdf.text('IVA', TABLE_COLS.tax, headerY + 5.5, { align: 'center' });
-  pdf.text('IMPORTE', TABLE_COLS.total - TABLE_CELL_PAD, headerY + 5.5, { align: 'right' });
+  pdf.text('CANT.', TABLE_ANCHORS.qty, headerY + 5.5, { align: 'center' });
+  pdf.text('P. UNIT.', TABLE_ANCHORS.price, headerY + 5.5, { align: 'right' });
+  pdf.text('IVA', TABLE_ANCHORS.tax, headerY + 5.5, { align: 'center' });
+  pdf.text('IMPORTE', TABLE_ANCHORS.total, headerY + 5.5, { align: 'right' });
   ctx.y = headerY + headerH + 1;
 }
 
@@ -363,7 +409,8 @@ function measureConceptBlock(
   description?: string,
 ): ConceptBlockMetrics {
   const { pdf } = ctx;
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(CONCEPT_FONT_SIZE);
   const conceptLines = splitPdfLines(pdf, name, CONCEPT_MAX_WIDTH);
   const conceptLineHeight = pdfLineHeight(pdf, CONCEPT_FONT_SIZE, CONCEPT_LINE_LEADING);
   const conceptHeight =
@@ -382,6 +429,8 @@ function measureConceptBlock(
     }
     pdf.setFontSize(CONCEPT_FONT_SIZE);
   }
+
+  pdf.setFont('helvetica', 'normal');
 
   return {
     conceptLines,
@@ -402,7 +451,7 @@ function drawConceptBlock(
   let lineY = y;
   setText(pdf, INK);
   pdf.setFontSize(CONCEPT_FONT_SIZE);
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont('helvetica', 'bold');
   for (const line of metrics.conceptLines) {
     pdf.text(line, x, lineY);
     lineY += metrics.conceptLineHeight;
@@ -412,6 +461,7 @@ function drawConceptBlock(
   lineY += DESC_GAP;
   setText(pdf, MUTED);
   pdf.setFontSize(DESC_FONT_SIZE);
+  pdf.setFont('helvetica', 'normal');
   for (const line of metrics.descriptionLines) {
     pdf.text(line, x, lineY);
     lineY += metrics.descLineHeight;
@@ -437,17 +487,17 @@ function drawItemsTable(ctx: PdfContext, doc: Document) {
     );
 
     const rowTop = ctx.y + ITEM_ROW_PAD_TOP;
+    const metricsBaseline = rowTop;
     drawConceptBlock(ctx, TABLE_COLS.item + TABLE_CELL_PAD, rowTop, block);
 
-    const metricsY = rowTop + block.contentHeight / 2;
     setText(ctx.pdf, INK);
     ctx.pdf.setFontSize(CONCEPT_FONT_SIZE);
     ctx.pdf.setFont('helvetica', 'normal');
-    ctx.pdf.text(item.quantity.toFixed(2), TABLE_COLS.qty, metricsY, { align: 'center' });
-    ctx.pdf.text(formatMoneyEs(item.price), TABLE_COLS.price, metricsY, { align: 'right' });
-    ctx.pdf.text(`${totals.taxRate}%`, TABLE_COLS.tax, metricsY, { align: 'center' });
+    ctx.pdf.text(item.quantity.toFixed(2), TABLE_ANCHORS.qty, metricsBaseline, { align: 'center' });
+    ctx.pdf.text(formatMoneyEs(item.price), TABLE_ANCHORS.price, metricsBaseline, { align: 'right' });
+    ctx.pdf.text(`${totals.taxRate}%`, TABLE_ANCHORS.tax, metricsBaseline, { align: 'center' });
     ctx.pdf.setFont('helvetica', 'bold');
-    ctx.pdf.text(formatMoneyEs(lineTotal), TABLE_COLS.total - TABLE_CELL_PAD, metricsY, {
+    ctx.pdf.text(formatMoneyEs(lineTotal), TABLE_ANCHORS.total, metricsBaseline, {
       align: 'right',
     });
     ctx.pdf.setFont('helvetica', 'normal');

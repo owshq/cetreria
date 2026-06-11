@@ -1,17 +1,22 @@
-import { Download } from 'lucide-react';
+import { ArrowDownToLine } from 'lucide-react';
 import ModalHeader from '@/components/ModalHeader';
 import ModalOverlay from '@/components/ModalOverlay';
 import PdfViewer from '@/components/PdfViewer/PdfViewer';
+import ContentLoading from '@/components/ContentLoading';
 import previewModalStyles from '@/components/documentPreviewModal.module.css';
+import { usePopupEscape } from '@/context/PopupStackContext';
 import { cx } from '@/lib/cx';
 import ui from '@/styles/shared.module.css';
+import styles from './ActivityDeliveryNotePreviewModal.module.css';
 
 type ActivityDeliveryNotePreviewModalProps = {
   open: boolean;
-  url: string;
+  url: string | null;
   title: string;
   hint?: string | null;
   fileName: string;
+  loading?: boolean;
+  error?: string | null;
   persisted: boolean;
   onClose: () => void;
   onDownload: () => void | Promise<void>;
@@ -23,13 +28,17 @@ export default function ActivityDeliveryNotePreviewModal({
   title,
   hint,
   fileName,
+  loading = false,
+  error = null,
   onClose,
   onDownload,
 }: ActivityDeliveryNotePreviewModalProps) {
+  usePopupEscape(open, onClose);
+
   if (!open) return null;
 
   return (
-    <ModalOverlay>
+    <ModalOverlay raised>
       <div
         className={cx(ui.modal, ui.modalXl, previewModalStyles.previewPanel)}
         role="dialog"
@@ -47,20 +56,31 @@ export default function ActivityDeliveryNotePreviewModal({
             <button
               type="button"
               className={ui.btnSecondary}
+              disabled={loading || Boolean(error) || !url}
               onClick={() => void onDownload()}
             >
-              <Download size={16} aria-hidden />
+              <ArrowDownToLine size={16} aria-hidden />
               Descargar albarán
             </button>
           </div>
         </ModalHeader>
         <div className={previewModalStyles.previewBody}>
-          <PdfViewer
-            className={previewModalStyles.previewFrame}
-            src={url}
-            fileName={fileName}
-            title={title}
-          />
+          {loading ? (
+            <div className={styles.loadingWrap}>
+              <ContentLoading label="Generando albaran" />
+            </div>
+          ) : error ? (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          ) : url ? (
+            <PdfViewer
+              className={previewModalStyles.previewFrame}
+              src={url}
+              fileName={fileName}
+              title={title}
+            />
+          ) : null}
         </div>
       </div>
     </ModalOverlay>

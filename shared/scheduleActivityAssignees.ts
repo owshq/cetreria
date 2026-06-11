@@ -28,7 +28,7 @@ function timeToMinutes(time: string): number {
 
 export function findEventForActivity(
   activity: Activity,
-  events: CalendarEvent[],
+  events: readonly CalendarEvent[],
 ): CalendarEvent | undefined {
   return (
     events.find((event) => event.activityId === activity.id) ??
@@ -46,7 +46,7 @@ export function getActivityAssigneeIds(
   event: CalendarEvent | null | undefined,
 ): string[] {
   if (Array.isArray(activity.assigneeSlots)) {
-    return getAssigneeIdsFromSlots(
+    const fromSlots = getAssigneeIdsFromSlots(
       activity.assigneeSlots.filter(
         (slot) =>
           Boolean(slot.userId) &&
@@ -55,6 +55,7 @@ export function getActivityAssigneeIds(
           Boolean(slot.endTime),
       ),
     );
+    if (fromSlots.length > 0) return fromSlots;
   }
 
   const fromEvent = (event?.assignedTo ?? []).filter(Boolean);

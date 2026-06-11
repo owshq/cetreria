@@ -1,4 +1,4 @@
-import type { Client, ClientObservation } from '@shared/types';
+import type { Client, ClientAssignUsersMode } from '@shared/types';
 import { apiFetch } from './client';
 import {
   getCachedResource,
@@ -64,6 +64,19 @@ export const clientsService = {
 
   deleteAllObservations: (clientId: string): Promise<Client> =>
     apiFetch(`/clients/${clientId}/observations`, { method: 'DELETE' }).then((updated) => {
+      invalidateClientsCache();
+      return updated;
+    }),
+
+  bulkAssignUsers: (payload: {
+    clientIds: string[];
+    userIds: string[];
+    mode: ClientAssignUsersMode;
+  }): Promise<Client[]> =>
+    apiFetch('/clients/bulk-assign-users', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }).then((updated) => {
       invalidateClientsCache();
       return updated;
     }),

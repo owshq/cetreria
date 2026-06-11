@@ -1,11 +1,13 @@
 import type { MutableRefObject, ReactNode } from 'react';
-import { CalendarDays, CircleMinus, Pencil } from 'lucide-react';
+import { CalendarDays, CircleMinus, ListTodo, Pencil } from 'lucide-react';
 import type { User } from '@shared/types';
 import { getKnownHalconeriaPassword, getUserRoleLabel } from '@shared/types';
 import UserAvatar from '@/components/UserAvatar';
 import { PasswordLockIcon } from '@/components/icons/PasswordLockIcon';
 import ui from '@/styles/shared.module.css';
 import styles from '@/pages/Users.module.css';
+
+export type UserPanelMode = 'schedule' | 'activities';
 
 type RenderUserCellArgs = {
   columnId: string;
@@ -20,6 +22,8 @@ type RenderUserCellArgs = {
   roleEditCancelledRef: MutableRefObject<boolean>;
   onEdit: (user: Omit<User, 'password'>) => void;
   onDelete: (id: string) => void;
+  userPanelMode?: UserPanelMode | null;
+  onOpenUserPanel?: (user: Omit<User, 'password'>) => void;
   passwordOverrides: Record<string, string>;
   revealedPasswordUserIds: ReadonlySet<string>;
   onTogglePasswordVisibility: (userId: string) => void;
@@ -37,7 +41,8 @@ export function renderUserCell({
   onCancelRoleEdit,
   roleEditCancelledRef,
   onEdit,
-  onOpenSchedule,
+  userPanelMode,
+  onOpenUserPanel,
   onDelete,
   passwordOverrides,
   revealedPasswordUserIds,
@@ -121,20 +126,25 @@ export function renderUserCell({
         </div>
       );
     }
-    case 'actions':
+    case 'actions': {
+      const panelLabel = userPanelMode === 'schedule' ? 'Horario' : 'Actividades';
       return (
         <div className={ui.flexEnd}>
-          {onOpenSchedule && (
+          {onOpenUserPanel && userPanelMode ? (
             <button
               type="button"
-              onClick={() => onOpenSchedule(user)}
+              onClick={() => onOpenUserPanel(user)}
               className={ui.btnIcon}
-              title="Horario"
-              aria-label={`Horario de ${user.name}`}
+              title={panelLabel}
+              aria-label={`${panelLabel} de ${user.name}`}
             >
-              <CalendarDays size={16} />
+              {userPanelMode === 'schedule' ? (
+                <CalendarDays size={16} />
+              ) : (
+                <ListTodo size={16} />
+              )}
             </button>
-          )}
+          ) : null}
           <button type="button" onClick={() => onEdit(user)} className={ui.btnIcon} title="Editar">
             <Pencil size={16} />
           </button>
@@ -145,6 +155,7 @@ export function renderUserCell({
           )}
         </div>
       );
+    }
     default:
       return null;
   }

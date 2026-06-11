@@ -27,16 +27,16 @@ export function activityTypeUsesWorkReport(type: ActivityType | null | undefined
 
 export function activityUsesWorkReport(
   activity: Pick<import('./types.js').Activity, 'type'>,
-  activityTypes: ActivityType[],
+  activityTypes: readonly ActivityType[],
 ): boolean {
   return activityTypeUsesWorkReport(resolveActivityType(activity.type, activityTypes));
 }
 
-export function workspaceHasWorkReportActivityTypes(activityTypes: ActivityType[]): boolean {
+export function workspaceHasWorkReportActivityTypes(activityTypes: readonly ActivityType[]): boolean {
   return activityTypes.some((type) => activityTypeUsesWorkReport(type));
 }
 
-export function resolveActivityType(typeRef: string, types: ActivityType[]): ActivityType | null {
+export function resolveActivityType(typeRef: string, types: readonly ActivityType[]): ActivityType | null {
   if (!typeRef) return null;
   const byId = types.find((t) => t.id === typeRef);
   if (byId) return byId;
@@ -45,27 +45,27 @@ export function resolveActivityType(typeRef: string, types: ActivityType[]): Act
   return null;
 }
 
-export function getActivityTypeLabel(typeRef: string, types: ActivityType[]): string {
+export function getActivityTypeLabel(typeRef: string, types: readonly ActivityType[]): string {
   return resolveActivityType(typeRef, types)?.name ?? UNKNOWN_ACTIVITY_TYPE_LABEL;
 }
 
 export function buildActivityEventTitle(
   typeId: string,
-  types: ActivityType[],
+  types: readonly ActivityType[],
   clientName?: string,
 ): string {
   const label = getActivityTypeLabel(typeId, types);
   return clientName ? `${label} - ${clientName}` : label;
 }
 
-export function parseEventTypeIdFromTitle(title: string, types: ActivityType[]): string {
+export function parseEventTypeIdFromTitle(title: string, types: readonly ActivityType[]): string {
   const [prefix] = title.split(' - ');
   if (!prefix || prefix === UNKNOWN_ACTIVITY_TYPE_LABEL) return '';
   const match = types.find((t) => t.name === prefix);
   return match?.id ?? '';
 }
 
-export function resolveEventType(title: string, types: ActivityType[]): ActivityType | null {
+export function resolveEventType(title: string, types: readonly ActivityType[]): ActivityType | null {
   const typeId = parseEventTypeIdFromTitle(title, types);
   if (typeId) return resolveActivityType(typeId, types);
   const [prefix] = title.split(' - ');

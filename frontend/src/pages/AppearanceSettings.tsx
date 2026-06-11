@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { APP_EVENTS } from '@/lib/appEvents';
 import {
   getAppFaviconUrl,
@@ -13,32 +13,85 @@ import {
   resetAppLogo,
   setAppLogo,
   setAppLogoSize,
-  APP_LOGO_SIZE_DIMENSIONS,
   APP_LOGO_SIZE_LABELS,
+  APP_LOGO_WORDMARK_HEIGHTS,
   type AppLogoSize,
   type AppLogoVariant,
 } from '@/lib/appLogo';
 import ColorPicker from '@/components/ColorPicker';
 import {
   APP_ACCENT_COLOR_PRESETS,
+  DEFAULT_APP_ACCENT,
   getAppAccentColor,
+  resetAppAccentColor,
   setAppAccentColor,
 } from '@/lib/appTheme';
+import { readLocalStorageFor } from '@/lib/storageKeys';
 import { readFaviconFile, readLogoFile } from '@/lib/logoImage';
 import { useTheme } from '@/context/ThemeContext';
 import LoginBackgroundGallerySettings from '@/components/LoginBackgroundGallerySettings';
+import WorkspaceTypographySettings from '@/components/WorkspaceTypographySettings';
 import { cx } from '@/lib/cx';
 import ui from '@/styles/shared.module.css';
 import styles from './AppearanceSettings.module.css';
 
+type LogoPreviewSurface = 'accent' | 'surface' | 'dark';
+
+type LogoSectionConfig = {
+  variant: AppLogoVariant;
+  label: string;
+  hint: string;
+  previewSurface: LogoPreviewSurface;
+  previewKind: 'wordmark' | 'login' | 'icon';
+};
+
+const SIDEBAR_LOGO_SECTION: LogoSectionConfig = {
+  variant: 'onAccent',
+  label: 'Wordmark sidebar',
+  hint: 'Sidebar expandido y colapsado. Logo claro sobre fondo de color corporativo.',
+  previewSurface: 'accent',
+  previewKind: 'wordmark',
+};
+
+const LOADING_LOGO_SECTION: LogoSectionConfig = {
+  variant: 'light',
+  label: 'Logo de carga',
+  hint: 'Animacion al cargar paginas y contenido. Por defecto usa el logo con letras de modo claro.',
+  previewSurface: 'surface',
+  previewKind: 'login',
+};
+
+const LOGIN_LOGO_SECTIONS: LogoSectionConfig[] = [
+  {
+    variant: 'login',
+    label: 'Modo claro',
+    hint: 'Logo a color sobre fondo claro.',
+    previewSurface: 'surface',
+    previewKind: 'login',
+  },
+  {
+    variant: 'dark',
+    label: 'Modo oscuro',
+    hint: 'Logo blanco sobre fondo oscuro.',
+    previewSurface: 'dark',
+    previewKind: 'login',
+  },
+];
+
 function syncLogoState() {
   return {
-    light: getAppLogoUrl('light'),
-    dark: getAppLogoUrl('dark'),
-    onAccent: getAppLogoUrl('onAccent'),
-    customLight: hasCustomAppLogo('light'),
-    customDark: hasCustomAppLogo('dark'),
-    customOnAccent: hasCustomAppLogo('onAccent'),
+    urls: {
+      login: getAppLogoUrl('login'),
+      dark: getAppLogoUrl('dark'),
+      onAccent: getAppLogoUrl('onAccent'),
+      light: getAppLogoUrl('light'),
+    },
+    custom: {
+      login: hasCustomAppLogo('login'),
+      dark: hasCustomAppLogo('dark'),
+      onAccent: hasCustomAppLogo('onAccent'),
+      light: hasCustomAppLogo('light'),
+    },
   };
 }
 
@@ -49,6 +102,175 @@ function syncFaviconState() {
   };
 }
 
+type LogoSettingCardProps = {
+  label: string;
+  hint: string;
+  src: string;
+  hasCustom: boolean;
+  previewSurface: LogoPreviewSurface;
+  previewKind: LogoSectionConfig['previewKind'];
+  accentColor: string;
+  logoSize: AppLogoSize;
+  layout?: 'card' | 'column';
+  showSizeControl?: boolean;
+  onLogoSizeChange?: (size: AppLogoSize) => void;
+  onUpload: (file: File | undefined) => void;
+  onReset: () => void;
+};
+
+function LogoSettingCard({
+  label,
+  hint,
+  src,
+  hasCustom,
+  previewSurface,
+  previewKind,
+  accentColor,
+  logoSize,
+  layout = 'card',
+  showSizeControl = false,
+  onLogoSizeChange,
+  onUpload,
+  onReset,
+}: LogoSettingCardProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isColumn = layout === 'column';
+  const Root = isColumn ? 'div' : 'section';
+
+  const previewClassName = cx(
+    styles.logoPreview,
+    previewSurface === 'accent' && styles.logoPreviewAccent,
+    previewSurface === 'dark' && styles.logoPreviewDark,
+  );
+
+  const imageClassName = cx(
+    styles.logoPreviewImage,
+    previewKind === 'wordmark' && styles.logoPreviewWordmarkImage,
+    previewKind === 'login' && styles.logoPreviewLoginImage,
+    previewKind === 'icon' && styles.logoPreviewIconImage,
+  );
+
+  const imageStyle: CSSProperties =
+    previewKind === 'wordmark' ? { height: APP_LOGO_WORDMARK_HEIGHTS[logoSize] } : undefined;
+
+  return (
+    <Root
+      className={isColumn ? styles.logoLoginColumn : styles.logoCard}
+      aria-label={label}
+    >
+      <div className={styles.logoCardHeader}>
+        <p className={styles.logoCardLabel}>{label}</p>
+        <p className={styles.logoCardHint}>{hint}</p>
+      </div>
+
+      <div
+        className={previewClassName}
+        style={previewSurface === 'accent' ? { background: accentColor } : undefined}
+      >
+        <img src={src} alt="" className={imageClassName} style={imageStyle} />
+      </div>
+
+      <div className={styles.logoActions}>
+        <button
+          type="button"
+          className={ui.btnSecondary}
+          onClick={() => inputRef.current?.click()}
+        >
+          Cambiar logo
+        </button>
+        {hasCustom && (
+          <button type="button" className={ui.btnSecondary} onClick={onReset}>
+            Restablecer
+          </button>
+        )}
+      </div>
+
+      {showSizeControl && onLogoSizeChange && (
+        <div className={styles.logoSizeControl}>
+          <p className={styles.logoSizeControlLabel}>Tamaño del logo en sidebar</p>
+          <p className={styles.logoCardHint}>
+            Afecta al wordmark del sidebar expandido y colapsado.
+          </p>
+          <div className={ui.flexRow}>
+            {(['sm', 'md', 'lg'] as const).map((size) => (
+              <button
+                key={size}
+                type="button"
+                className={cx(ui.btnToggle, logoSize === size && ui.btnToggleActive)}
+                onClick={() => onLogoSizeChange(size)}
+              >
+                {APP_LOGO_SIZE_LABELS[size]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className={styles.hiddenInput}
+        onChange={(event) => {
+          onUpload(event.target.files?.[0]);
+          event.target.value = '';
+        }}
+      />
+    </Root>
+  );
+}
+
+type LoginLogoSettingSectionProps = {
+  sections: LogoSectionConfig[];
+  logos: ReturnType<typeof syncLogoState>;
+  accentColor: string;
+  onUpload: (variant: AppLogoVariant, file: File | undefined) => void;
+  onReset: (variant: AppLogoVariant) => void;
+};
+
+function LoginLogoSettingSection({
+  sections,
+  logos,
+  accentColor,
+  onUpload,
+  onReset,
+}: LoginLogoSettingSectionProps) {
+  return (
+    <section className={styles.logoCard} aria-label="Wordmark login">
+      <div className={styles.logoCardHeader}>
+        <p className={styles.logoCardLabel}>Wordmark login</p>
+        <p className={styles.logoCardHint}>
+          Pantalla de login en tema claro y oscuro. El topbar movil usa la variante de cada
+          modo.
+        </p>
+      </div>
+
+      <div className={styles.logoGrid}>
+        {sections.map((section) => (
+          <LogoSettingCard
+            key={section.variant}
+            layout="column"
+            label={section.label}
+            hint={section.hint}
+            src={logos.urls[section.variant]}
+            hasCustom={logos.custom[section.variant]}
+            previewSurface={section.previewSurface}
+            previewKind={section.previewKind}
+            accentColor={accentColor}
+            logoSize="md"
+            onUpload={(file) => {
+              onUpload(section.variant, file);
+            }}
+            onReset={() => {
+              onReset(section.variant);
+            }}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function AppearanceSettings() {
   const [color, setColor] = useState(getAppAccentColor);
   const { colorScheme, setThemePreference } = useTheme();
@@ -57,12 +279,14 @@ export default function AppearanceSettings() {
   const [favicon, setFavicon] = useState(syncFaviconState);
   const [logoError, setLogoError] = useState<string | null>(null);
   const [faviconError, setFaviconError] = useState<string | null>(null);
-  const lightInputRef = useRef<HTMLInputElement>(null);
-  const darkInputRef = useRef<HTMLInputElement>(null);
-  const onAccentInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!readLocalStorageFor('appAccent')) {
+      setAppAccentColor(DEFAULT_APP_ACCENT);
+    }
+    setColor(getAppAccentColor());
+
     const syncColor = () => setColor(getAppAccentColor());
     window.addEventListener(APP_EVENTS.appAccentUpdated, syncColor);
     return () => window.removeEventListener(APP_EVENTS.appAccentUpdated, syncColor);
@@ -86,9 +310,16 @@ export default function AppearanceSettings() {
     return () => window.removeEventListener(APP_EVENTS.appFaviconUpdated, syncFavicon);
   }, []);
 
+  const isCorporateColor = color.trim().toLowerCase() === DEFAULT_APP_ACCENT;
+
   const handleColorChange = (nextColor: string) => {
     setColor(nextColor);
     setAppAccentColor(nextColor);
+  };
+
+  const handleRestoreCorporateColor = () => {
+    resetAppAccentColor();
+    setColor(DEFAULT_APP_ACCENT);
   };
 
   const handleLogoUpload = async (variant: AppLogoVariant, file: File | undefined) => {
@@ -158,18 +389,31 @@ export default function AppearanceSettings() {
         </div>
       </section>
 
+      <WorkspaceTypographySettings />
+
       <section className={ui.pageSection} aria-labelledby="appearance-color-title">
         <h2 id="appearance-color-title" className={ui.pageSectionTitle}>
           Color
         </h2>
         <div className={ui.card}>
           <div className={ui.cardBody}>
-            <ColorPicker
-              value={color}
-              onChange={handleColorChange}
-              presets={APP_ACCENT_COLOR_PRESETS}
-              allowCustom={false}
-            />
+            <div className={styles.accentColorSection}>
+              <ColorPicker
+                value={color}
+                onChange={handleColorChange}
+                presets={APP_ACCENT_COLOR_PRESETS}
+                defaultColor={DEFAULT_APP_ACCENT}
+              />
+              {!isCorporateColor && (
+                <button
+                  type="button"
+                  className={ui.btnSecondary}
+                  onClick={handleRestoreCorporateColor}
+                >
+                  Restaurar color corporativo
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -182,166 +426,67 @@ export default function AppearanceSettings() {
           <div className={ui.cardBody}>
             <div className={styles.logoSection}>
               <p className={styles.logoSectionHint}>
-                Solo el pájaro, sin texto. El logo original (blanco sobre fondo transparente) se
-                muestra en el sidebar. En login y otras pantallas se usan las variantes claro y
-                oscuro.
+                Cada variante del logo tiene su propia seccion. Puedes subir una imagen
+                personalizada o restablecer la predeterminada.
               </p>
 
-              <div className={styles.logoCard}>
-                <p className={styles.logoCardLabel}>Logo original (sidebar)</p>
-                <div
-                  className={cx(styles.logoPreview, styles.logoPreviewAccent)}
-                  style={{ background: color }}
-                >
-                  <img
-                    src={logos.onAccent}
-                    alt=""
-                    className={styles.logoPreviewImage}
-                    style={{ maxHeight: APP_LOGO_SIZE_DIMENSIONS[logoSize] }}
-                  />
-                </div>
-                <div className={styles.logoActions}>
-                  <button
-                    type="button"
-                    className={ui.btnSecondary}
-                    onClick={() => onAccentInputRef.current?.click()}
-                  >
-                    Cambiar logo
-                  </button>
-                  {logos.customOnAccent && (
-                    <button
-                      type="button"
-                      className={ui.btnSecondary}
-                      onClick={() => handleLogoReset('onAccent')}
-                    >
-                      Restablecer
-                    </button>
-                  )}
-                </div>
-                <input
-                  ref={onAccentInputRef}
-                  type="file"
-                  accept="image/*"
-                  className={styles.hiddenInput}
-                  onChange={(event) => {
-                    void handleLogoUpload('onAccent', event.target.files?.[0]);
-                    event.target.value = '';
+              <div className={styles.logoSectionsStack}>
+                <LogoSettingCard
+                  label={SIDEBAR_LOGO_SECTION.label}
+                  hint={SIDEBAR_LOGO_SECTION.hint}
+                  src={logos.urls[SIDEBAR_LOGO_SECTION.variant]}
+                  hasCustom={logos.custom[SIDEBAR_LOGO_SECTION.variant]}
+                  previewSurface={SIDEBAR_LOGO_SECTION.previewSurface}
+                  previewKind={SIDEBAR_LOGO_SECTION.previewKind}
+                  accentColor={color}
+                  logoSize={logoSize}
+                  showSizeControl
+                  onLogoSizeChange={handleLogoSizeChange}
+                  onUpload={(file) => {
+                    void handleLogoUpload(SIDEBAR_LOGO_SECTION.variant, file);
                   }}
+                  onReset={() => handleLogoReset(SIDEBAR_LOGO_SECTION.variant)}
                 />
-              </div>
 
-              <div className={ui.field}>
-                <label className={ui.label}>Tamaño del logo</label>
-                <div className={ui.flexRow}>
-                  {(['sm', 'md', 'lg'] as const).map((size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      className={cx(ui.btnToggle, logoSize === size && ui.btnToggleActive)}
-                      onClick={() => handleLogoSizeChange(size)}
-                    >
-                      {APP_LOGO_SIZE_LABELS[size]}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                <LoginLogoSettingSection
+                  sections={LOGIN_LOGO_SECTIONS}
+                  logos={logos}
+                  accentColor={color}
+                  onUpload={(variant, file) => {
+                    void handleLogoUpload(variant, file);
+                  }}
+                  onReset={handleLogoReset}
+                />
 
-              <div className={styles.logoGrid}>
-                <div className={styles.logoCard}>
-                  <p className={styles.logoCardLabel}>Modo claro</p>
-                  <div className={styles.logoPreview}>
-                    <img
-                      src={logos.light}
-                      alt=""
-                      className={styles.logoPreviewImage}
-                      style={{ maxHeight: APP_LOGO_SIZE_DIMENSIONS[logoSize] }}
-                    />
+                <LogoSettingCard
+                  label={LOADING_LOGO_SECTION.label}
+                  hint={LOADING_LOGO_SECTION.hint}
+                  src={logos.urls[LOADING_LOGO_SECTION.variant]}
+                  hasCustom={logos.custom[LOADING_LOGO_SECTION.variant]}
+                  previewSurface={LOADING_LOGO_SECTION.previewSurface}
+                  previewKind={LOADING_LOGO_SECTION.previewKind}
+                  accentColor={color}
+                  logoSize={logoSize}
+                  onUpload={(file) => {
+                    void handleLogoUpload(LOADING_LOGO_SECTION.variant, file);
+                  }}
+                  onReset={() => handleLogoReset(LOADING_LOGO_SECTION.variant)}
+                />
+
+                <section className={styles.logoCard} aria-labelledby="appearance-favicon-title">
+                  <div className={styles.logoCardHeader}>
+                    <p id="appearance-favicon-title" className={styles.logoCardLabel}>
+                      Favicon
+                    </p>
+                    <p className={styles.logoCardHint}>
+                      Icono de la pestaña del navegador. Recomendado cuadrado, minimo 32x32 px.
+                    </p>
                   </div>
-                  <div className={styles.logoActions}>
-                    <button
-                      type="button"
-                      className={ui.btnSecondary}
-                      onClick={() => lightInputRef.current?.click()}
-                    >
-                      Cambiar logo
-                    </button>
-                    {logos.customLight && (
-                      <button
-                        type="button"
-                        className={ui.btnSecondary}
-                        onClick={() => handleLogoReset('light')}
-                      >
-                        Restablecer
-                      </button>
-                    )}
-                  </div>
-                  <input
-                    ref={lightInputRef}
-                    type="file"
-                    accept="image/*"
-                    className={styles.hiddenInput}
-                    onChange={(event) => {
-                      void handleLogoUpload('light', event.target.files?.[0]);
-                      event.target.value = '';
-                    }}
-                  />
-                </div>
 
-                <div className={styles.logoCard}>
-                  <p className={styles.logoCardLabel}>Modo oscuro</p>
-                  <div className={cx(styles.logoPreview, styles.logoPreviewDark)}>
-                    <img
-                      src={logos.dark}
-                      alt=""
-                      className={styles.logoPreviewImage}
-                      style={{ maxHeight: APP_LOGO_SIZE_DIMENSIONS[logoSize] }}
-                    />
-                  </div>
-                  <div className={styles.logoActions}>
-                    <button
-                      type="button"
-                      className={ui.btnSecondary}
-                      onClick={() => darkInputRef.current?.click()}
-                    >
-                      Cambiar logo
-                    </button>
-                    {logos.customDark && (
-                      <button
-                        type="button"
-                        className={ui.btnSecondary}
-                        onClick={() => handleLogoReset('dark')}
-                      >
-                        Restablecer
-                      </button>
-                    )}
-                  </div>
-                  <input
-                    ref={darkInputRef}
-                    type="file"
-                    accept="image/*"
-                    className={styles.hiddenInput}
-                    onChange={(event) => {
-                      void handleLogoUpload('dark', event.target.files?.[0]);
-                      event.target.value = '';
-                    }}
-                  />
-                </div>
-              </div>
-
-              {logoError && <p className={styles.logoError}>{logoError}</p>}
-
-              <div className={styles.faviconBlock}>
-                <div className={ui.field}>
-                  <label className={ui.label}>Favicon</label>
-                  <p className={styles.logoSectionHint}>
-                    Icono de la pestaña del navegador. Recomendado cuadrado, mínimo 32×32 px.
-                  </p>
-                </div>
-
-                <div className={styles.faviconCard}>
                   <div className={styles.faviconPreview}>
                     <img src={favicon.url} alt="" className={styles.faviconPreviewImage} />
                   </div>
+
                   <div className={styles.logoActions}>
                     <button
                       type="button"
@@ -360,6 +505,7 @@ export default function AppearanceSettings() {
                       </button>
                     )}
                   </div>
+
                   <input
                     ref={faviconInputRef}
                     type="file"
@@ -370,10 +516,12 @@ export default function AppearanceSettings() {
                       event.target.value = '';
                     }}
                   />
-                </div>
 
-                {faviconError && <p className={styles.logoError}>{faviconError}</p>}
+                  {faviconError && <p className={styles.logoError}>{faviconError}</p>}
+                </section>
               </div>
+
+              {logoError && <p className={styles.logoError}>{logoError}</p>}
             </div>
           </div>
         </div>

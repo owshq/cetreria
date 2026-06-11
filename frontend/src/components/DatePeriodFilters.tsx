@@ -34,6 +34,8 @@ type DatePeriodFiltersProps = {
   showError?: boolean;
   /** Título del periodo encima y filtros dentro de un panel con borde. */
   sectionLayout?: boolean;
+  /** Con `sectionLayout`: solo cabecera, solo panel o ambos (defecto). */
+  sectionPart?: 'full' | 'heading' | 'panel';
   /** Clases extra para el panel con borde cuando `sectionLayout` está activo. */
   panelClassName?: string;
   /** Contenido a la izquierda del título (`sectionLayout`). */
@@ -63,6 +65,7 @@ export default function DatePeriodFilters({
   showCustomDates = true,
   showError = true,
   sectionLayout = false,
+  sectionPart = 'full',
   panelClassName,
   headingStart,
   headingTrailing,
@@ -147,37 +150,60 @@ export default function DatePeriodFilters({
   ) : null;
 
   if (sectionLayout) {
-    return (
-      <section
+    const sectionClassName = cx(
+      ui.pageSection,
+      showAbbreviated && styles.abbreviated,
+      compact && styles.compact,
+      className,
+    );
+
+    const headingRow = (
+      <div
         className={cx(
-          ui.pageSection,
-          showAbbreviated && styles.abbreviated,
-          compact && styles.compact,
-          className,
+          styles.sectionHeadingRow,
+          (hidePeriodLabel || isCustomOnly) && styles.sectionHeadingRowEnd,
         )}
       >
-        <div
-          className={cx(
-            styles.sectionHeadingRow,
-            (hidePeriodLabel || isCustomOnly) && styles.sectionHeadingRowEnd,
-          )}
-        >
-          {headingStart ? (
-            <div className={styles.sectionHeadingStart}>{headingStart}</div>
-          ) : null}
-          {!hidePeriodLabel && (
-            <h2 className={cx(ui.pageSectionTitle, styles.sectionHeadingTitle)}>
-              {periodLabel}
-            </h2>
-          )}
+        {headingStart ? (
+          <div className={styles.sectionHeadingStart}>{headingStart}</div>
+        ) : null}
+        {!hidePeriodLabel && (
+          <h2 className={cx(ui.pageSectionTitle, styles.sectionHeadingTitle)}>
+            {periodLabel}
+          </h2>
+        )}
 
-          <div className={styles.sectionHeadingEnd}>
-            {headingTrailing}
-            {periodFilters}
-            {headingEnd}
-          </div>
+        <div className={styles.sectionHeadingEnd}>
+          {headingTrailing}
+          {periodFilters}
+          {headingEnd}
         </div>
+      </div>
+    );
 
+    if (sectionPart === 'heading') {
+      return (
+        <section className={sectionClassName}>
+          {headingRow}
+          {customDates}
+          {rangeError}
+        </section>
+      );
+    }
+
+    if (sectionPart === 'panel') {
+      return (
+        <section className={sectionClassName}>
+          <div className={cx(panelClassName || ui.card)}>
+            {children}
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <section className={sectionClassName}>
+        {headingRow}
         <div className={cx(panelClassName || ui.card)}>
           {customDates}
           {rangeError}

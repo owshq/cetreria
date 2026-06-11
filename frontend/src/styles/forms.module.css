@@ -55,7 +55,7 @@
   border-radius: var(--radius-field);
   background-color: var(--color-field-fill);
   color: var(--color-text-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.4;
@@ -267,4 +267,26 @@
 
 .searchShell:focus-within .searchIcon {
   color: var(--color-search-icon);
+}
+
+.timeInput24Shell {
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.timeInput24Shell .control {
+  width: 100%;
+}
+
+.controlTime24h {
+  font-variant-numeric: tabular-nums;
+}
+
+.controlTime24h::-webkit-datetime-edit-ampm-field {
+  display: none;
+}
+
+.controlTime24h::-webkit-calendar-picker-indicator {
+  cursor: pointer;
 }

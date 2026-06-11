@@ -85,7 +85,7 @@ export default function Sidebar() {
   }> = [
     { to: '/home', icon: 'home', label: 'Inicio' },
     { to: '/activities', icon: 'schedule', label: 'Actividades' },
-    { to: '/clients', icon: 'people', label: 'Contactos' },
+    { to: '/clients', icon: 'people', label: 'Clientes' },
     { to: '/docs', icon: 'folder', label: 'Documentos' },
     { to: '/reports', icon: 'chartBar', label: 'Reportes' },
     { to: '/settings', icon: 'settings', label: 'Configuración' },
@@ -113,8 +113,8 @@ export default function Sidebar() {
           aria-expanded={!isCollapsed}
         >
           <BrandLogo
-            collapsed={isIconRail}
             tone="onAccent"
+            collapsed={isIconRail}
             className={styles.brandLogo}
           />
         </button>

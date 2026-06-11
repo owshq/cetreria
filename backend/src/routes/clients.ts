@@ -1,6 +1,13 @@
 import { Router } from 'express';
 import type { Activity, CalendarEvent, Client, ClientObservation } from '@shared/types';
-import { canDeleteClientObservation, canUserAccessClient, filterClientsForUser } from '@shared/types';
+import {
+  canDeleteClientObservation,
+  canUserAccessClient,
+  filterClientsForUser,
+  mergeClientAssignedUserIds,
+  normalizeClientAssignedUserIds,
+  type ClientAssignUsersMode,
+} from '@shared/types';
 import { DB_NAMES } from '../config.js';
 import {
   deleteDoc,
@@ -18,6 +25,7 @@ import {
   notifyClientChanged,
   notifyClientObservation,
 } from '../services/notifications.js';
+import { getWorkspaceMemberIds } from '../services/workspaces.js';
 
 const router = Router();
 
@@ -31,6 +39,66 @@ async function loadClientAccessContext(workspaceId: string) {
   ]);
   return { activities, events };
 }
+
+const CLIENT_ASSIGN_MODES = new Set<ClientAssignUsersMode>(['set', 'add', 'remove']);
+
+async function resolveValidAssigneeIds(workspaceId: string, userIds: string[]): Promise<string[]> {
+  const memberIds = new Set(await getWorkspaceMemberIds(workspaceId));
+  return normalizeClientAssignedUserIds(userIds).filter((id) => memberIds.has(id));
+}
+
+router.post('/bulk-assign-users', workspaceAdminRequired, async (req, res) => {
+  const workspaceId = req.workspaceId!;
+  const clientIds = normalizeClientAssignedUserIds(req.body?.clientIds);
+  const mode = req.body?.mode as ClientAssignUsersMode;
+  if (!CLIENT_ASSIGN_MODES.has(mode)) {
+    res.status(400).json({ error: 'Modo de asignacion no valido' });
+    return;
+  }
+  if (clientIds.length === 0) {
+    res.status(400).json({ error: 'Selecciona al menos un contacto' });
+    return;
+  }
+
+  const userIds = await resolveValidAssigneeIds(
+    workspaceId,
+    normalizeClientAssignedUserIds(req.body?.userIds),
+  );
+  if (mode === 'add' && userIds.length === 0) {
+    res.status(400).json({ error: 'Selecciona al menos un operario valido' });
+    return;
+  }
+  if (mode === 'remove' && userIds.length === 0) {
+    res.status(400).json({ error: 'Selecciona al menos un operario valido' });
+    return;
+  }
+
+  const updatedClients: Client[] = [];
+  for (const clientId of clientIds) {
+    const existing = await getByIdInWorkspace<Client>(DB_NAMES.clients, clientId, workspaceId);
+    if (!existing) continue;
+
+    const merged = mergeClientUpdates(
+      normalizeClientRecord(existing, workspaceId),
+      {
+        assignedUserIds: mergeClientAssignedUserIds(existing.assignedUserIds, userIds, mode),
+      },
+      workspaceId,
+    );
+    const updated = await updateDoc<Client>(DB_NAMES.clients, clientId, merged);
+    if (!updated) continue;
+    const normalizedUpdated = normalizeClientRecord(updated, workspaceId);
+    updatedClients.push(normalizedUpdated);
+    await notifyClientChanged(workspaceId, req.user!, 'client.updated', normalizedUpdated);
+  }
+
+  if (updatedClients.length === 0) {
+    res.status(404).json({ error: 'No se encontraron contactos validos' });
+    return;
+  }
+
+  res.json(updatedClients);
+});
 
 router.get('/', async (req, res) => {
   const workspaceId = req.workspaceId!;
@@ -50,7 +118,7 @@ router.get('/:id', async (req, res) => {
     return;
   }
   const { activities, events } = await loadClientAccessContext(workspaceId);
-  if (!canUserAccessClient(client.id, activities, events, req.user!)) {
+  if (!canUserAccessClient(client.id, activities, events, req.user!, client)) {
     res.status(403).json({ error: 'Permiso denegado' });
     return;
   }
@@ -132,7 +200,7 @@ router.post('/:id/observations', async (req, res) => {
   }
 
   const { activities, events } = await loadClientAccessContext(workspaceId);
-  if (!canUserAccessClient(client.id, activities, events, req.user!)) {
+  if (!canUserAccessClient(client.id, activities, events, req.user!, client)) {
     res.status(403).json({ error: 'Permiso denegado' });
     return;
   }
@@ -181,7 +249,7 @@ router.delete('/:id/observations/:obsId', async (req, res) => {
   }
 
   const { activities, events } = await loadClientAccessContext(workspaceId);
-  if (!canUserAccessClient(client.id, activities, events, req.user!)) {
+  if (!canUserAccessClient(client.id, activities, events, req.user!, client)) {
     res.status(403).json({ error: 'Permiso denegado' });
     return;
   }

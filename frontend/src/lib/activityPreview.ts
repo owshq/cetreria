@@ -8,8 +8,10 @@ import type {
   UserAssignee,
 } from '@shared/types';
 import {
+  activityUsesWorkReport,
   aggregateEventTimeRange,
   buildAssigneeSlotsFromLegacy,
+  canEditActivityWorkReport,
   formatActivityRelativeTime,
   getActivityAssigneeIds,
   getActivityTypeLabel,
@@ -23,9 +25,11 @@ import {
 } from '@shared/types';
 import type { WorkspaceScheduleShiftBoundaries } from '@shared/types';
 import { isPastActivity } from '@/lib/activityUtils';
+import { activityHasLinkedDeliveryNote } from '@/lib/activityDocumentModalOptions';
 
-const HOUR_RANGE_SEPARATOR = ' \u2013 ';
-const META_SEPARATOR = ' \u00b7 ';
+import { META_SEPARATOR, TIME_RANGE_SEPARATOR } from './textSeparators';
+
+const HOUR_RANGE_SEPARATOR = TIME_RANGE_SEPARATOR;
 
 export function formatActivityHourRange(
   assigneeSlots: ReturnType<typeof normalizeActivityAssigneeSlots>,
@@ -289,6 +293,31 @@ export function getActivityPreviewSearchHaystack({
     : (resolveEventType(event.title, activityTypes)?.name ?? '');
   const description = activity?.description ?? event.description ?? event.title;
   return `${clientName} ${typeLabel} ${description}`.toLowerCase();
+}
+
+/** Muestra informe de trabajo en previsualizaciones cuando el operario puede completarlo. */
+export function canViewerOpenWorkReportPreview(
+  activity: Activity | undefined,
+  event: CalendarEvent,
+  viewerUser: { id: string; role: 'admin' | 'user' } | null | undefined,
+  activityTypes: ActivityType[],
+  linkedDocuments: readonly Document[],
+): boolean {
+  if (!activity || !viewerUser) return false;
+  if (!activityUsesWorkReport(activity, activityTypes)) return false;
+  if (activityHasLinkedDeliveryNote(linkedDocuments)) return false;
+
+  const targetUserId =
+    viewerUser.role === 'admin'
+      ? (getActivityAssigneeIds(activity, event)[0] ?? viewerUser.id)
+      : viewerUser.id;
+
+  return canEditActivityWorkReport(viewerUser, {
+    activity,
+    event,
+    targetUserId,
+    documents: linkedDocuments,
+  });
 }
 
 /** Muestra la acción de firma en previsualizaciones (popover, etc.). */

@@ -1,17 +1,21 @@
 /* ── Layout, typography & chrome (theme-agnostic) ── */
 :global(:root) {
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-heading: 'Helvetica Neue', Helvetica, 'Inter', sans-serif;
-  --font-search: 'DM Sans', var(--font-body);
+  --font-body: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-heading: 'Oswald', sans-serif;
+  --font-description: var(--font-body);
+  --font-search: var(--font-body);
 
   --layout-header-height: 52px;
   --layout-sidebar-width: 15.5rem;
   --layout-sidebar-collapsed-width: max(4.25rem, calc(var(--app-logo-size) + 1.25rem));
-  --app-logo-size: 2.75rem;
-  --app-logo-header-padding-top: 0.625rem;
-  --app-logo-header-padding-bottom: 0.5rem;
+  --app-logo-size: 3rem;
+  --app-logo-wordmark-height: 2.5rem;
+  --app-logo-header-padding-top: 0.75rem;
+  --app-logo-header-padding-bottom: 0.625rem;
   --layout-sidebar-header-height: calc(
-    var(--app-logo-size) + var(--app-logo-header-padding-top) + var(--app-logo-header-padding-bottom)
+    max(var(--app-logo-size), var(--app-logo-wordmark-height))
+    + var(--app-logo-header-padding-top)
+    + var(--app-logo-header-padding-bottom)
   );
   --layout-chrome-chevron-inset-top: 1rem;
   --layout-chrome-chevron-row-height: 2.25rem;
@@ -58,6 +62,7 @@
   --z-view-filter-backdrop: 199;
   --z-view-filter: 200;
   --z-modal: 210;
+  --z-modal-raised: 211;
 
   --radius: 0.45rem;
   --radius-sm: 0.375rem;
@@ -121,7 +126,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* Corporate accent (overridable via JS) */
-  --app-accent: #166534;
+  --app-accent: #576327;
   --accent: var(--app-accent);
   --accent-foreground: oklch(0.985 0 0);
   --sidebar-primary: var(--app-accent);
@@ -258,9 +263,9 @@
   --metric-bg-active: var(--color-nav-active);
   --metric-accent: var(--foreground);
 
-  --color-table-head-bg: var(--app-accent);
-  --color-table-head-text: var(--accent-foreground);
-  --color-table-head-border: color-mix(in srgb, var(--app-accent) 85%, black);
+  --color-table-head-bg: var(--app-accent-soft);
+  --color-table-head-text: var(--app-accent);
+  --color-table-head-border: color-mix(in srgb, var(--app-accent) 30%, transparent);
   --color-table-group-bg: oklch(0.975 0 0);
   --color-table-cell-text: var(--muted-foreground);
   --color-table-link-hover: var(--foreground);
@@ -440,9 +445,9 @@
   --metric-bg-active: var(--color-nav-active);
   --metric-accent: var(--foreground);
 
-  --color-table-head-bg: var(--app-accent);
-  --color-table-head-text: var(--accent-foreground);
-  --color-table-head-border: color-mix(in srgb, var(--app-accent) 85%, black);
+  --color-table-head-bg: var(--app-accent-soft);
+  --color-table-head-text: var(--app-accent);
+  --color-table-head-border: color-mix(in srgb, var(--app-accent) 30%, transparent);
   --color-table-group-bg: var(--background);
   --color-table-cell-text: var(--muted-foreground);
   --color-table-link-hover: var(--foreground);
@@ -489,11 +494,18 @@
 :global(h1),
 :global(h2),
 :global(h3),
+:global(h4),
+:global(h5),
+:global(h6),
 :global(.titulo-crm) {
   font-family: var(--font-heading);
   font-weight: 600;
   text-transform: none;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.01em;
+}
+
+:global(h1) {
+  font-weight: 700;
 }
 
 :global(button) {

@@ -69,6 +69,11 @@ import {
   formatLinkedActivityHeaderLabel,
 } from '@/lib/documentHeaderMeta';
 import { useActivityTypes } from '@/context/ActivityTypesContext';
+import { ApiError } from '@/api/client';
+import {
+  getDocumentActivityLinkError,
+  logDocumentActivityLinkBlock,
+} from '@/lib/documentActivityLink';
 import {
   DOCUMENT_STATUS_DOT,
   DOCUMENT_STATUS_LABELS,
@@ -290,21 +295,43 @@ export default function DocumentDetail() {
   const handleLinkToActivity = useCallback(
     async (activityId: string) => {
       if (!document) return;
+
+      const activity =
+        activities.find((item) => item.id === activityId) ??
+        (await activitiesService.getById(activityId));
+      if (!activity) {
+        alert('Actividad no encontrada.');
+        return;
+      }
+
+      const linkError = getDocumentActivityLinkError(
+        document,
+        activity,
+        allDocuments,
+        activityTypes,
+      );
+      if (linkError) {
+        logDocumentActivityLinkBlock(document, activity, linkError);
+        alert(linkError);
+        return;
+      }
+
       setActivityLinkMenu(null);
       try {
         const updated = await documentsService.update(document.id, { activityId });
         setDocument(updated);
-        const activity =
-          activities.find((item) => item.id === activityId) ??
-          (await activitiesService.getById(activityId));
         setLinkedActivity(activity);
         await refreshDocumentList();
       } catch (error) {
         console.error('Error al vincular actividad:', error);
-        alert('No se pudo vincular la actividad al documento.');
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : 'No se pudo vincular la actividad al documento.';
+        alert(message);
       }
     },
-    [activities, document],
+    [activities, activityTypes, allDocuments, document],
   );
 
   const activityLinkMenuItems = useMemo((): ContextMenuItem[] => {
@@ -814,22 +841,27 @@ export default function DocumentDetail() {
               <div className={styles.pageHeaderMetaRow}>
                 {linkedActivityLink || headerMeta?.label ? (
                   <div className={cx(styles.pageHeaderMetaMain, styles.pageHeaderMetaMainContent)}>
-                    {linkedActivityLink}
-                    {headerMeta?.label ? (
-                      <p className={cx(ui.pageSubtitle, headerStyles.headerMeta)}>
+                    <p className={cx(ui.pageSubtitle, headerStyles.headerMeta, styles.pageHeaderMetaLine)}>
+                      {linkedActivityLink}
+                      {linkedActivityLink && headerMeta?.label ? (
+                        <span className={headerStyles.headerMetaSep} aria-hidden>
+                          ·
+                        </span>
+                      ) : null}
+                      {headerMeta?.label ? (
                         <span className={headerStyles.headerTitleRelative}>{headerMeta.label}</span>
-                        {headerMeta.relative && (
-                          <>
-                            <span className={headerStyles.headerMetaSep} aria-hidden>
-                              ·
-                            </span>
-                            <span className={headerStyles.headerTitleRelative}>
-                              {headerMeta.relative.charAt(0).toUpperCase() + headerMeta.relative.slice(1)}
-                            </span>
-                          </>
-                        )}
-                      </p>
-                    ) : null}
+                      ) : null}
+                      {headerMeta?.label && headerMeta.relative ? (
+                        <span className={headerStyles.headerMetaSep} aria-hidden>
+                          ·
+                        </span>
+                      ) : null}
+                      {headerMeta?.relative ? (
+                        <span className={headerStyles.headerTitleRelative}>
+                          {headerMeta.relative.charAt(0).toUpperCase() + headerMeta.relative.slice(1)}
+                        </span>
+                      ) : null}
+                    </p>
                   </div>
                 ) : (
                   <span className={styles.pageHeaderMetaMain} aria-hidden />

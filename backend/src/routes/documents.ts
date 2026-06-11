@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import express from 'express';
-import type { Activity, CalendarEvent, Client, Document } from '@shared/types';
+import type { Activity, ActivityType, CalendarEvent, Client, Document } from '@shared/types';
 import {
   buildDocumentXml,
   canOperatorCreateDocumentType,
@@ -11,10 +11,15 @@ import {
   mimeTypeToExtension,
   nextDocumentNumber,
   validateActivityInvoiceRequiresDeliveryNote,
+  validateActivityInvoiceRequiresWorkerDeliveryNotes,
   validateRemovingDeliveryNoteFromActivity,
+  validateSingleActivityInvoice,
+  activityTypeUsesWorkReport,
+  resolveActivityType,
   isVerifactuLocked,
 } from '@shared/types';
 import { getWorkspaceBillingSettings } from '../services/workspaceBillingSettings.js';
+import { buildDisplayNameForDocumentRecord } from '../services/documentDisplayNames.js';
 import { DB_NAMES } from '../config.js';
 import {
   deleteDoc,
@@ -39,6 +44,7 @@ import { normalizeDocumentPayload } from '../services/documentRecords.js';
 import { getDocumentStorageDriver } from '../storage/index.js';
 import { getFreshAuthUser } from '../services/authUser.js';
 import { notifyDocumentChanged } from '../services/notifications.js';
+import { reopenWorkReportAfterDeliveryNoteRemoval } from '../services/activityDeliveryNote.js';
 import { readDocumentsBootstrapFromStore } from '../services/documentsBootstrap.js';
 import { jsonFileStore } from '../db/jsonFileStore.js';
 import { approveElectronicInvoicing } from '../services/electronicInvoicing/electronicInvoicingGate.js';
@@ -147,10 +153,35 @@ async function validateInvoiceDeliveryNotePairOnActivity(
   if (!activityId || documentType !== 'invoice') return null;
 
   const documents = await listAllInWorkspace<Document>(DB_NAMES.documents, workspaceId);
-  return validateActivityInvoiceRequiresDeliveryNote(documents, activityId, undefined, {
+  const deliveryError = validateActivityInvoiceRequiresDeliveryNote(documents, activityId, undefined, {
     excludeDocumentId,
     includesInvoice: true,
   });
+  if (deliveryError) return deliveryError;
+
+  const singleInvoiceError = validateSingleActivityInvoice(documents, activityId, undefined, {
+    excludeDocumentId,
+    addingInvoice: true,
+  });
+  if (singleInvoiceError) return singleInvoiceError;
+
+  const activity = await getByIdInWorkspace<Activity>(
+    DB_NAMES.activities,
+    activityId,
+    workspaceId,
+  );
+  if (!activity) return 'Actividad no encontrada';
+
+  const activityTypes = await listAllInWorkspace<ActivityType>(
+    DB_NAMES.activityTypes,
+    workspaceId,
+  );
+  const resolvedType = resolveActivityType(activity.type, activityTypes);
+  if (!activityTypeUsesWorkReport(resolvedType)) return null;
+
+  const events = await listAllInWorkspace<CalendarEvent>(DB_NAMES.events, workspaceId);
+  const linkedEvent = events.find((event) => event.activityId === activityId) ?? null;
+  return validateActivityInvoiceRequiresWorkerDeliveryNotes(activity, linkedEvent, documents);
 }
 
 async function validateDeliveryNoteRemovalFromActivity(
@@ -337,17 +368,21 @@ router.post('/', async (req, res) => {
   }
 
   const documents = await listAllInWorkspace<Document>(DB_NAMES.documents, req.workspaceId!);
-  const numberFormat = getDocumentFormatsForType(
+  const typeFormats = getDocumentFormatsForType(billingSettings.documentFormats, body.type);
+  const documentNumber = nextDocumentNumber(documents, body.type, typeFormats.number, body.date);
+  const displayName = buildDisplayNameForDocumentRecord(
     billingSettings.documentFormats,
-    body.type,
-  ).number;
+    { type: body.type, number: documentNumber, date: body.date },
+    client.name,
+  );
   const document: Document = {
     ...body,
     ...normalized,
     workspaceId: req.workspaceId!,
     activityId,
     id: crypto.randomUUID(),
-    number: nextDocumentNumber(documents, body.type, numberFormat, body.date),
+    number: documentNumber,
+    displayName: displayName || undefined,
     createdAt: new Date().toISOString(),
     pdfSource: body.pdfSource === 'uploaded' ? 'uploaded' : 'generated',
     invoiceKind: body.type === 'invoice' ? body.invoiceKind ?? 'ordinaria' : undefined,
@@ -666,6 +701,20 @@ router.delete('/:id', async (req, res) => {
     res.status(404).json({ error: 'Documento no encontrado' });
     return;
   }
+
+  if (
+    existing.type === 'delivery-note' &&
+    existing.activityId &&
+    existing.workerUserId
+  ) {
+    await reopenWorkReportAfterDeliveryNoteRemoval({
+      workspaceId,
+      activityId: existing.activityId,
+      workerUserId: existing.workerUserId,
+      actingUser: req.user!,
+    });
+  }
+
   res.status(204).send();
 });
 

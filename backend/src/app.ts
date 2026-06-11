@@ -7,6 +7,7 @@ import usersRoutes from './routes/users.js';
 import clientsRoutes from './routes/clients.js';
 import activitiesRoutes from './routes/activities.js';
 import activityWorkReportRoutes from './routes/activityWorkReport.js';
+import activityAttachmentsRoutes from './routes/activityAttachments.js';
 import activityTypesRoutes from './routes/activityTypes.js';
 import clientGroupsRoutes from './routes/clientGroups.js';
 import documentTypeGroupsRoutes from './routes/documentTypeGroups.js';
@@ -51,6 +52,7 @@ export function createApp() {
   app.use('/api/document-type-groups', documentTypeGroupsRoutes);
   app.use('/api/activities', activitiesRoutes);
   app.use('/api/activities/:id/work-report', activityWorkReportRoutes);
+  app.use('/api/activities/:id/attachments', activityAttachmentsRoutes);
   app.use('/api/activity-types', activityTypesRoutes);
   app.use('/api/invoice-concept-settings', invoiceConceptSettingsRoutes);
   app.use('/api/workspace-billing-settings', workspaceBillingSettingsRoutes);

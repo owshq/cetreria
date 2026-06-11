@@ -78,6 +78,9 @@ export const DEFAULT_DOCUMENT_HTML_TEMPLATE = `<!DOCTYPE html>
     th.col-tax { width: 52px; text-align: center; }
     th.col-total { width: 72px; text-align: right; }
     td { padding: 7px 6px; border: 1px solid #e5e5e5; vertical-align: top; font-size: 11px; }
+    td.item-concept { line-height: 1.25; }
+    .item-name { display: block; font-weight: 700; line-height: 1.25; }
+    .item-desc { display: block; margin-top: 3px; color: #737373; font-size: 10px; font-weight: 400; line-height: 1.3; }
     .num { text-align: right; white-space: nowrap; }
     .center { text-align: center; white-space: nowrap; }
     .bottom { display: flex; justify-content: space-between; gap: 24px; margin-top: 8px; }
@@ -226,14 +229,16 @@ function formatMoneyEs(value: number): string {
 function buildItemsRowsHtml(doc: Document, taxRate: number): string {
   return doc.items
     .map((item) => {
-      const label = item.name?.trim() || item.description?.trim() || '�';
-      const description =
-        item.name?.trim() && item.description?.trim()
-          ? `<div style="color:#737373;font-size:10px;">${escapeHtml(item.description.trim())}</div>`
+      const name = item.name?.trim();
+      const description = item.description?.trim();
+      const label = name || description || '\u2014';
+      const descriptionHtml =
+        name && description
+          ? `<span class="item-desc">${escapeHtml(description)}</span>`
           : '';
       const lineTotal = item.quantity * item.price;
       return `<tr>
-        <td>${escapeHtml(label)}${description}</td>
+        <td class="item-concept"><span class="item-name">${escapeHtml(label)}</span>${descriptionHtml}</td>
         <td class="center">${item.quantity.toFixed(2)}</td>
         <td class="num">${formatMoneyEs(item.price)}</td>
         <td class="center">${taxRate}%</td>

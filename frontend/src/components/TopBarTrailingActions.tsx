@@ -54,11 +54,6 @@ export default function TopBarTrailingActions({
   const notificationsMenuRef = useRef<HTMLDivElement>(null);
   const notificationsDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
-  const [notificationsMenuPosition, setNotificationsMenuPosition] = useState<{
-    top: number;
-    left: number;
-    width: number;
-  } | null>(null);
   const [userMenuPosition, setUserMenuPosition] = useState<{
     top: number;
     left: number;
@@ -136,44 +131,6 @@ export default function TopBarTrailingActions({
     document.addEventListener('mousedown', handlePointerDown);
     return () => document.removeEventListener('mousedown', handlePointerDown);
   }, [notificationsOpen, useDesktopNotificationsSidebar, closeNotifications]);
-
-  useLayoutEffect(() => {
-    if (useDesktopNotificationsSidebar || !notificationsOpen || !notificationsMenuRef.current) {
-      setNotificationsMenuPosition(null);
-      return;
-    }
-
-    const updatePosition = () => {
-      const anchor = notificationsMenuRef.current;
-      if (!anchor) return;
-
-      const rect = anchor.getBoundingClientRect();
-      const width = 320;
-      const gap = 6;
-      const openAbove = isSidebarPlacement && !isSidebarHeaderActions;
-      const height = notificationsDropdownRef.current?.offsetHeight ?? 384;
-      let top = openAbove ? rect.top - gap - height : rect.bottom + gap;
-      let left = openAbove ? rect.right + gap : rect.right - width;
-      left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
-      top = Math.max(8, Math.min(top, window.innerHeight - height - 8));
-      setNotificationsMenuPosition({ top, left, width });
-    };
-
-    updatePosition();
-    requestAnimationFrame(updatePosition);
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
-    return () => {
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition, true);
-    };
-  }, [
-    notificationsOpen,
-    useDesktopNotificationsSidebar,
-    isSidebarPlacement,
-    isSidebarHeaderActions,
-    unreadCount,
-  ]);
 
   useLayoutEffect(() => {
     if (isMobile || !userMenuOpen || !userMenuRef.current) {
@@ -278,31 +235,26 @@ export default function TopBarTrailingActions({
             )}
           </button>
 
-          {!useDesktopNotificationsSidebar &&
-            notificationsOpen &&
-            notificationsMenuPosition && (
+          {!useDesktopNotificationsSidebar && notificationsOpen && (
             <Portal>
-            <div
-              ref={notificationsDropdownRef}
-              className={cx(
-                styles.notificationsDropdown,
-                styles.dropdownPortal,
-                isSidebarPlacement && !isSidebarHeaderActions && styles.dropdownAbove,
-              )}
-              style={{
-                top: notificationsMenuPosition.top,
-                left: notificationsMenuPosition.left,
-                width: notificationsMenuPosition.width,
-              }}
-              role="menu"
-              aria-label="Notificaciones"
-              data-popup-layer
-            >
-              <NotificationsPanel
-                open={notificationsOpen}
-                onClose={closeNotifications}
+              <button
+                type="button"
+                className={styles.notificationsMobileBackdrop}
+                aria-label="Cerrar notificaciones"
+                onClick={closeNotifications}
               />
-            </div>
+              <div
+                ref={notificationsDropdownRef}
+                className={styles.notificationsMobileSheet}
+                role="menu"
+                aria-label="Notificaciones"
+                data-popup-layer
+              >
+                <NotificationsPanel
+                  open={notificationsOpen}
+                  onClose={closeNotifications}
+                />
+              </div>
             </Portal>
           )}
         </div>

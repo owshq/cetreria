@@ -25,10 +25,9 @@ type ActivityPreviewContentProps = {
   activityTypes: ActivityType[];
   variant?: 'default' | 'nav' | 'day';
   clientsMap?: Map<string, Client>;
-  onAssociateDocument?: () => void;
-  /** Muestra accion para crear/vincular albaran aunque ya haya otros documentos. */
-  showAssociateDocument?: boolean;
-  associateDocumentLabel?: string;
+  onOpenWorkReport?: () => void;
+  showWorkReportAction?: boolean;
+  workReportActionLabel?: string;
   canSignHours?: boolean;
   onSignHours?: () => void;
   /** Solo en variante nav: abre edición para asignar operarios. */
@@ -40,9 +39,9 @@ export default function ActivityPreviewContent({
   activityTypes,
   variant = 'default',
   clientsMap,
-  onAssociateDocument,
-  showAssociateDocument = false,
-  associateDocumentLabel = 'Asociar documento',
+  onOpenWorkReport,
+  showWorkReportAction = false,
+  workReportActionLabel = 'Informe de trabajo',
   canSignHours = false,
   onSignHours,
   onEditAssignees,
@@ -68,13 +67,9 @@ export default function ActivityPreviewContent({
   } = meta;
 
   const showDocumentList = linkedDocuments.length > 0;
-  const canAssociateInline =
+  const canWorkReportInline =
     variant !== 'nav' &&
-    Boolean(
-      onAssociateDocument &&
-        activityId &&
-        (showAssociateDocument || linkedDocuments.length === 0),
-    );
+    Boolean(onOpenWorkReport && activityId && showWorkReportAction);
   const canSignInline =
     workerSignaturesEnabled &&
     !typeUsesWorkReport &&
@@ -82,16 +77,16 @@ export default function ActivityPreviewContent({
     canSignHours &&
     onSignHours != null;
 
-  const associateButton = canAssociateInline ? (
+  const workReportButton = canWorkReportInline ? (
     <button
       type="button"
       className={cx(ui.btnPrimary, styles.associateBtn)}
       onClick={(event) => {
         event.stopPropagation();
-        onAssociateDocument?.();
+        onOpenWorkReport?.();
       }}
     >
-      {associateDocumentLabel}
+      {workReportActionLabel}
     </button>
   ) : null;
 
@@ -109,15 +104,15 @@ export default function ActivityPreviewContent({
   ) : null;
 
   const actionButtons =
-    associateButton || signButton ? (
+    workReportButton || signButton ? (
       variant === 'day' ? (
         <div className={styles.dayActions}>
-          {associateButton}
+          {workReportButton}
           {signButton}
         </div>
       ) : (
         <>
-          {associateButton}
+          {workReportButton}
           {signButton}
         </>
       )

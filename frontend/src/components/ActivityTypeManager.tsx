@@ -52,8 +52,6 @@ export default function ActivityTypeManager({
   autoCreate = false,
   createOnly = false,
 }: Props) {
-  usePopupEscape(!embedded && Boolean(onClose), () => onClose?.());
-
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft());
@@ -149,10 +147,119 @@ export default function ActivityTypeManager({
 
   const isEditing = creating || editingId !== null;
 
+  usePopupEscape(
+    (!embedded && Boolean(onClose)) || (embedded && isEditing),
+    () => {
+      if (embedded && isEditing) cancelEdit();
+      else onClose?.();
+    },
+  );
+
+  const formFields = (
+    <div className={ui.form}>
+      <div className={ui.field}>
+        <label className={ui.label}>Nombre *</label>
+        <Input
+          type="text"
+          value={draft.name}
+          onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+          placeholder="Ej. Mantenimiento, Instalación, Reparación, Inspección…"
+        />
+      </div>
+      <div className={ui.field}>
+        <label className={ui.label}>Color</label>
+        <ColorPicker value={draft.color} onChange={(color) => setDraft({ ...draft, color })} />
+      </div>
+      <div className={ui.field}>
+        <label className={ui.label}>Icono</label>
+        <div className={styles.iconGrid}>
+          {ACTIVITY_ICON_OPTIONS.map(({ id, emoji, label }) => (
+            <button
+              key={id}
+              type="button"
+              className={cx(styles.iconOption, draft.icon === id && styles.iconOptionActive)}
+              onClick={() => setDraft({ ...draft, icon: id })}
+              title={label}
+            >
+              <span aria-hidden style={{ fontSize: '1.125rem', lineHeight: 1 }}>{emoji}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className={ui.field}>
+        <label className={styles.checkboxLabel}>
+          <input
+            type="checkbox"
+            checked={draft.createsDeliveryNote}
+            onChange={(event) =>
+              setDraft({ ...draft, createsDeliveryNote: event.target.checked })
+            }
+          />
+          Informe de Trabajo (genera albarán al completar)
+        </label>
+        <p className={styles.checkboxHint}>
+          Si está desactivado, el tipo es una actividad normal sin informe ni albarán automático.
+        </p>
+      </div>
+    </div>
+  );
+
+  const editActionButtons = (
+    <>
+      <button type="button" onClick={handleSave} disabled={saving} className={cx(modalBtnPrimary, styles.footerActionBtn)}>
+        <Check size={18} />
+        Guardar
+      </button>
+      <button type="button" onClick={cancelEdit} className={cx(modalBtnSecondary, styles.footerActionBtn)}>
+        Cancelar
+      </button>
+    </>
+  );
+
+  const inlineEditForm = !embedded && isEditing ? (
+    <div className={styles.editPanel}>
+      {!createOnly && (
+        <p className={styles.editPanelTitle}>
+          {creating ? 'Nuevo tipo' : 'Editar tipo'}
+        </p>
+      )}
+      {error && <p className={styles.error}>{error}</p>}
+      {formFields}
+      <ModalActions className={styles.editPanelActions}>{editActionButtons}</ModalActions>
+    </div>
+  ) : null;
+
+  const embeddedEditModal = embedded && isEditing ? (
+    <ModalOverlay>
+      <div
+        className={cx(ui.modal, ui.modalLg, styles.managerModal)}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="activity-type-edit-title"
+      >
+        <ModalHeader
+          title={creating ? 'Nuevo tipo de actividad' : 'Editar tipo de actividad'}
+          titleId="activity-type-edit-title"
+          onClose={cancelEdit}
+          closeDisabled={saving}
+        />
+        <div className={ui.modalScroll}>
+          {error && <p className={ui.alertError}>{error}</p>}
+          {formFields}
+        </div>
+        <ModalFooter>
+          <ModalActions>{editActionButtons}</ModalActions>
+        </ModalFooter>
+      </div>
+    </ModalOverlay>
+  ) : null;
+
   const scrollContent = (
     <>
       {!hideTitle && embedded && <h4 className={styles.embeddedTitle}>Gestionar tipos</h4>}
-      {error && <p className={styles.error}>{error}</p>}
+      {error && !(embedded && isEditing) && <p className={styles.error}>{error}</p>}
+
+      {inlineEditForm}
 
       {!createOnly && (
         <div className={cx(styles.typeList, embedded && styles.typeListEmbedded)}>
@@ -197,81 +304,20 @@ export default function ActivityTypeManager({
           )}
         </div>
       )}
-
-      {isEditing && (
-        <div className={ui.form}>
-          <div className={ui.field}>
-            <label className={ui.label}>Nombre *</label>
-            <Input
-              type="text"
-              value={draft.name}
-              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              placeholder="Ej. Mantenimiento, Instalación, Reparación, Inspección…"
-            />
-          </div>
-          <div className={ui.field}>
-            <label className={ui.label}>Color</label>
-            <ColorPicker value={draft.color} onChange={(color) => setDraft({ ...draft, color })} />
-          </div>
-          <div className={ui.field}>
-            <label className={ui.label}>Icono</label>
-            <div className={styles.iconGrid}>
-              {ACTIVITY_ICON_OPTIONS.map(({ id, emoji, label }) => (
-                <button
-                  key={id}
-                  type="button"
-                  className={cx(styles.iconOption, draft.icon === id && styles.iconOptionActive)}
-                  onClick={() => setDraft({ ...draft, icon: id })}
-                  title={label}
-                >
-                  <span aria-hidden style={{ fontSize: '1.125rem', lineHeight: 1 }}>{emoji}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className={ui.field}>
-            <label className={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                checked={draft.createsDeliveryNote}
-                onChange={(event) =>
-                  setDraft({ ...draft, createsDeliveryNote: event.target.checked })
-                }
-              />
-              Informe de Trabajo (genera albarán al completar)
-            </label>
-            <p className={styles.checkboxHint}>
-              Si está desactivado, el tipo es una actividad normal sin informe ni albarán automático.
-            </p>
-          </div>
-        </div>
-      )}
     </>
   );
 
-  const footer = (
+  const footer = !isEditing && !createOnly ? (
     <ModalFooter className={embedded ? styles.embeddedFooter : undefined}>
-      {isEditing || createOnly ? (
-        <ModalActions>
-          <button type="button" onClick={handleSave} disabled={saving} className={cx(modalBtnPrimary, styles.footerActionBtn)}>
-            <Check size={18} />
-            Guardar
-          </button>
-          <button type="button" onClick={cancelEdit} className={cx(modalBtnSecondary, styles.footerActionBtn)}>
-            Cancelar
-          </button>
-        </ModalActions>
-      ) : (
-        <button type="button" onClick={startCreate} className={cx(modalBtnSecondary, styles.addBtn)}>
-          <Plus size={18} />
-          Añadir tipo
-        </button>
-      )}
+      <button type="button" onClick={startCreate} className={cx(modalBtnSecondary, styles.addBtn)}>
+        <Plus size={18} />
+        Añadir tipo
+      </button>
     </ModalFooter>
-  );
+  ) : null;
 
   const layout = (
-    <div className={styles.managerLayout}>
+    <div className={cx(styles.managerLayout, embedded && styles.embeddedLayout)}>
       <div className={embedded ? styles.embeddedScroll : ui.modalScroll}>{scrollContent}</div>
       {footer}
     </div>
@@ -298,6 +344,7 @@ export default function ActivityTypeManager({
     return (
       <>
         {layout}
+        {embeddedEditModal}
         {deleteConfirmDialog}
       </>
     );

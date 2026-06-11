@@ -85,6 +85,10 @@ export const authService = {
   },
 
   syncSessionUser(user: Omit<User, 'password'>) {
+    if (!user || typeof user !== 'object') {
+      removeLocalStorageFor('user');
+      return;
+    }
     writeLocalStorageFor('user', JSON.stringify(user));
     window.dispatchEvent(new CustomEvent(APP_EVENTS.userUpdated, { detail: user }));
   },
@@ -99,7 +103,22 @@ export const authService = {
 
   getCurrentUser(): Omit<User, 'password'> | null {
     const userData = readLocalStorageFor('user');
-    return userData ? JSON.parse(userData) : null;
+    if (!userData || userData === 'undefined' || userData === 'null') {
+      if (userData) removeLocalStorageFor('user');
+      return null;
+    }
+
+    try {
+      const parsed: unknown = JSON.parse(userData);
+      if (!parsed || typeof parsed !== 'object') {
+        removeLocalStorageFor('user');
+        return null;
+      }
+      return parsed as Omit<User, 'password'>;
+    } catch {
+      removeLocalStorageFor('user');
+      return null;
+    }
   },
 
   getWorkspaces(): WorkspaceSummary[] {
@@ -111,6 +130,6 @@ export const authService = {
   },
 
   isAuthenticated(): boolean {
-    return !!readLocalStorageFor('user') && !!getToken();
+    return !!this.getCurrentUser() && !!getToken();
   },
 };

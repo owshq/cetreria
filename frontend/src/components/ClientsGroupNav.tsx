@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import { ArrowDownToLine, ChevronDown, CircleMinus, MoreVertical, Plus } from 'lucide-react';
+import { ArrowDownToLine, ChevronDown, CircleMinus, MoreVertical, Pencil, Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { ClientGroup } from '@shared/types';
+import type { ClientGroup, UserAssignee } from '@shared/types';
 import ContextMenu, { type ContextMenuItem } from '@/components/ContextMenu';
 import ClientsMobileFilterMenu from '@/components/ClientsMobileFilterMenu';
+import ActivitiesScheduleNav from '@/components/ActivitiesScheduleNav';
 import type { SavedTableView } from '@/lib/viewConfig';
+import { ACTIVITIES_ALL_USERS_ID, isAllTeamUsers } from '@/lib/activitiesTeamFilter';
 import { cx } from '@/lib/cx';
 import { scrollRegionProps } from '@/lib/scrollRegion';
 import { SidebarFooter, SidebarFooterAction } from '@/components/SidebarFooter';
@@ -17,6 +19,7 @@ type ClientsGroupNavProps = {
   onSelectGroup: (groupId: string) => void;
   isAdmin: boolean;
   onCreateGroup: () => void;
+  onEditGroup?: (group: ClientGroup) => void;
   onDownloadGroup: (group: ClientGroup) => void;
   onDeleteGroup: (group: ClientGroup) => void;
   loading?: boolean;
@@ -28,6 +31,11 @@ type ClientsGroupNavProps = {
   savedViews?: SavedTableView[];
   activeSavedViewId?: string | null;
   onSelectView?: (view: SavedTableView) => void;
+  assignees?: UserAssignee[];
+  selectedOperatorId?: string;
+  onSelectOperator?: (operatorId: string) => void;
+  currentUserId?: string;
+  operatorDataLoading?: boolean;
 };
 
 type GroupOptionsMenuState = {
@@ -47,6 +55,7 @@ export default function ClientsGroupNav({
   onSelectGroup,
   isAdmin,
   onCreateGroup,
+  onEditGroup,
   onDownloadGroup,
   onDeleteGroup,
   loading = false,
@@ -57,6 +66,11 @@ export default function ClientsGroupNav({
   savedViews = [],
   activeSavedViewId = null,
   onSelectView,
+  assignees = [],
+  selectedOperatorId = ACTIVITIES_ALL_USERS_ID,
+  onSelectOperator,
+  currentUserId = '',
+  operatorDataLoading = false,
 }: ClientsGroupNavProps) {
   const [groupOptionsMenu, setGroupOptionsMenu] = useState<GroupOptionsMenuState | null>(null);
   const [mobileFilterMenu, setMobileFilterMenu] = useState<MobileFilterMenuState | null>(null);
@@ -84,6 +98,16 @@ export default function ClientsGroupNav({
 
   const groupOptionsItems: ContextMenuItem[] = groupOptionsMenu
     ? [
+        ...(onEditGroup
+          ? [
+              {
+                id: 'edit',
+                label: 'Editar',
+                icon: <Pencil size={16} />,
+                onSelect: () => onEditGroup(groupOptionsMenu.group),
+              } satisfies ContextMenuItem,
+            ]
+          : []),
         {
           id: 'download',
           label: 'Descargar',
@@ -120,13 +144,18 @@ export default function ClientsGroupNav({
     if (activeGroupId !== 'all' && activeGroup) {
       return activeGroup.name;
     }
+    if (!isAllTeamUsers(selectedOperatorId)) {
+      const operator = assignees.find((user) => user.id === selectedOperatorId);
+      if (operator) return operator.name;
+    }
     if (activeSavedViewId && activeView) {
       return activeView.name;
     }
     return 'Todos';
-  }, [activeGroupId, activeGroup, activeSavedViewId, activeView]);
+  }, [activeGroupId, activeGroup, activeSavedViewId, activeView, selectedOperatorId, assignees]);
 
-  const isFilterActive = activeGroupId !== 'all' || Boolean(activeSavedViewId);
+  const isFilterActive =
+    activeGroupId !== 'all' || Boolean(activeSavedViewId) || !isAllTeamUsers(selectedOperatorId);
 
   const mobileFilterMenuPortal = mobileFilterMenu ? (
     <ClientsMobileFilterMenu
@@ -139,6 +168,9 @@ export default function ClientsGroupNav({
       savedViews={savedViews}
       activeSavedViewId={activeSavedViewId}
       onSelectView={onSelectView}
+      assignees={assignees}
+      selectedOperatorId={selectedOperatorId}
+      onSelectOperator={onSelectOperator}
     />
   ) : null;
 
@@ -333,6 +365,24 @@ export default function ClientsGroupNav({
                     </div>
                   ),
                 },
+                ...(isAdmin && onSelectOperator
+                  ? [
+                      {
+                        id: 'operators',
+                        children: (
+                          <ActivitiesScheduleNav
+                            assignees={assignees}
+                            currentUserId={currentUserId}
+                            selectedUserId={selectedOperatorId}
+                            isAdmin={isAdmin}
+                            onSelect={onSelectOperator}
+                            sectionHeader
+                            loading={operatorDataLoading}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
                 ...(savedViews.length > 0 && afterNav
                   ? [
                       {

@@ -6,6 +6,7 @@ export const APP_EVENTS = {
   appLogoUpdated: 'app:app-logo-updated',
   appLogoSizeUpdated: 'app:app-logo-size-updated',
   appFaviconUpdated: 'app:app-favicon-updated',
+  workspaceTypographyUpdated: 'app:workspace-typography-updated',
   notificationsReceived: 'app:notifications-received',
 } as const;
 

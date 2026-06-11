@@ -1,13 +1,42 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useParams, useNavigate, Link, useLocation, Navigate } from 'react-router';
 import { ArrowLeft, Pencil, CircleMinus, FileText, Mail, Phone, MapPin, Info, X, Globe, Search, Plus, FileDown, CalendarDays, MoreVertical, Copy, Check } from 'lucide-react';
-import { clientsService, activitiesService, documentsService, clientGroupsService, authService, eventsService } from '@/api';
-import type { Activity, CalendarEvent, Client, ClientGroup, Document } from '@shared/types';
-import { DOCUMENT_TYPE_LABELS, formatDocumentAmount, formatPeriodDisplayLabel, getActivityTypeLabel, isDateInRange, canDeleteClientObservation, compareClientCreatedAtDesc, compareDateStringsAsc, compareDateStringsDesc, formatClientCreatedAtLong, formatDateSafe, parseDateSafe, resolveClientCreatedAtPrecision, getClientWebsiteHref, getClientWebsiteLabel, clientCreatedAtToFormValues, customFieldsToEntries, entriesToCustomFields } from '@shared/types';
+import {
+  clientsService,
+  activitiesService,
+  documentsService,
+  clientGroupsService,
+  authService,
+  eventsService,
+  usersService,
+} from '@/api';
+import type { Activity, CalendarEvent, Client, ClientGroup, Document, UserAssignee } from '@shared/types';
+import {
+  DOCUMENT_TYPE_LABELS,
+  formatDocumentAmount,
+  formatPeriodDisplayLabel,
+  getActivityTypeLabel,
+  isDateInRange,
+  canDeleteClientObservation,
+  compareClientCreatedAtDesc,
+  compareDateStringsAsc,
+  compareDateStringsDesc,
+  formatClientCreatedAtLong,
+  formatDateSafe,
+  parseDateSafe,
+  resolveClientCreatedAtPrecision,
+  getClientWebsiteHref,
+  getClientWebsiteLabel,
+  clientCreatedAtToFormValues,
+  customFieldsToEntries,
+  entriesToCustomFields,
+  normalizeClientAssignedUserIds,
+} from '@shared/types';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { ActivityGroupBy, ActivityValueMeasure } from '@/components/clientCharts/utils';
 import { cx } from '@/lib/cx';
+import { getClientActivityOperatorIds } from '@/lib/clientOperatorFilter';
 import { Textarea, SearchField } from '@/components/forms';
 import ClientFormSections, { type ClientFormData } from '@/components/ClientFormSections';
 import ClientLogo from '@/components/ClientLogo';
@@ -183,6 +212,7 @@ export default function ClientDetail() {
 
   const [client, setClient] = useState<Client | null>(null);
   const [groups, setGroups] = useState<ClientGroup[]>([]);
+  const [assignees, setAssignees] = useState<UserAssignee[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -304,8 +334,29 @@ export default function ClientDetail() {
       createdAt,
       createdAtPrecision,
       customFieldEntries: [],
+      assignedUserIds: [],
     };
   });
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setAssignees([]);
+      return;
+    }
+
+    let cancelled = false;
+    void usersService.getAssignees()
+      .then((nextAssignees) => {
+        if (!cancelled) setAssignees(nextAssignees);
+      })
+      .catch(() => {
+        if (!cancelled) setAssignees([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
 
   useEffect(() => {
     if (id === 'new') {
@@ -344,6 +395,7 @@ export default function ClientDetail() {
           createdAt,
           createdAtPrecision,
           customFieldEntries: customFieldsToEntries(clientData.customFields),
+          assignedUserIds: normalizeClientAssignedUserIds(clientData.assignedUserIds),
         });
       }
       setGroups(groupData);
@@ -360,6 +412,11 @@ export default function ClientDetail() {
       isDateInRange(activity.date, dateRange.from, dateRange.to),
     );
   }, [activities, dateRange.from, dateRange.to, invalidCustomRange]);
+
+  const clientAccessViaScheduleUserIds = useMemo(() => {
+    if (!client) return [];
+    return getClientActivityOperatorIds(client.id, activities, events);
+  }, [client, activities, events]);
 
   const filteredDocuments = useMemo(() => {
     if (invalidCustomRange) return [];
@@ -467,6 +524,7 @@ export default function ClientDetail() {
       createdAt,
       createdAtPrecision,
       customFieldEntries: customFieldsToEntries(source.customFields),
+      assignedUserIds: normalizeClientAssignedUserIds(source.assignedUserIds),
     });
   }, []);
 
@@ -481,11 +539,12 @@ export default function ClientDetail() {
     e.preventDefault();
     if (!isAdmin || !id) return;
 
-    const { customFieldEntries, logoUrl, ...clientPayload } = formData;
+    const { customFieldEntries, logoUrl, assignedUserIds, ...clientPayload } = formData;
     const updated = await clientsService.update(id, {
       ...clientPayload,
       logoUrl: logoUrl || undefined,
       customFields: entriesToCustomFields(customFieldEntries),
+      assignedUserIds: normalizeClientAssignedUserIds(assignedUserIds),
     });
     setClient(updated);
     closeAllPopups();
@@ -1352,6 +1411,8 @@ export default function ClientDetail() {
                   formData={formData}
                   setFormData={setFormData}
                   groups={groups}
+                  assignees={assignees}
+                  accessViaScheduleUserIds={clientAccessViaScheduleUserIds}
                   idPrefix="edit-client"
                 />
               </div>

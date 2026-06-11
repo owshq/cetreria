@@ -78,7 +78,7 @@
   border-radius: 0;
   background: transparent;
   color: var(--color-text-muted);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   cursor: pointer;
   white-space: nowrap;
   transition: color 0.15s ease, background 0.15s ease;

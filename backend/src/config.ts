@@ -16,9 +16,17 @@ function resolveDocumentStorageDir(): string {
   return process.env.DOCUMENT_STORAGE_DIR ?? path.join(backendDir, 'data', 'document-pdfs');
 }
 
+function resolveDatabaseProviderEnv(): string {
+  return (process.env.DATABASE_PROVIDER ?? process.env.DB_TYPE ?? 'json').trim().toLowerCase();
+}
+
 export const config = {
   port: Number(process.env.PORT ?? PORTS.api),
+  /** @deprecated Usar databaseProvider. Alias legacy DB_TYPE. */
   dbType: process.env.DB_TYPE ?? 'json',
+  get databaseProvider() {
+    return resolveDatabaseProviderEnv();
+  },
   get dbPath() {
     return resolveDbPath();
   },

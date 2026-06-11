@@ -194,4 +194,17 @@ describe('canUserAccessClient / filterClientsForUser', () => {
     );
     assert.deepEqual(filtered.map((client) => client.id), [clientA.id]);
   });
+
+  it('operario ve contacto con asignacion explicita sin actividad', () => {
+    const explicitClient: Client = {
+      ...clientB,
+      assignedUserIds: [operator.id],
+    };
+    assert.equal(
+      canUserAccessClient(explicitClient.id, [], events, operator, explicitClient),
+      true,
+    );
+    const filtered = filterClientsForUser([clientA, explicitClient], [], events, operator);
+    assert.deepEqual(filtered.map((client) => client.id), [explicitClient.id]);
+  });
 });

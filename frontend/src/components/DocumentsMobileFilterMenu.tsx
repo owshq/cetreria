@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { Client } from '@shared/types';
+import type { Client, DocumentTypeGroup } from '@shared/types';
 import { SearchField } from '@/components/forms';
 import InfiniteScrollSentinel from '@/components/InfiniteScrollSentinel';
 import {
@@ -30,6 +30,10 @@ type DocumentsMobileFilterMenuProps = {
   savedViews: SavedTableView[];
   activeSavedViewId: string | null;
   onSelectView?: (view: SavedTableView) => void;
+  isAdmin?: boolean;
+  onEditGroup?: (group: DocumentTypeGroup) => void;
+  onDownloadGroup?: (group: DocumentTypeGroup) => void;
+  onDeleteGroup?: (group: DocumentTypeGroup) => void;
 };
 
 function filterClients(clients: Client[], searchTerm: string): Client[] {
@@ -56,6 +60,10 @@ export default function DocumentsMobileFilterMenu({
   savedViews,
   activeSavedViewId,
   onSelectView,
+  isAdmin = false,
+  onEditGroup,
+  onDownloadGroup,
+  onDeleteGroup,
 }: DocumentsMobileFilterMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const clientsListRef = useRef<HTMLDivElement>(null);
@@ -123,6 +131,11 @@ export default function DocumentsMobileFilterMenu({
 
   const allClientsSelected = documentsClientFilterIsAll(activeClientIds);
   const selectedClientIds = useMemo(() => new Set(activeClientIds), [activeClientIds]);
+  const activeGroup = tabs.find((tab) => tab.id === activeTab)?.group ?? null;
+  const showGroupActions =
+    isAdmin &&
+    activeGroup &&
+    (onEditGroup || onDownloadGroup || onDeleteGroup);
 
   const selectAndClose = (action: () => void) => {
     action();
@@ -150,6 +163,35 @@ export default function DocumentsMobileFilterMenu({
             onClick={() => selectAndClose(() => onSelectTab(tab.id))}
           />
         ))}
+        {showGroupActions && activeGroup && (
+          <>
+            <div className={styles.separator} role="separator" />
+            <div className={styles.sectionHeader} role="presentation">
+              Opciones del grupo
+            </div>
+            {onEditGroup && (
+              <MobileFilterMenuItem
+                selected={false}
+                label="Editar"
+                onClick={() => selectAndClose(() => onEditGroup(activeGroup))}
+              />
+            )}
+            {onDownloadGroup && (
+              <MobileFilterMenuItem
+                selected={false}
+                label="Descargar"
+                onClick={() => selectAndClose(() => onDownloadGroup(activeGroup))}
+              />
+            )}
+            {onDeleteGroup && (
+              <MobileFilterMenuItem
+                selected={false}
+                label="Eliminar"
+                onClick={() => selectAndClose(() => onDeleteGroup(activeGroup))}
+              />
+            )}
+          </>
+        )}
       </div>
 
       <div className={styles.separator} role="separator" />

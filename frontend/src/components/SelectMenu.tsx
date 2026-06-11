@@ -30,6 +30,8 @@ type SelectMenuProps = {
   symbolOnlyTrigger?: boolean;
   /** Smaller trigger padding for dense layouts. */
   compact?: boolean;
+  /** Chevron-only trigger for combobox layouts. */
+  iconTrigger?: boolean;
   /** Render dropdown in a portal to avoid clipping inside scroll containers. */
   menuPortal?: boolean;
 };
@@ -52,6 +54,7 @@ export default function SelectMenu({
   emojiOnlyTriggerValues = ['all'],
   symbolOnlyTrigger = false,
   compact = false,
+  iconTrigger = false,
   menuPortal = true,
 }: SelectMenuProps) {
   const autoId = useId();
@@ -133,7 +136,7 @@ export default function SelectMenu({
       const triggerRect = trigger.getBoundingClientRect();
       const gap = 6;
       const padding = 8;
-      const minDropdownWidth = symbolOnlyTrigger ? 176 : triggerRect.width;
+      const minDropdownWidth = symbolOnlyTrigger || iconTrigger ? 176 : triggerRect.width;
       const width = Math.max(triggerRect.width, minDropdownWidth);
       let left = triggerRect.left;
 
@@ -164,7 +167,7 @@ export default function SelectMenu({
 
     updatePosition();
     requestAnimationFrame(updatePosition);
-  }, [open, menuPortal, placement, options.length, highlightIndex, symbolOnlyTrigger]);
+  }, [open, menuPortal, placement, options.length, highlightIndex, symbolOnlyTrigger, iconTrigger]);
 
   const closeMenu = () => {
     setOpen(false);
@@ -293,10 +296,13 @@ export default function SelectMenu({
         disabled && styles.rootDisabled,
         showEmojiOnlyTrigger && styles.rootEmojiTrigger,
         showSymbolOnlyTrigger && styles.rootSymbolTrigger,
+        iconTrigger && styles.rootIconTrigger,
         className,
       )}
       style={
-        showEmojiOnlyTrigger || showSymbolOnlyTrigger ? { minWidth: 0, width: 'auto' } : undefined
+        showEmojiOnlyTrigger || showSymbolOnlyTrigger || iconTrigger
+          ? { minWidth: 0, width: 'auto' }
+          : undefined
       }
     >
       <button
@@ -309,6 +315,7 @@ export default function SelectMenu({
           compact && styles.triggerCompact,
           showEmojiOnlyTrigger && styles.triggerEmojiOnly,
           showSymbolOnlyTrigger && styles.triggerSymbolOnly,
+          iconTrigger && styles.triggerIconOnly,
         )}
         aria-label={selected ? `${ariaLabel}: ${selected.label}` : ariaLabel}
         aria-haspopup="listbox"
@@ -320,7 +327,7 @@ export default function SelectMenu({
         }}
         onKeyDown={handleKeyDown}
       >
-        <span className={styles.triggerLabel}>
+        <span className={styles.triggerLabel} hidden={iconTrigger}>
           {showEmojiOnlyTrigger ? (
             <span className={styles.emoji} aria-hidden>
               {selected.emoji}

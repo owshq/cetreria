@@ -104,7 +104,7 @@ export default function Help() {
   const { collapsed: secondaryNavCollapsed, toggle: toggleSecondaryNav } =
     useSecondaryNavCollapsed('help');
   const isMobile = useMediaQuery('(max-width: 767px)');
-  const showSecondaryNav = isMobile ? !secondaryNavCollapsed : true;
+  const showSecondaryNav = isMobile ? true : !secondaryNavCollapsed;
   useLayoutSecondarySidebarWidth(!isMobile);
 
   const selectTopic = (topicId: HelpTopicId) => {

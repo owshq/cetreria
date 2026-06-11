@@ -1,5 +1,12 @@
 import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
-import type { Client, ClientCreatedAtPrecision, ClientCustomFieldEntry, ClientGroup } from '@shared/types';
+import type {
+  Client,
+  ClientCreatedAtPrecision,
+  ClientCustomFieldEntry,
+  ClientGroup,
+  UserAssignee,
+} from '@shared/types';
+import ClientAssigneesPicker from '@/components/ClientAssigneesPicker';
 import PhoneInput from '@/components/PhoneInput';
 import SelectMenu from '@/components/SelectMenu';
 import { Input } from '@/components/forms';
@@ -28,6 +35,7 @@ export type ClientFormData = {
   createdAt: string;
   createdAtPrecision: ClientCreatedAtPrecision;
   customFieldEntries: ClientCustomFieldEntry[];
+  assignedUserIds: string[];
 };
 
 const CREATED_AT_PRECISION_OPTIONS = [
@@ -39,6 +47,10 @@ type ClientFormSectionsProps = {
   formData: ClientFormData;
   setFormData: Dispatch<SetStateAction<ClientFormData>>;
   groups: ClientGroup[];
+  /** Si se pasa, muestra la seccion de operarios asignados (solo admin). */
+  assignees?: UserAssignee[];
+  /** Operarios que ya ven el contacto por actividades o eventos. */
+  accessViaScheduleUserIds?: string[];
   /** Prefijo para ids de campos (p. ej. `edit-client` o `client`). */
   idPrefix?: string;
 };
@@ -47,6 +59,8 @@ export default function ClientFormSections({
   formData,
   setFormData,
   groups,
+  assignees,
+  accessViaScheduleUserIds,
   idPrefix = 'client',
 }: ClientFormSectionsProps) {
   const groupId = `${idPrefix}-group`;
@@ -332,6 +346,28 @@ export default function ClientFormSections({
           </div>
         </div>
       </section>
+
+      {assignees ? (
+        <section className={ui.pageSection} aria-labelledby={`${idPrefix}-section-operators`}>
+          <h2 id={`${idPrefix}-section-operators`} className={ui.pageSectionTitle}>
+            Operarios
+          </h2>
+          <div className={ui.card}>
+            <div className={styles.sectionCardBody}>
+              <p className={styles.operatorsHint}>
+                Marca operarios con acceso explicito. Los que ya tienen acceso por actividades o
+                eventos aparecen marcados y no hace falta volver a asignarlos.
+              </p>
+              <ClientAssigneesPicker
+                assignees={assignees}
+                selectedUserIds={formData.assignedUserIds}
+                accessViaScheduleUserIds={accessViaScheduleUserIds}
+                onChange={(assignedUserIds) => setFormData({ ...formData, assignedUserIds })}
+              />
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className={ui.pageSection} aria-labelledby={`${idPrefix}-section-custom`}>
         <h2 id={`${idPrefix}-section-custom`} className={ui.pageSectionTitle}>

@@ -17,7 +17,7 @@ export const USER_DISPLAY_COLUMNS: DisplayColumnDef[] = [
     minWidth: 140,
     headerStretch: true,
   },
-  { id: 'actions', label: 'Acciones', defaultWidth: 100, minWidth: 90, locked: true, align: 'right' },
+  { id: 'actions', label: 'Acciones', defaultWidth: 140, minWidth: 132, locked: true, align: 'right' },
 ];
 
 export const USER_TABLE_VIEW_COLUMNS: TableViewColumnDef<Omit<User, 'password'>>[] = [

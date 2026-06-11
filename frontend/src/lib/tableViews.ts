@@ -63,6 +63,13 @@ export type TableViewColumnDef<T, Ctx = undefined> = {
   getGroupKey: (item: T, ctx: Ctx) => string;
   getGroupLabel: (key: string, ctx: Ctx) => string;
   getFilterValue: (item: T, ctx: Ctx) => string;
+  /** Evaluacion custom de filtros (p. ej. varios operarios por contacto). */
+  matchesFilter?: (
+    item: T,
+    operator: FilterOperator,
+    value: string,
+    ctx: Ctx,
+  ) => boolean;
   filterOptions?: {
     value: string;
     label: string;
@@ -326,19 +333,23 @@ function evaluateCondition<T, Ctx>(
   const column = columns.find((entry) => entry.id === condition.columnId);
   if (!column) return true;
 
+  const compareValue = condition.value.trim();
+  if (column.matchesFilter) {
+    if (!operatorNeedsValue(condition.operator)) {
+      return column.matchesFilter(item, condition.operator, '', ctx);
+    }
+    if (compareValue === '') return true;
+    return column.matchesFilter(item, condition.operator, compareValue, ctx);
+  }
+
   const rawValue = column.getFilterValue(item, ctx) ?? '';
   if (!operatorNeedsValue(condition.operator)) {
     return compareValues(rawValue, condition.operator, '', column.valueType);
   }
 
-  if (condition.value.trim() === '') return true;
+  if (compareValue === '') return true;
 
-  return compareValues(
-    rawValue,
-    condition.operator,
-    condition.value.trim(),
-    column.valueType,
-  );
+  return compareValues(rawValue, condition.operator, compareValue, column.valueType);
 }
 
 export function matchesFilterRule<T, Ctx>(

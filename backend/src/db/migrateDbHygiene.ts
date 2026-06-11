@@ -10,6 +10,11 @@ export const EPHEMERAL_SMOKE_WORKSPACE_IDS = new Set([
 const TEST_USER_EMAIL_SUFFIX = '@test.local';
 
 type DbEntity = { id: string; workspaceId?: string; email?: string };
+type DbUser = { id: string; email?: string };
+
+function isTestLocalEmail(email?: string): boolean {
+  return (email?.trim().toLowerCase() ?? '').endsWith(TEST_USER_EMAIL_SUFFIX);
+}
 
 function dedupeById<T extends { id: string }>(items: T[]): T[] {
   const seen = new Set<string>();
@@ -94,19 +99,27 @@ export async function migrateDbHygiene(): Promise<void> {
     }
   }
 
-  const memberUserIds = new Set(
-    (db.data[DB_NAMES.workspaceMembers] as unknown as Array<{ userId: string }>).map(
-      (m) => m.userId,
-    ),
+  const usersBefore = [...db.data[DB_NAMES.users]] as DbUser[];
+  const testUserIds = new Set(
+    usersBefore.filter((user) => isTestLocalEmail(user.email)).map((user) => user.id),
   );
-  const usersBefore = [...db.data[DB_NAMES.users]] as Array<{ id: string; email?: string }>;
-  const usersAfter = usersBefore.filter((user) => {
-    const email = user.email?.trim().toLowerCase() ?? '';
-    if (!email.endsWith(TEST_USER_EMAIL_SUFFIX)) return true;
-    return memberUserIds.has(user.id);
-  });
+  const usersAfter = usersBefore.filter((user) => !isTestLocalEmail(user.email));
   if (JSON.stringify(usersAfter) !== JSON.stringify(usersBefore)) {
     db.data[DB_NAMES.users] = usersAfter as typeof db.data[typeof DB_NAMES.users];
+    changed = true;
+  }
+
+  const membersBefore = [...db.data[DB_NAMES.workspaceMembers]] as Array<{
+    id: string;
+    userId: string;
+    workspaceId?: string;
+  }>;
+  const membersAfter = membersBefore.filter(
+    (member) => !testUserIds.has(member.userId) && !belongsToEphemeralWorkspace(member),
+  );
+  if (JSON.stringify(membersAfter) !== JSON.stringify(membersBefore)) {
+    db.data[DB_NAMES.workspaceMembers] =
+      membersAfter as typeof db.data[typeof DB_NAMES.workspaceMembers];
     changed = true;
   }
 

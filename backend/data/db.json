@@ -39,342 +39,6 @@
       "role": "user",
       "roleLabel": "Operario",
       "password": "$2b$10$DUbNqHQiOoc6bzdQU0jeteFP2Pb.B4RHXOAogDV8fekLqYIRl.x2O"
-    },
-    {
-      "id": "f7000002-0000-4000-8000-000000000001",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "f7000003-0000-4000-8000-000000000001",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "95897af6-9019-48a5-860a-a0aa29d92a60",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "f7dae9f1-4a01-4bb6-9ee7-1970da10f7f3",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "1a9faa7e-da1e-47c2-bd32-34253522d72b",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "f79c70f8-99a1-463f-b8ad-51a7825df018",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "a8bc0e82-0a2f-4305-b58a-0777be03d53a",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "5686e7f3-8b99-4b26-8124-af59c2bfa95e",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "1fa9ea41-978e-4a3e-acc0-d0b0c205c0c5",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "9365319a-f68b-426a-a9f8-b7e608db21c4",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "eba4af08-1baf-42ba-9ccd-6df3df7dd1a5",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "7de3f49b-7a2a-4e49-ba96-34dcdf457cb4",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "3925ae97-454e-4dfd-937f-45216f0b1b21",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "27ac15ee-8107-4e58-92d0-6ecb4304e19a",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "5d73ff02-65da-4842-93e6-f6323952b702",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "cc2928ef-d0e1-4701-9f13-498fc855be84",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "7f98e9b8-f555-45a8-902c-3d6b4652cd69",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "d64f2ab9-5095-42a0-9e9b-0fffbef86e90",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "ad41af49-52a2-4f3f-8f22-b95be7fd4c9f",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "768ed241-b398-4bc1-a0dd-85802b32bbde",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "addd2696-5be4-433d-accd-980c892186f9",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "b084d7b0-e248-47a3-84d1-942f03c4204d",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "b27e6776-fb9d-4e9e-90d2-1d59843dc3ed",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "c75948f3-e032-4dec-80e7-6d1bb332af2c",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "790e2227-a013-4f55-a049-b59fd2e7a93a",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "57645547-3b05-40d8-a75b-ff6342b4aebe",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "5db5c42d-7096-4aee-ab8e-dcf653636e7d",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "55f125da-7b5a-4195-b49f-fa42506cda86",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "83ad2133-097b-4739-9995-656a3cbdc2d9",
-      "name": "Verifactu Admin",
-      "email": "verifactu-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "98d427c5-8baa-4172-ab81-2458c6caf01e",
-      "name": "Verifactu Operario",
-      "email": "verifactu-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "6c7e4c0d-8250-4c6c-968b-b5d6ac6de2c7",
-      "name": "Toggle Admin",
-      "email": "toggle-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "a690a484-e500-463a-a7a6-8b3904ff9d6d",
-      "name": "Toggle Operario",
-      "email": "toggle-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "3864c205-81c0-47d5-8081-0c2b4ac0ee25",
-      "name": "Toggle Admin",
-      "email": "toggle-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "0109569c-21d3-4434-a8d3-450b3d28d10d",
-      "name": "Toggle Operario",
-      "email": "toggle-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "e279b333-8d89-4333-95a3-05a760a467ba",
-      "name": "Toggle Admin",
-      "email": "toggle-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "40b2850e-4773-4a22-8c1b-f0f5c41f2a8f",
-      "name": "Toggle Operario",
-      "email": "toggle-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "41272147-4e21-45fe-9ddc-32ad750fb490",
-      "name": "Toggle Admin",
-      "email": "toggle-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "63c89cc3-af95-4997-8add-e4687316b069",
-      "name": "Toggle Operario",
-      "email": "toggle-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "c9da8ef6-c195-4954-8fb8-2d46861eba94",
-      "name": "Toggle Admin",
-      "email": "toggle-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "e82b0cb3-2d26-4542-abc0-ea740bfbfb74",
-      "name": "Toggle Operario",
-      "email": "toggle-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "3b019af1-393e-4a40-aecc-b9c6a29d20b4",
-      "name": "Toggle Admin",
-      "email": "toggle-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "512ca203-c35b-4e95-b16f-702718616eac",
-      "name": "Toggle Operario",
-      "email": "toggle-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "705173b0-7751-4554-9b5c-4e5e308f3520",
-      "name": "Toggle Admin",
-      "email": "toggle-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "86b564dd-b216-4c83-b9dc-644c0d396dfe",
-      "name": "Toggle Operario",
-      "email": "toggle-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "22aee95a-0269-4d70-b4c2-fd21ee75e3ed",
-      "name": "Toggle Admin",
-      "email": "toggle-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "1a91b51c-62ee-4c60-9cab-82a7a59ba108",
-      "name": "Toggle Operario",
-      "email": "toggle-op@test.local",
-      "role": "user",
-      "password": "unused"
-    },
-    {
-      "id": "aed77650-3b48-4f35-9772-7c856a1c4c57",
-      "name": "Toggle Admin",
-      "email": "toggle-admin@test.local",
-      "role": "admin",
-      "password": "unused"
-    },
-    {
-      "id": "0e3a032d-4fa4-441f-b24c-205ffa85c763",
-      "name": "Toggle Operario",
-      "email": "toggle-op@test.local",
-      "role": "user",
-      "password": "unused"
     }
   ],
   "workspaces": [
@@ -421,342 +85,6 @@
       "userId": "a189da1c-4929-4eee-a9d9-116c0ce2a3e5",
       "role": "member",
       "joinedAt": "2026-06-03T04:37:50.546Z"
-    },
-    {
-      "id": "5b0a98e8-c9ac-4656-a263-05845044a93f",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "f7000002-0000-4000-8000-000000000001",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:32.709Z"
-    },
-    {
-      "id": "d6299b39-9361-4d13-9f48-3a90b7279a91",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "f7000003-0000-4000-8000-000000000001",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:32.717Z"
-    },
-    {
-      "id": "37890e2e-d248-4320-878b-88fd9a0c70e5",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "95897af6-9019-48a5-860a-a0aa29d92a60",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:32.724Z"
-    },
-    {
-      "id": "4398291a-c9b9-4264-8709-d5b9165a79bb",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "f7dae9f1-4a01-4bb6-9ee7-1970da10f7f3",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:32.731Z"
-    },
-    {
-      "id": "57349ac9-d709-421e-b8c3-7c81214574e8",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "1a9faa7e-da1e-47c2-bd32-34253522d72b",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:32.842Z"
-    },
-    {
-      "id": "5a09df9e-5a2d-48e9-a4c1-fdce579687cf",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "f79c70f8-99a1-463f-b8ad-51a7825df018",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:32.848Z"
-    },
-    {
-      "id": "e2b581aa-5ad1-460a-af29-c23c3d145238",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "a8bc0e82-0a2f-4305-b58a-0777be03d53a",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:32.855Z"
-    },
-    {
-      "id": "6d0bc0b9-9843-4ef0-b8b0-39daf74cfc05",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "5686e7f3-8b99-4b26-8124-af59c2bfa95e",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:32.862Z"
-    },
-    {
-      "id": "df496994-c46a-4ebb-bf49-c2176fa9c291",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "1fa9ea41-978e-4a3e-acc0-d0b0c205c0c5",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:32.869Z"
-    },
-    {
-      "id": "d6bf6bc6-997e-4fb4-ba22-81839a95171f",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "9365319a-f68b-426a-a9f8-b7e608db21c4",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:32.876Z"
-    },
-    {
-      "id": "98e20c36-da03-4ede-b9e3-105e7ea1ded0",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "eba4af08-1baf-42ba-9ccd-6df3df7dd1a5",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:32.883Z"
-    },
-    {
-      "id": "6120ac3b-4612-4c5a-beab-436bc87e644d",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "7de3f49b-7a2a-4e49-ba96-34dcdf457cb4",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:32.890Z"
-    },
-    {
-      "id": "3e8c9152-07a6-4914-8286-bdcfa100f6b7",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "3925ae97-454e-4dfd-937f-45216f0b1b21",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:32.896Z"
-    },
-    {
-      "id": "65338dac-5b91-4676-a0c9-d6b5c341f91f",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "27ac15ee-8107-4e58-92d0-6ecb4304e19a",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:32.902Z"
-    },
-    {
-      "id": "13daf971-d8c2-4cac-bb10-6583e0117ac1",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "5d73ff02-65da-4842-93e6-f6323952b702",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:32.908Z"
-    },
-    {
-      "id": "d2e47a21-e3ad-472b-8bdf-eae992ec2348",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "cc2928ef-d0e1-4701-9f13-498fc855be84",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:32.914Z"
-    },
-    {
-      "id": "08d11716-a2c9-4e11-b024-ef1a6080b017",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "7f98e9b8-f555-45a8-902c-3d6b4652cd69",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:32.921Z"
-    },
-    {
-      "id": "a74892d3-40c6-49bb-9175-a8d0635eb438",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "d64f2ab9-5095-42a0-9e9b-0fffbef86e90",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:32.927Z"
-    },
-    {
-      "id": "f12d0cd1-270e-4f2d-8bb4-da87e432a7bb",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "ad41af49-52a2-4f3f-8f22-b95be7fd4c9f",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:32.935Z"
-    },
-    {
-      "id": "8d220570-2165-477e-8fb9-01757a83054d",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "768ed241-b398-4bc1-a0dd-85802b32bbde",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:32.949Z"
-    },
-    {
-      "id": "ad6c3128-7f58-42c8-84ba-7abc3564d252",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "addd2696-5be4-433d-accd-980c892186f9",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:32.958Z"
-    },
-    {
-      "id": "803c2cee-a8e3-4e74-85e0-3347ec9c0756",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "b084d7b0-e248-47a3-84d1-942f03c4204d",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:32.966Z"
-    },
-    {
-      "id": "687d89ff-9f1f-4175-b238-e27485a93f37",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "b27e6776-fb9d-4e9e-90d2-1d59843dc3ed",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:32.973Z"
-    },
-    {
-      "id": "4a1bfed1-6cc6-4dd5-b8bd-71a3e0fc12fe",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "c75948f3-e032-4dec-80e7-6d1bb332af2c",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:32.982Z"
-    },
-    {
-      "id": "d3b8b28a-5415-4053-b925-e99c59f08806",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "790e2227-a013-4f55-a049-b59fd2e7a93a",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:32.992Z"
-    },
-    {
-      "id": "6dd57041-70ff-48ac-a12d-7ca2d10f1035",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "57645547-3b05-40d8-a75b-ff6342b4aebe",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:33.001Z"
-    },
-    {
-      "id": "0361ea55-7738-4a3b-8ec1-a93a79b59ccb",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "5db5c42d-7096-4aee-ab8e-dcf653636e7d",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:33.010Z"
-    },
-    {
-      "id": "8f54c371-4847-4c94-8511-a54e996212f6",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "55f125da-7b5a-4195-b49f-fa42506cda86",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:33.025Z"
-    },
-    {
-      "id": "0c1b302e-f0e4-4ef5-b637-40da5ea9fef0",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "83ad2133-097b-4739-9995-656a3cbdc2d9",
-      "role": "owner",
-      "joinedAt": "2026-06-10T17:57:33.035Z"
-    },
-    {
-      "id": "9e75cbac-c144-4185-8696-4dd0e6805244",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "98d427c5-8baa-4172-ab81-2458c6caf01e",
-      "role": "member",
-      "joinedAt": "2026-06-10T17:57:33.046Z"
-    },
-    {
-      "id": "394f2cd0-b5f4-4f59-99e4-a33b03f7936d",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "6c7e4c0d-8250-4c6c-968b-b5d6ac6de2c7",
-      "role": "owner",
-      "joinedAt": "2026-06-10T18:12:32.327Z"
-    },
-    {
-      "id": "b909baee-de02-485c-a818-9a41ecafed60",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "a690a484-e500-463a-a7a6-8b3904ff9d6d",
-      "role": "member",
-      "joinedAt": "2026-06-10T18:12:32.337Z"
-    },
-    {
-      "id": "4a3ee5a2-8c72-44f9-bf16-13c47245e6bc",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "3864c205-81c0-47d5-8081-0c2b4ac0ee25",
-      "role": "owner",
-      "joinedAt": "2026-06-10T18:12:32.344Z"
-    },
-    {
-      "id": "e3170590-943f-4767-bab4-64ec0558798e",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "0109569c-21d3-4434-a8d3-450b3d28d10d",
-      "role": "member",
-      "joinedAt": "2026-06-10T18:12:32.352Z"
-    },
-    {
-      "id": "01f6656c-cae7-4101-a6c3-fa71cfef05b1",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "e279b333-8d89-4333-95a3-05a760a467ba",
-      "role": "owner",
-      "joinedAt": "2026-06-10T18:12:32.359Z"
-    },
-    {
-      "id": "f34de2d1-57ff-4104-98ba-0cd237f93ea7",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "40b2850e-4773-4a22-8c1b-f0f5c41f2a8f",
-      "role": "member",
-      "joinedAt": "2026-06-10T18:12:32.367Z"
-    },
-    {
-      "id": "107c9418-9207-4054-9cbd-0c7f095224a5",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "41272147-4e21-45fe-9ddc-32ad750fb490",
-      "role": "owner",
-      "joinedAt": "2026-06-10T18:12:32.374Z"
-    },
-    {
-      "id": "8df9e0eb-0d06-45de-bdf1-bbf5e754df9e",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "63c89cc3-af95-4997-8add-e4687316b069",
-      "role": "member",
-      "joinedAt": "2026-06-10T18:12:32.381Z"
-    },
-    {
-      "id": "c358a8ec-c586-4778-8541-e9f41eec7e03",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "c9da8ef6-c195-4954-8fb8-2d46861eba94",
-      "role": "owner",
-      "joinedAt": "2026-06-10T18:12:32.388Z"
-    },
-    {
-      "id": "77a2857d-054e-4fe7-a639-4c06475d3b06",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "e82b0cb3-2d26-4542-abc0-ea740bfbfb74",
-      "role": "member",
-      "joinedAt": "2026-06-10T18:12:32.395Z"
-    },
-    {
-      "id": "ca882bb2-3bb7-4822-9bfc-5027f5c242ad",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "3b019af1-393e-4a40-aecc-b9c6a29d20b4",
-      "role": "owner",
-      "joinedAt": "2026-06-10T18:12:32.403Z"
-    },
-    {
-      "id": "cba8adfc-f2c4-427a-a3f1-73175ce2211d",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "512ca203-c35b-4e95-b16f-702718616eac",
-      "role": "member",
-      "joinedAt": "2026-06-10T18:12:32.409Z"
-    },
-    {
-      "id": "715bf6c9-aa00-48b8-9e5e-274be38bde05",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "705173b0-7751-4554-9b5c-4e5e308f3520",
-      "role": "owner",
-      "joinedAt": "2026-06-10T18:12:32.417Z"
-    },
-    {
-      "id": "45ba0a1f-f9d4-454d-a1f5-085eb45b4cb1",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "86b564dd-b216-4c83-b9dc-644c0d396dfe",
-      "role": "member",
-      "joinedAt": "2026-06-10T18:12:32.423Z"
-    },
-    {
-      "id": "4d2414dd-9b3f-481d-b5ab-2e875b6e4bad",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "22aee95a-0269-4d70-b4c2-fd21ee75e3ed",
-      "role": "owner",
-      "joinedAt": "2026-06-10T18:12:32.431Z"
-    },
-    {
-      "id": "d6183df7-94cc-4298-b266-5a88b3445be0",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "1a91b51c-62ee-4c60-9cab-82a7a59ba108",
-      "role": "member",
-      "joinedAt": "2026-06-10T18:12:32.437Z"
-    },
-    {
-      "id": "386b8ab7-2b15-4c1e-88ea-d324fe5db8bf",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "aed77650-3b48-4f35-9772-7c856a1c4c57",
-      "role": "owner",
-      "joinedAt": "2026-06-10T18:12:32.444Z"
-    },
-    {
-      "id": "072fbfe8-dfb0-4339-968a-9a93a9e950df",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "0e3a032d-4fa4-441f-b24c-205ffa85c763",
-      "role": "member",
-      "joinedAt": "2026-06-10T18:12:32.451Z"
     }
   ],
   "clients": [
@@ -769,7 +97,7 @@
       "website": "https://www.industriastecnicas.com",
       "technicalInfo": "Sistema de control automático - Modelo XR-2000",
       "observations": [],
-      "status": "potential",
+      "status": "active",
       "createdAt": "2024-01-15",
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "groupId": "383dc1ab-f526-4bf8-b736-45265368c019",
@@ -778,7 +106,8 @@
       "postalCode": "",
       "country": "",
       "state": "",
-      "createdAtPrecision": "day"
+      "createdAtPrecision": "day",
+      "assignedUserIds": []
     },
     {
       "id": "f060b15d-2347-4ca3-b7dc-16b4c0e56bab",
@@ -798,7 +127,8 @@
       "postalCode": "",
       "country": "",
       "state": "",
-      "createdAtPrecision": "day"
+      "createdAtPrecision": "day",
+      "assignedUserIds": []
     },
     {
       "id": "e5731123-7513-4354-a66d-acb5be83b588",
@@ -818,7 +148,8 @@
       "postalCode": "",
       "country": "",
       "state": "",
-      "createdAtPrecision": "day"
+      "createdAtPrecision": "day",
+      "assignedUserIds": []
     },
     {
       "name": "Centro de Cetrería El Águila",
@@ -838,7 +169,8 @@
       "postalCode": "",
       "country": "",
       "state": "",
-      "createdAtPrecision": "day"
+      "createdAtPrecision": "day",
+      "assignedUserIds": []
     }
   ],
   "activities": [
@@ -907,33 +239,51 @@
     },
     {
       "clientId": "6220c3fa-8a34-4bd0-88cf-4e733677cbb0",
-      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "userId": "e9fcba63-d6fe-4101-9460-ddc47731b349",
       "date": "2026-06-11",
       "type": "at-4",
       "description": "trabajo de campo en aeropuerto",
-      "hours": 12,
+      "hours": 67,
       "attachments": [],
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "id": "c6ab237a-b266-49b7-9ca5-9cdc2df21c8e",
       "createdAt": "2026-06-03T08:53:01.732Z",
       "assigneeSlots": [
         {
-          "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
-          "shift": "T",
-          "startTime": "14:00",
-          "endTime": "22:00"
+          "userId": "e9fcba63-d6fe-4101-9460-ddc47731b349",
+          "shift": "L",
+          "startTime": "00:00",
+          "endTime": "00:00"
         },
         {
-          "userId": "e9fcba63-d6fe-4101-9460-ddc47731b349",
-          "shift": "M",
-          "startTime": "10:00",
-          "endTime": "12:00"
+          "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
+          "shift": "L",
+          "startTime": "00:00",
+          "endTime": "00:00"
         },
         {
           "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
-          "shift": "M",
-          "startTime": "10:00",
-          "endTime": "12:00"
+          "shift": "L",
+          "startTime": "00:00",
+          "endTime": "19:00"
+        }
+      ],
+      "workReports": [
+        {
+          "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+          "userName": "Administrador",
+          "status": "submitted",
+          "workedMinutes": 1140,
+          "submittedAt": "2026-06-11T21:12:19.239Z",
+          "updatedAt": "2026-06-11T21:12:19.239Z"
+        }
+      ],
+      "workReportExtraItems": [
+        {
+          "name": "Gestión y retirada de nidos de gaviotas",
+          "description": "knw",
+          "quantity": 1,
+          "price": 50
         }
       ]
     },
@@ -947,22 +297,25 @@
       "assigneeSlots": [
         {
           "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
-          "shift": "M",
+          "shift": "L",
           "startTime": "06:00",
-          "endTime": "14:00",
-          "workerSignature": {
-            "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
-            "userName": "Administrador",
-            "imageDataUrl": "data:image/png;base64,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",
-            "signedAt": "2026-06-08T14:37:00.698Z",
-            "hours": 6
-          }
+          "endTime": "14:00"
         }
       ],
       "attachments": [],
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "id": "6693168a-4181-46a9-a998-ff98014a85e9",
-      "createdAt": "2026-06-04T00:54:12.635Z"
+      "createdAt": "2026-06-04T00:54:12.635Z",
+      "workReports": [
+        {
+          "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+          "userName": "Administrador",
+          "status": "submitted",
+          "workedMinutes": 480,
+          "submittedAt": "2026-06-11T17:40:44.909Z",
+          "updatedAt": "2026-06-11T17:40:59.902Z"
+        }
+      ]
     },
     {
       "clientId": "f060b15d-2347-4ca3-b7dc-16b4c0e56bab",
@@ -970,11 +323,17 @@
       "date": "2026-06-10",
       "type": "at-6",
       "description": "wcw",
-      "hours": 8,
+      "hours": 16,
       "assigneeSlots": [
         {
           "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
-          "shift": "M",
+          "shift": "L",
+          "startTime": "06:00",
+          "endTime": "14:00"
+        },
+        {
+          "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
+          "shift": "L",
           "startTime": "06:00",
           "endTime": "14:00"
         }
@@ -982,7 +341,17 @@
       "attachments": [],
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "id": "910a2fd4-ebfb-4ca7-b4c1-a0ec4f625ba5",
-      "createdAt": "2026-06-08T08:56:14.200Z"
+      "createdAt": "2026-06-08T08:56:14.200Z",
+      "workReports": [
+        {
+          "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+          "userName": "Administrador",
+          "status": "submitted",
+          "workedMinutes": 480,
+          "submittedAt": "2026-06-11T16:50:06.918Z",
+          "updatedAt": "2026-06-11T16:50:06.918Z"
+        }
+      ]
     },
     {
       "clientId": "f060b15d-2347-4ca3-b7dc-16b4c0e56bab",
@@ -1023,6 +392,64 @@
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "id": "6143a4a8-c677-49d3-8f3c-a0b5a4ddb552",
       "createdAt": "2026-06-08T15:14:03.542Z"
+    },
+    {
+      "clientId": "6220c3fa-8a34-4bd0-88cf-4e733677cbb0",
+      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "date": "2026-06-19",
+      "type": "at-1",
+      "description": "Caprabo",
+      "hours": 8.5,
+      "assigneeSlots": [
+        {
+          "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+          "shift": "L",
+          "startTime": "09:00",
+          "endTime": "17:30"
+        }
+      ],
+      "attachments": [],
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "id": "88f1a694-3fcb-401b-a149-14cd9a3f7fdb",
+      "createdAt": "2026-06-11T11:50:55.708Z"
+    },
+    {
+      "clientId": "e5731123-7513-4354-a66d-acb5be83b588",
+      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "date": "2026-06-12",
+      "type": "at-5",
+      "description": "ejemplo",
+      "hours": 8,
+      "assigneeSlots": [
+        {
+          "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+          "shift": "L",
+          "startTime": "06:00",
+          "endTime": "14:00"
+        }
+      ],
+      "attachments": [],
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "id": "16804eee-5e15-4e6d-92b5-4f19dd6f1cf3",
+      "createdAt": "2026-06-11T12:06:04.200Z",
+      "workReportExtraItems": [
+        {
+          "name": "Colocación de jaulas trampas",
+          "description": "fwdqwkdqwkkqwdkwqdkqwkdqwkdkqwdkqwdkqwkq",
+          "quantity": 2,
+          "price": 120
+        }
+      ],
+      "workReports": [
+        {
+          "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+          "userName": "Administrador",
+          "status": "submitted",
+          "workedMinutes": 300,
+          "submittedAt": "2026-06-11T12:09:06.516Z",
+          "updatedAt": "2026-06-11T12:09:06.516Z"
+        }
+      ]
     }
   ],
   "events": [
@@ -1114,11 +541,11 @@
       "title": "Inspección - Industrias Técnicas S.L.",
       "description": "trabajo de campo en aeropuerto",
       "date": "2026-06-11",
-      "startTime": "10:00",
-      "endTime": "22:00",
+      "startTime": "00:00",
+      "endTime": "00:00",
       "assignedTo": [
-        "f77fbe88-b80b-4979-881e-d534e753d30c",
         "e9fcba63-d6fe-4101-9460-ddc47731b349",
+        "f77fbe88-b80b-4979-881e-d534e753d30c",
         "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
       ],
       "clientId": "6220c3fa-8a34-4bd0-88cf-4e733677cbb0",
@@ -1151,6 +578,31 @@
           "action": "Modificado",
           "user": "Admin Usuario",
           "timestamp": "2026-06-03T23:49:37.031Z"
+        },
+        {
+          "action": "Modificado",
+          "user": "Administrador",
+          "timestamp": "2026-06-11T12:20:53.015Z"
+        },
+        {
+          "action": "Modificado",
+          "user": "Administrador",
+          "timestamp": "2026-06-11T12:22:50.516Z"
+        },
+        {
+          "action": "Modificado",
+          "user": "Administrador",
+          "timestamp": "2026-06-11T16:29:52.481Z"
+        },
+        {
+          "action": "Modificado",
+          "user": "Administrador",
+          "timestamp": "2026-06-11T16:32:43.996Z"
+        },
+        {
+          "action": "Modificado",
+          "user": "Administrador",
+          "timestamp": "2026-06-11T19:22:46.023Z"
         }
       ]
     },
@@ -1203,6 +655,11 @@
           "action": "Modificado",
           "user": "Administrador",
           "timestamp": "2026-06-05T10:53:35.696Z"
+        },
+        {
+          "action": "Modificado",
+          "user": "Administrador",
+          "timestamp": "2026-06-11T17:40:46.526Z"
         }
       ]
     },
@@ -1213,7 +670,8 @@
       "startTime": "06:00",
       "endTime": "14:00",
       "assignedTo": [
-        "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
+        "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+        "f77fbe88-b80b-4979-881e-d534e753d30c"
       ],
       "clientId": "f060b15d-2347-4ca3-b7dc-16b4c0e56bab",
       "createdBy": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
@@ -1225,6 +683,16 @@
           "action": "Creado",
           "user": "Administrador",
           "timestamp": "2026-06-08T08:56:14.302Z"
+        },
+        {
+          "action": "Modificado",
+          "user": "Administrador",
+          "timestamp": "2026-06-11T16:42:33.046Z"
+        },
+        {
+          "action": "Modificado",
+          "user": "Administrador",
+          "timestamp": "2026-06-11T21:03:49.773Z"
         }
       ]
     },
@@ -1296,6 +764,55 @@
           "timestamp": "2026-06-08T15:17:13.939Z"
         }
       ]
+    },
+    {
+      "title": "Mantenimiento - Industrias Técnicas S.L.",
+      "description": "Caprabo",
+      "date": "2026-06-19",
+      "startTime": "09:00",
+      "endTime": "17:30",
+      "assignedTo": [
+        "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
+      ],
+      "clientId": "6220c3fa-8a34-4bd0-88cf-4e733677cbb0",
+      "createdBy": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "activityId": "88f1a694-3fcb-401b-a149-14cd9a3f7fdb",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "id": "db9a452b-56d5-4766-912b-21f6c82663a5",
+      "history": [
+        {
+          "action": "Creado",
+          "user": "Administrador",
+          "timestamp": "2026-06-11T11:50:55.818Z"
+        }
+      ]
+    },
+    {
+      "title": "Consultoría - Almacenes del Norte",
+      "description": "ejemplo",
+      "date": "2026-06-12",
+      "startTime": "06:00",
+      "endTime": "14:00",
+      "assignedTo": [
+        "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
+      ],
+      "clientId": "e5731123-7513-4354-a66d-acb5be83b588",
+      "createdBy": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "activityId": "16804eee-5e15-4e6d-92b5-4f19dd6f1cf3",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "id": "31b65a26-f51c-44ee-b125-452c046464ac",
+      "history": [
+        {
+          "action": "Creado",
+          "user": "Administrador",
+          "timestamp": "2026-06-11T12:06:04.356Z"
+        },
+        {
+          "action": "Modificado",
+          "user": "Administrador",
+          "timestamp": "2026-06-11T12:06:45.152Z"
+        }
+      ]
     }
   ],
   "documents": [
@@ -1335,7 +852,8 @@
       "pdfGeneratedAt": "2026-06-03T08:18:48.342Z",
       "pdfRenderVersion": 6,
       "templateId": "classic",
-      "templateColor": "#525252"
+      "templateColor": "#525252",
+      "displayName": "F-2026-001-Centro de Cetrería El Águila"
     },
     {
       "id": "2e7b5d94-1c86-4f3a-a712-3c9e8f45d6b2",
@@ -1379,7 +897,8 @@
       "pdfGeneratedAt": "2026-06-03T08:37:05.991Z",
       "pdfRenderVersion": 6,
       "templateId": "classic",
-      "templateColor": "#525252"
+      "templateColor": "#525252",
+      "displayName": "F-2026-002-Comercial Distribuidora"
     },
     {
       "id": "b41d6e28-9f53-4c87-b265-1a8e3d7c4f93",
@@ -1417,7 +936,8 @@
       "pdfGeneratedAt": "2026-06-03T07:54:38.768Z",
       "pdfRenderVersion": 4,
       "templateId": "classic",
-      "templateColor": "#525252"
+      "templateColor": "#525252",
+      "displayName": "F-2026-003-Almacenes del Norte"
     },
     {
       "id": "5c9a1f73-6e42-4d98-8831-7f2e6b0d5a14",
@@ -1461,7 +981,8 @@
       "pdfGeneratedAt": "2026-06-09T22:07:08.946Z",
       "pdfRenderVersion": 12,
       "templateId": "classic",
-      "templateColor": "#525252"
+      "templateColor": "#525252",
+      "displayName": "F-2026-004-Industrias Técnicas S.L."
     },
     {
       "id": "1a4f8e62-7d39-4b15-9c74-2e6f8a3b1d85",
@@ -1505,7 +1026,8 @@
       "pdfGeneratedAt": "2026-06-08T08:52:44.137Z",
       "pdfRenderVersion": 9,
       "templateId": "classic",
-      "templateColor": "#525252"
+      "templateColor": "#525252",
+      "displayName": "F-2026-005-Centro de Cetrería El Águila"
     },
     {
       "type": "invoice",
@@ -1554,7 +1076,96 @@
       "pdfSource": "generated",
       "pdfKey": "workspaces/a0000001-0000-4000-8000-000000000001/documents/6220c3fa-8a34-4bd0-88cf-4e733677cbb0/6630d9da-bae0-4c2c-9007-6559f773f7e3.pdf",
       "pdfGeneratedAt": "2026-06-09T21:48:56.482Z",
-      "pdfRenderVersion": 12
+      "pdfRenderVersion": 12,
+      "displayName": "F-2026-006-Industrias Técnicas S.L."
+    },
+    {
+      "type": "delivery-note",
+      "clientId": "e5731123-7513-4354-a66d-acb5be83b588",
+      "activityId": "16804eee-5e15-4e6d-92b5-4f19dd6f1cf3",
+      "date": "2026-06-12",
+      "items": [
+        {
+          "name": "Consultoría",
+          "description": "Administrador: 5h",
+          "quantity": 5,
+          "price": 0
+        },
+        {
+          "name": "Colocación de jaulas trampas",
+          "description": "fwdqwkdqwkkqwdkwqdkqwkdqwkdkqwdkqwdkqwkq",
+          "quantity": 2,
+          "price": 120
+        }
+      ],
+      "subtotal": 240,
+      "taxRate": 21,
+      "taxAmount": 50.4,
+      "total": 290.4,
+      "notes": "Albaran generado automaticamente a partir de los informes de trabajo.\nejemplo",
+      "billingAddress": {
+        "name": "Almacenes del Norte",
+        "email": "almacenes@norte.com",
+        "address": "Polígono Norte 67, Bilbao",
+        "city": "",
+        "postalCode": "",
+        "country": "",
+        "state": ""
+      },
+      "status": "sent",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "id": "90408e57-ffd5-4c3e-87ed-6fcd8235ea7b",
+      "number": "A-2026-001",
+      "createdAt": "2026-06-11T12:09:06.525Z",
+      "pdfSource": "generated",
+      "pdfKey": "workspaces/a0000001-0000-4000-8000-000000000001/documents/e5731123-7513-4354-a66d-acb5be83b588/90408e57-ffd5-4c3e-87ed-6fcd8235ea7b.pdf",
+      "pdfGeneratedAt": "2026-06-11T12:09:07.556Z",
+      "templateId": "classic",
+      "templateColor": "#5e6a37",
+      "pdfRenderVersion": 15,
+      "displayName": "A-2026-001-Almacenes del Norte",
+      "workerUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
+    },
+    {
+      "type": "delivery-note",
+      "clientId": "f060b15d-2347-4ca3-b7dc-16b4c0e56bab",
+      "activityId": "6693168a-4181-46a9-a998-ff98014a85e9",
+      "date": "2026-06-05",
+      "items": [
+        {
+          "name": "Consultoría",
+          "description": "Administrador: 8h",
+          "quantity": 8,
+          "price": 0
+        }
+      ],
+      "subtotal": 0,
+      "taxRate": 21,
+      "taxAmount": 0,
+      "total": 0,
+      "notes": "Albaran generado automaticamente a partir de los informes de trabajo.\nreer",
+      "billingAddress": {
+        "name": "Comercial Distribuidora",
+        "email": "info@comercialdist.com",
+        "address": "Avenida Industrial 45, Barcelona",
+        "city": "",
+        "postalCode": "",
+        "country": "",
+        "state": ""
+      },
+      "status": "sent",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "id": "e8892d31-2dd7-456d-bced-97a3a9b3eb42",
+      "number": "A-2026-003",
+      "createdAt": "2026-06-11T17:40:44.920Z",
+      "pdfSource": "generated",
+      "pdfKey": "workspaces/a0000001-0000-4000-8000-000000000001/documents/f060b15d-2347-4ca3-b7dc-16b4c0e56bab/e8892d31-2dd7-456d-bced-97a3a9b3eb42.pdf",
+      "pdfGeneratedAt": "2026-06-11T17:40:45.999Z",
+      "templateId": "classic",
+      "templateColor": "#5e6a37",
+      "pdfRenderVersion": 15,
+      "displayName": "A-2026-003-Comercial Distribuidora",
+      "workerUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
     }
   ],
   "reports": [
@@ -2350,6 +1961,110 @@
           ]
         }
       }
+    },
+    {
+      "id": "639207fb-2b3a-49f4-a22c-ab397535e686",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "clientId": "e5731123-7513-4354-a66d-acb5be83b588",
+      "month": "06",
+      "year": 2026,
+      "periodFrom": "2026-06-01",
+      "periodTo": "2026-06-30",
+      "activities": [
+        {
+          "clientId": "e5731123-7513-4354-a66d-acb5be83b588",
+          "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
+          "date": "2026-06-20",
+          "type": "at-4",
+          "description": "123",
+          "hours": 8,
+          "assigneeSlots": [
+            {
+              "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
+              "shift": "M",
+              "startTime": "06:00",
+              "endTime": "14:00"
+            }
+          ],
+          "attachments": [],
+          "workspaceId": "a0000001-0000-4000-8000-000000000001",
+          "id": "6143a4a8-c677-49d3-8f3c-a0b5a4ddb552",
+          "createdAt": "2026-06-08T15:14:03.542Z"
+        }
+      ],
+      "totalHours": 8,
+      "generatedAt": "2026-06-11T11:58:05.821Z",
+      "generatedBy": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "generatedByName": "Administrador",
+      "reportKind": "contact",
+      "reportLabel": "Almacenes del Norte",
+      "pdfSnapshot": {
+        "reportKind": "contact",
+        "periodLabel": "1 jun 2026 — 30 jun 2026",
+        "dateFrom": "2026-06-01",
+        "dateTo": "2026-06-30",
+        "companyName": "Fauna y Halconeros",
+        "metrics": {
+          "clientScope": "Almacenes del Norte",
+          "clientsOrDocumentsLabel": "Documentos",
+          "clientsOrDocumentsValue": 0,
+          "totalActivities": 1,
+          "totalHours": 8,
+          "paidAmount": 0,
+          "paidCount": 0,
+          "sentCount": 0,
+          "sentAmount": 0,
+          "draftCount": 0,
+          "draftAmount": 0
+        },
+        "invoiceConcepts": [],
+        "chartMode": "bars",
+        "chartData": [
+          {
+            "typeId": "at-4",
+            "label": "Inspección",
+            "hours": 8,
+            "color": "#14532d",
+            "shortName": "Inspección",
+            "percent": 100
+          }
+        ],
+        "narrative": {
+          "reportKind": "contact",
+          "companyName": "Fauna y Halconeros",
+          "periodLabel": "1 jun 2026 — 30 jun 2026",
+          "clientScope": "Almacenes del Norte",
+          "totalClients": 1,
+          "totalWorkers": 3,
+          "totalActivities": 1,
+          "totalHours": 8,
+          "paidAmount": 0,
+          "paidCount": 0,
+          "sentCount": 0,
+          "sentAmount": 0,
+          "draftCount": 0,
+          "draftAmount": 0,
+          "invoiceConcepts": [],
+          "chartMode": "bars",
+          "chartData": [
+            {
+              "typeId": "at-4",
+              "label": "Inspección",
+              "hours": 8,
+              "color": "#14532d",
+              "shortName": "Inspección",
+              "percent": 100
+            }
+          ],
+          "comparison": {
+            "period": "month",
+            "from": "2026-06-01",
+            "to": "2026-06-30"
+          },
+          "activitiesChangePercent": null,
+          "hoursChangePercent": null
+        }
+      }
     }
   ],
   "activity_types": [
@@ -2418,6 +2133,13 @@
       "name": "Clientes",
       "isDefault": true,
       "createdAt": "2026-05-31T03:38:29.457Z"
+    },
+    {
+      "id": "6fdbd560-bb81-4cdc-86e4-4f74ed8b2f99",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "name": "Juan",
+      "isDefault": false,
+      "createdAt": "2026-06-11T11:48:07.849Z"
     }
   ],
   "invoice_concept_settings": [
@@ -2426,69 +2148,78 @@
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "normalizedKey": "vuelos de marcaje y dispersión con aves rapaces",
       "emoji": "🦅",
-      "label": "Vuelos de marcaje y dispersión con aves rapaces"
+      "label": "Vuelos de marcaje y dispersión con aves rapaces",
+      "defaultPrice": 50
     },
     {
       "id": "b1a2c3d4-e5f6-4789-a012-345678901002",
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "normalizedKey": "revisión y retirada de jaulas trampas",
       "emoji": "🔍",
-      "label": "Revisión y retirada de jaulas trampas"
+      "label": "Revisión y retirada de jaulas trampas",
+      "defaultPrice": 120
     },
     {
       "id": "b1a2c3d4-e5f6-4789-a012-345678901003",
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "normalizedKey": "servicio control de palomas",
       "emoji": "🕊️",
-      "label": "Servicio control de palomas"
+      "label": "Servicio control de palomas",
+      "defaultPrice": 1
     },
     {
       "id": "b1a2c3d4-e5f6-4789-a012-345678901004",
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "normalizedKey": "servicio control de gaviotas",
       "emoji": "🐦",
-      "label": "Servicio control de gaviotas"
+      "label": "Servicio control de gaviotas",
+      "defaultPrice": 11
     },
     {
       "id": "b1a2c3d4-e5f6-4789-a012-345678901005",
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "normalizedKey": "gestión y retirada de nidos de palomas",
       "emoji": "🪺",
-      "label": "Gestión y retirada de nidos de palomas"
+      "label": "Gestión y retirada de nidos de palomas",
+      "defaultPrice": 123
     },
     {
       "id": "b1a2c3d4-e5f6-4789-a012-345678901006",
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "normalizedKey": "gestión y retirada de nidos de gaviotas",
       "emoji": "🪹",
-      "label": "Gestión y retirada de nidos de gaviotas"
+      "label": "Gestión y retirada de nidos de gaviotas",
+      "defaultPrice": 50
     },
     {
       "id": "b1a2c3d4-e5f6-4789-a012-345678901007",
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "normalizedKey": "servicio nocturno control de aves",
       "emoji": "🌙",
-      "label": "Servicio nocturno control de aves"
+      "label": "Servicio nocturno control de aves",
+      "defaultPrice": 300
     },
     {
       "id": "b1a2c3d4-e5f6-4789-a012-345678901008",
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "normalizedKey": "colocación de jaulas trampas",
       "emoji": "🪤",
-      "label": "Colocación de jaulas trampas"
+      "label": "Colocación de jaulas trampas",
+      "defaultPrice": 111
     }
   ],
   "workspace_billing_settings": [
     {
       "id": "a0000001-0000-4000-8000-000000000001",
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "companyName": "Fauna y Halconeros",
+      "companyName": "F&H Fauna y Halconeros Servicio Control de Fauna S.L.",
       "email": "info@faunayhalconeros.com",
-      "address": "calle 123",
-      "city": "",
-      "postalCode": "",
+      "address": "Av. Paisos Catalans, 2 casa 1",
+      "city": "El Morell",
+      "postalCode": "43760",
       "country": "España",
-      "state": "",
+      "state": "Tarragona",
+      "issuerNif": "B55647499",
       "defaultTaxRate": 21,
       "documentFormats": {
         "invoice": {
@@ -2573,22 +2304,6 @@
       "createdAt": "2026-06-03T08:53:28.267Z"
     },
     {
-      "id": "215e1315-0a78-4bae-8cac-cc85f209d541",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
-      "category": "calendar",
-      "action": "calendar.updated",
-      "title": "Actividad reprogramada",
-      "message": "Inspección - Industrias Técnicas S.L. · Industrias Técnicas S.L. · 11 jun 2026 · 10:00–12:00",
-      "href": "/activities/c6ab237a-b266-49b7-9ca5-9cdc2df21c8e",
-      "entityType": "event",
-      "entityId": "be29e76e-8c5a-4ec9-ac8f-73b99d46b7aa",
-      "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
-      "actorUserName": "Admin",
-      "createdAt": "2026-06-03T08:53:50.101Z",
-      "readAt": "2026-06-05T21:45:48.041Z"
-    },
-    {
       "id": "993d0764-ed72-4d33-ab5f-837e5030e5b0",
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
@@ -2602,22 +2317,6 @@
       "actorUserId": "system",
       "actorUserName": "Sistema",
       "createdAt": "2026-06-08T15:53:28.826Z",
-      "dedupeKey": "reminder:upcoming:be29e76e-8c5a-4ec9-ac8f-73b99d46b7aa"
-    },
-    {
-      "id": "4852dbe8-96dc-465a-96b1-7d7e8f8b694e",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
-      "category": "calendar",
-      "action": "calendar.reminder_upcoming",
-      "title": "Próxima actividad",
-      "message": "Inspección - Industrias Técnicas S.L. · Industrias Técnicas S.L. · 11 jun 2026 · 10:00–22:00",
-      "href": "/activities/c6ab237a-b266-49b7-9ca5-9cdc2df21c8e",
-      "entityType": "event",
-      "entityId": "be29e76e-8c5a-4ec9-ac8f-73b99d46b7aa",
-      "actorUserId": "system",
-      "actorUserName": "Sistema",
-      "createdAt": "2026-06-11T09:16:55.792Z",
       "dedupeKey": "reminder:upcoming:be29e76e-8c5a-4ec9-ac8f-73b99d46b7aa"
     },
     {
@@ -2643,14 +2342,14 @@
       "category": "calendar",
       "action": "calendar.updated",
       "title": "Actividad reprogramada",
-      "message": "Inspección - Industrias Técnicas S.L. · Industrias Técnicas S.L. · 11 jun 2026 · 10:00–22:00",
+      "message": "Inspección - Industrias Técnicas S.L. · Industrias Técnicas S.L. · 11 jun 2026 · 00:00–00:00",
       "href": "/activities/c6ab237a-b266-49b7-9ca5-9cdc2df21c8e",
       "entityType": "event",
       "entityId": "be29e76e-8c5a-4ec9-ac8f-73b99d46b7aa",
       "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
-      "actorUserName": "Admin Usuario",
-      "createdAt": "2026-06-03T23:49:37.036Z",
-      "readAt": "2026-06-05T21:45:48.041Z"
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T19:22:45.963Z",
+      "dedupeKey": "calendar.updated:activity:c6ab237a-b266-49b7-9ca5-9cdc2df21c8e"
     },
     {
       "id": "3284cc89-f57d-4681-a27c-691f0859ed7f",
@@ -2659,13 +2358,14 @@
       "category": "calendar",
       "action": "calendar.updated",
       "title": "Actividad reprogramada",
-      "message": "Inspección - Industrias Técnicas S.L. · Industrias Técnicas S.L. · 11 jun 2026 · 10:00–22:00",
+      "message": "Inspección - Industrias Técnicas S.L. · Industrias Técnicas S.L. · 11 jun 2026 · 00:00–00:00",
       "href": "/activities/c6ab237a-b266-49b7-9ca5-9cdc2df21c8e",
       "entityType": "event",
       "entityId": "be29e76e-8c5a-4ec9-ac8f-73b99d46b7aa",
       "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
-      "actorUserName": "Admin Usuario",
-      "createdAt": "2026-06-03T23:49:37.036Z"
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T19:22:45.963Z",
+      "dedupeKey": "calendar.updated:activity:c6ab237a-b266-49b7-9ca5-9cdc2df21c8e"
     },
     {
       "id": "b74c7c48-8dc6-4923-9a93-d00adb283582",
@@ -2860,7 +2560,7 @@
       "entityId": "6d6688fa-982c-43ee-8cbc-3544c788db5e",
       "actorUserId": "system",
       "actorUserName": "Sistema",
-      "createdAt": "2026-06-11T09:16:55.804Z",
+      "createdAt": "2026-06-11T22:20:21.145Z",
       "dedupeKey": "reminder:overdue:6d6688fa-982c-43ee-8cbc-3544c788db5e"
     },
     {
@@ -3003,7 +2703,7 @@
       "entityId": "4a6b2bd6-3601-4f86-ae88-f9e776bbbc72",
       "actorUserId": "system",
       "actorUserName": "Sistema",
-      "createdAt": "2026-06-11T09:16:55.809Z",
+      "createdAt": "2026-06-11T22:20:21.150Z",
       "dedupeKey": "reminder:overdue:4a6b2bd6-3601-4f86-ae88-f9e776bbbc72"
     },
     {
@@ -3021,6 +2721,246 @@
       "actorUserName": "Sistema",
       "createdAt": "2026-06-10T19:51:09.790Z",
       "dedupeKey": "reminder:upcoming:be29e76e-8c5a-4ec9-ac8f-73b99d46b7aa"
+    },
+    {
+      "id": "8bccc0b7-3c97-4734-a96d-15a8eb592b0c",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
+      "category": "activity",
+      "action": "activity.updated",
+      "title": "Actividad actualizada",
+      "message": "Industrias Técnicas S.L. · trabajo de campo en aeropuerto",
+      "href": "/activities/c6ab237a-b266-49b7-9ca5-9cdc2df21c8e",
+      "entityType": "activity",
+      "entityId": "c6ab237a-b266-49b7-9ca5-9cdc2df21c8e",
+      "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T21:12:19.244Z",
+      "dedupeKey": "activity.updated:c6ab237a-b266-49b7-9ca5-9cdc2df21c8e"
+    },
+    {
+      "id": "e02bae2a-e713-449b-9ddc-c137f68b6508",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "e9fcba63-d6fe-4101-9460-ddc47731b349",
+      "category": "activity",
+      "action": "activity.updated",
+      "title": "Actividad actualizada",
+      "message": "Industrias Técnicas S.L. · trabajo de campo en aeropuerto",
+      "href": "/activities/c6ab237a-b266-49b7-9ca5-9cdc2df21c8e",
+      "entityType": "activity",
+      "entityId": "c6ab237a-b266-49b7-9ca5-9cdc2df21c8e",
+      "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T21:12:19.244Z",
+      "dedupeKey": "activity.updated:c6ab237a-b266-49b7-9ca5-9cdc2df21c8e"
+    },
+    {
+      "id": "7d63536e-d081-4113-af5b-f4bbb7d77195",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "category": "calendar",
+      "action": "calendar.reminder_upcoming",
+      "title": "Próxima actividad",
+      "message": "Mantenimiento - Industrias Técnicas S.L. · Industrias Técnicas S.L. · 19 jun 2026 · 09:00–17:30",
+      "href": "/activities/88f1a694-3fcb-401b-a149-14cd9a3f7fdb",
+      "entityType": "event",
+      "entityId": "db9a452b-56d5-4766-912b-21f6c82663a5",
+      "actorUserId": "system",
+      "actorUserName": "Sistema",
+      "createdAt": "2026-06-11T22:20:21.155Z",
+      "dedupeKey": "reminder:upcoming:db9a452b-56d5-4766-912b-21f6c82663a5"
+    },
+    {
+      "id": "312461d9-8576-4c9a-af59-a4244291b12a",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "category": "report",
+      "action": "report.generated",
+      "title": "Informe generado",
+      "message": "Almacenes del Norte · 2026-06-01 – 2026-06-30",
+      "href": "/reports/639207fb-2b3a-49f4-a22c-ab397535e686",
+      "entityType": "report",
+      "entityId": "639207fb-2b3a-49f4-a22c-ab397535e686",
+      "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T11:58:05.827Z",
+      "dedupeKey": "report.generated:639207fb-2b3a-49f4-a22c-ab397535e686"
+    },
+    {
+      "id": "13b1e9e6-c062-40b1-9630-7e84ef867710",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "category": "client",
+      "action": "client.updated",
+      "title": "Contacto actualizado",
+      "message": "Industrias Técnicas S.L.",
+      "href": "/clients/6220c3fa-8a34-4bd0-88cf-4e733677cbb0",
+      "entityType": "client",
+      "entityId": "6220c3fa-8a34-4bd0-88cf-4e733677cbb0",
+      "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T12:00:14.501Z",
+      "dedupeKey": "client.updated:6220c3fa-8a34-4bd0-88cf-4e733677cbb0"
+    },
+    {
+      "id": "868d89d0-0d7a-402b-8f34-9815bc132e33",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "category": "calendar",
+      "action": "calendar.reminder_upcoming",
+      "title": "Próxima actividad",
+      "message": "Consultoría - Almacenes del Norte · Almacenes del Norte · 12 jun 2026 · 06:00–14:00",
+      "href": "/activities/16804eee-5e15-4e6d-92b5-4f19dd6f1cf3",
+      "entityType": "event",
+      "entityId": "31b65a26-f51c-44ee-b125-452c046464ac",
+      "actorUserId": "system",
+      "actorUserName": "Sistema",
+      "createdAt": "2026-06-11T22:20:21.161Z",
+      "dedupeKey": "reminder:upcoming:31b65a26-f51c-44ee-b125-452c046464ac"
+    },
+    {
+      "id": "e2e916e7-7169-4d0a-a6cb-5cd6a0fd68d6",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
+      "category": "document",
+      "action": "document.created",
+      "title": "Albarán creado",
+      "message": "A-2026-002-Industrias Técnicas S.L.",
+      "href": "/documents",
+      "entityType": "document",
+      "entityId": "fa5d4406-fa70-4449-9757-e0ed133acb9a",
+      "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T16:08:03.029Z",
+      "dedupeKey": "document.created:fa5d4406-fa70-4449-9757-e0ed133acb9a"
+    },
+    {
+      "id": "b35370b3-d1f2-4129-8e6c-534ce1ef7cbb",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "e9fcba63-d6fe-4101-9460-ddc47731b349",
+      "category": "document",
+      "action": "document.created",
+      "title": "Albarán creado",
+      "message": "A-2026-002-Industrias Técnicas S.L.",
+      "href": "/documents",
+      "entityType": "document",
+      "entityId": "fa5d4406-fa70-4449-9757-e0ed133acb9a",
+      "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T16:08:03.029Z",
+      "dedupeKey": "document.created:fa5d4406-fa70-4449-9757-e0ed133acb9a"
+    },
+    {
+      "id": "825736fd-4c27-4385-8917-2a08ec80fee1",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "category": "calendar",
+      "action": "calendar.reminder_overdue",
+      "title": "Actividad vencida",
+      "message": "Inspección - Industrias Técnicas S.L. · Industrias Técnicas S.L. · 11 jun 2026 · 00:00–00:00",
+      "href": "/activities/c6ab237a-b266-49b7-9ca5-9cdc2df21c8e",
+      "entityType": "event",
+      "entityId": "be29e76e-8c5a-4ec9-ac8f-73b99d46b7aa",
+      "actorUserId": "system",
+      "actorUserName": "Sistema",
+      "createdAt": "2026-06-11T22:20:21.139Z",
+      "dedupeKey": "reminder:overdue:be29e76e-8c5a-4ec9-ac8f-73b99d46b7aa"
+    },
+    {
+      "id": "042e2384-75db-42c6-9a18-becffd0462c3",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
+      "category": "calendar",
+      "action": "calendar.assigned",
+      "title": "Te han asignado una actividad",
+      "message": "Formación - Comercial Distribuidora · Comercial Distribuidora · 10 jun 2026 · 06:00–14:00",
+      "href": "/activities/910a2fd4-ebfb-4ca7-b4c1-a0ec4f625ba5",
+      "entityType": "event",
+      "entityId": "4a6b2bd6-3601-4f86-ae88-f9e776bbbc72",
+      "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T16:42:33.007Z",
+      "dedupeKey": "calendar.assigned:activity:910a2fd4-ebfb-4ca7-b4c1-a0ec4f625ba5"
+    },
+    {
+      "id": "72a43dbf-ec52-4dca-9d98-1d796ae4395d",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
+      "category": "activity",
+      "action": "activity.updated",
+      "title": "Actividad actualizada",
+      "message": "Comercial Distribuidora · wcw",
+      "href": "/activities/910a2fd4-ebfb-4ca7-b4c1-a0ec4f625ba5",
+      "entityType": "activity",
+      "entityId": "910a2fd4-ebfb-4ca7-b4c1-a0ec4f625ba5",
+      "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T21:03:49.757Z",
+      "dedupeKey": "activity.updated:910a2fd4-ebfb-4ca7-b4c1-a0ec4f625ba5"
+    },
+    {
+      "id": "a86f8081-ab00-47e0-a395-2681c9a8b3e3",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "e9fcba63-d6fe-4101-9460-ddc47731b349",
+      "category": "document",
+      "action": "document.deleted",
+      "title": "Albarán eliminado",
+      "message": "A-2026-002-Industrias Técnicas S.L.",
+      "href": "/documents",
+      "entityType": "document",
+      "entityId": "fa5d4406-fa70-4449-9757-e0ed133acb9a",
+      "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T19:22:45.673Z",
+      "dedupeKey": "document.deleted:fa5d4406-fa70-4449-9757-e0ed133acb9a"
+    },
+    {
+      "id": "fb35c995-3d3d-4533-8eba-62d10fc8c891",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
+      "category": "document",
+      "action": "document.deleted",
+      "title": "Albarán eliminado",
+      "message": "A-2026-002-Industrias Técnicas S.L.",
+      "href": "/documents",
+      "entityType": "document",
+      "entityId": "fa5d4406-fa70-4449-9757-e0ed133acb9a",
+      "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T19:22:45.673Z",
+      "dedupeKey": "document.deleted:fa5d4406-fa70-4449-9757-e0ed133acb9a"
+    },
+    {
+      "id": "6d8e1897-f052-40f7-9844-b7983faee772",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "category": "report",
+      "action": "report.generated",
+      "title": "Informe generado",
+      "message": "Informe General · 2026-06-08 – 2026-06-14",
+      "href": "/reports/95f54581-e0ee-4133-a057-5a38e87eef9c",
+      "entityType": "report",
+      "entityId": "95f54581-e0ee-4133-a057-5a38e87eef9c",
+      "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T20:22:50.411Z",
+      "dedupeKey": "report.generated:95f54581-e0ee-4133-a057-5a38e87eef9c"
+    },
+    {
+      "id": "1a07baaa-5b85-42cd-9743-c7afd60f29bc",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "category": "report",
+      "action": "report.generated",
+      "title": "Informe generado",
+      "message": "Informe General · 2026-06-08 – 2026-06-14",
+      "href": "/reports/614ca11b-4565-4b95-b91d-343c02be7a7f",
+      "entityType": "report",
+      "entityId": "614ca11b-4565-4b95-b91d-343c02be7a7f",
+      "actorUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "actorUserName": "Administrador",
+      "createdAt": "2026-06-11T20:38:30.260Z",
+      "dedupeKey": "report.generated:614ca11b-4565-4b95-b91d-343c02be7a7f"
     }
   ],
   "saved_table_views_pages": [
@@ -3236,8 +3176,8 @@
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
       "date": "2026-06-10",
-      "shift": "M",
-      "updatedAt": "2026-06-08T08:56:14.406Z",
+      "shift": "L",
+      "updatedAt": "2026-06-11T21:03:49.785Z",
       "updatedBy": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
     },
     {
@@ -3245,8 +3185,8 @@
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
       "date": "2026-06-11",
-      "shift": "M",
-      "updatedAt": "2026-06-03T23:49:37.081Z",
+      "shift": "L",
+      "updatedAt": "2026-06-11T16:32:44.008Z",
       "updatedBy": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
     },
     {
@@ -3254,8 +3194,8 @@
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "userId": "e9fcba63-d6fe-4101-9460-ddc47731b349",
       "date": "2026-06-11",
-      "shift": "M",
-      "updatedAt": "2026-06-03T23:49:37.081Z",
+      "shift": "L",
+      "updatedAt": "2026-06-11T16:32:44.008Z",
       "updatedBy": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
     },
     {
@@ -3317,9 +3257,9 @@
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
       "date": "2026-06-11",
-      "shift": "M",
-      "updatedAt": "2026-06-08T14:45:54.085Z",
-      "updatedBy": "f77fbe88-b80b-4979-881e-d534e753d30c"
+      "shift": "L",
+      "updatedAt": "2026-06-11T16:32:44.008Z",
+      "updatedBy": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
     },
     {
       "id": "b8e084ce-c80f-4305-bed4-ec26f857e223",
@@ -3356,6 +3296,33 @@
       "shift": "M",
       "updatedAt": "2026-06-08T15:16:36.602Z",
       "updatedBy": "f77fbe88-b80b-4979-881e-d534e753d30c"
+    },
+    {
+      "id": "e25eb74a-1ece-46e1-bbba-0ba2ff05308a",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "date": "2026-06-19",
+      "shift": "L",
+      "updatedAt": "2026-06-11T11:50:56.095Z",
+      "updatedBy": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
+    },
+    {
+      "id": "1518abe0-1364-4575-b153-6c9cfc9b43af",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "date": "2026-06-12",
+      "shift": "L",
+      "updatedAt": "2026-06-11T12:06:45.305Z",
+      "updatedBy": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
+    },
+    {
+      "id": "d9af9013-bfdd-45f2-852c-a3bbaf373842",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "f77fbe88-b80b-4979-881e-d534e753d30c",
+      "date": "2026-06-10",
+      "shift": "L",
+      "updatedAt": "2026-06-11T21:03:49.785Z",
+      "updatedBy": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
     }
   ],
   "workspace_schedule_holidays": [],
@@ -3377,18 +3344,17 @@
         "visibleColumnIds": [
           "select",
           "type",
+          "description",
           "date",
           "client",
           "assignee",
+          "hoursAssigned",
+          "workReportHours",
+          "workReportStatus",
           "documents",
-          "description",
-          "shifts",
           "documentTotal",
           "documentStatus",
-          "documentConcepts",
-          "signed",
-          "hoursAssigned",
-          "hoursSigned"
+          "documentConcepts"
         ],
         "columnOrder": [
           "select",
@@ -3396,11 +3362,10 @@
           "date",
           "client",
           "assignee",
-          "signed",
           "hoursAssigned",
-          "hoursSigned",
+          "workReportHours",
+          "workReportStatus",
           "documents",
-          "shifts",
           "documentTotal",
           "documentStatus",
           "documentConcepts",
@@ -3414,21 +3379,20 @@
           "date": 120,
           "client": 160,
           "assignee": 150,
-          "signed": 204,
           "hoursAssigned": 108,
-          "hoursSigned": 108,
+          "workReportHours": 108,
+          "workReportStatus": 178,
           "documents": 150,
-          "shifts": 120,
           "documentTotal": 100,
           "documentStatus": 150,
           "documentConcepts": 180
         },
         "showHeaderEmojis": false,
-        "viewDefaultsVersion": 2,
-        "activityTeamTableVersion": 3
+        "viewDefaultsVersion": 3,
+        "activityTeamTableVersion": 4
       },
       "activeSavedViewId": "8af2b006-0783-48db-b9b9-09a3a104aa8d",
-      "updatedAt": "2026-06-04T14:52:28.881Z"
+      "updatedAt": "2026-06-11T16:36:33.728Z"
     },
     {
       "id": "2c73c1f9-a966-4abf-a46d-25107141c6d6",
@@ -3732,7 +3696,7 @@
       "interactionKey": "secondary-sidebar-sections:activities-calendar",
       "payload": {
         "heights": [
-          311
+          154
         ],
         "sectionIds": [
           "period",
@@ -3740,7 +3704,7 @@
         ],
         "version": 2
       },
-      "updatedAt": "2026-06-09T20:32:04.828Z"
+      "updatedAt": "2026-06-11T12:27:07.522Z"
     },
     {
       "id": "fbbce558-0116-4550-8f57-f22966d23315",
@@ -3749,15 +3713,15 @@
       "interactionKey": "secondary-sidebar-sections:clients",
       "payload": {
         "heights": [
-          120
+          275.3750305175781
         ],
         "sectionIds": [
           "groups",
-          "views"
+          "operators"
         ],
         "version": 2
       },
-      "updatedAt": "2026-06-04T05:24:11.077Z"
+      "updatedAt": "2026-06-11T19:32:14.058Z"
     },
     {
       "id": "9cf7c98e-0249-4aa7-a982-7dfb367a2580",
@@ -3776,7 +3740,7 @@
         ],
         "version": 2
       },
-      "updatedAt": "2026-06-05T10:36:14.194Z"
+      "updatedAt": "2026-06-11T12:12:51.077Z"
     },
     {
       "id": "5b97299b-653f-4337-8f83-ee712b5172e0",

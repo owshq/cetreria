@@ -16,6 +16,7 @@ import {
   getActivityTypeLabel,
   getActivityWorkReport,
   getWorkerHoursStatus,
+  isActivityPast,
 } from '@shared/types';
 import { isAllTeamUsers } from '@/lib/activitiesTeamFilter';
 import { activityMatchesTeamUser } from '@/lib/activitiesTeamScope';
@@ -37,6 +38,8 @@ export type ActivityAssociationGapItem = {
   /** Tipo de documento principal que falta (para busqueda y etiquetas). */
   missingDocumentType: Document['type'] | null;
   lacksSignature: boolean;
+  /** Al abrir la actividad, enfocar informe de trabajo (vs asignacion/firma). */
+  actionableFocusWorkReport: boolean;
 };
 
 export type ActivityDocumentGapCounts = {
@@ -54,18 +57,25 @@ export type ActivityAssociationGapCounts = {
   withoutInvoice: number;
   withoutDeliveryNote: number;
   withoutWorkReport: number;
+  /** Actividades listas para firmar horas (solo flujo de firma). */
+  withoutSignableHours: number;
+  /** Actividades finalizadas con informe de trabajo pendiente de envio. */
+  withoutSubmitWorkReports: number;
+  /** Total accionable (firma o informe). */
   withoutSignatures: number;
 };
 
 export type ActivityAssociationGapBannerContext = {
   signatureSubjectLabel: string;
   viewerIsAdmin?: boolean;
+  workerSignaturesEnabled?: boolean;
 };
 
 export type ActivityDocumentGapOptions = {
   viewerIsAdmin: boolean;
   activityTypes: ActivityType[];
   operatorUserId?: string;
+  workerSignaturesEnabled?: boolean;
 };
 
 export function resolveViewerRequiredDocumentType(isAdmin: boolean): Document['type'] {
@@ -187,18 +197,54 @@ export function resolveActivitySignatureSubjectLabel(
   return 'Tú';
 }
 
-function activityLacksSignableSignature(
+function activityUsesSignatureFlow(
+  activity: Activity,
+  activityTypes: ActivityType[],
+  workerSignaturesEnabled: boolean,
+): boolean {
+  return workerSignaturesEnabled && !activityUsesWorkReport(activity, activityTypes);
+}
+
+function resolveActionableCompletionGap(
   activity: Activity,
   event: CalendarEvent | undefined,
-  signatureUserId: string | undefined,
-  boundaries: Partial<WorkspaceScheduleShiftBoundaries> = {},
-): boolean {
-  if (!signatureUserId) return false;
-  if (!getActivityAssigneeIds(activity, event).includes(signatureUserId)) {
-    return false;
+  userId: string | undefined,
+  boundaries: Partial<WorkspaceScheduleShiftBoundaries>,
+  documentGapOptions: ActivityDocumentGapOptions,
+  now: Date = new Date(),
+): { lacksActionableCompletion: boolean; actionableFocusWorkReport: boolean } {
+  if (!userId || !getActivityAssigneeIds(activity, event).includes(userId)) {
+    return { lacksActionableCompletion: false, actionableFocusWorkReport: false };
   }
 
-  return getWorkerHoursStatus(activity, event, signatureUserId, boundaries).canSignNow;
+  const workerSignaturesEnabled = documentGapOptions.workerSignaturesEnabled === true;
+  const { activityTypes } = documentGapOptions;
+
+  if (activityUsesSignatureFlow(activity, activityTypes, workerSignaturesEnabled)) {
+    return {
+      lacksActionableCompletion: getWorkerHoursStatus(
+        activity,
+        event,
+        userId,
+        boundaries,
+        now,
+      ).canSignNow,
+      actionableFocusWorkReport: false,
+    };
+  }
+
+  if (!activityUsesWorkReport(activity, activityTypes)) {
+    return { lacksActionableCompletion: false, actionableFocusWorkReport: false };
+  }
+  if (!isActivityPast({ activity, event }, now)) {
+    return { lacksActionableCompletion: false, actionableFocusWorkReport: false };
+  }
+
+  const report = getActivityWorkReport(activity, userId);
+  return {
+    lacksActionableCompletion: !report || report.status !== 'submitted',
+    actionableFocusWorkReport: true,
+  };
 }
 
 export function countActivityAssociationGaps(
@@ -218,6 +264,8 @@ export function countActivityAssociationGaps(
   let withoutInvoice = 0;
   let withoutDeliveryNote = 0;
   let withoutWorkReport = 0;
+  let withoutSignableHours = 0;
+  let withoutSubmitWorkReports = 0;
   let withoutSignatures = 0;
   let total = 0;
 
@@ -235,14 +283,20 @@ export function countActivityAssociationGaps(
       ...documentGapOptions,
       operatorUserId,
     });
-    const lacksSignature = activityLacksSignableSignature(
+    const actionableGap = resolveActionableCompletionGap(
       activity,
       event,
       signatureUserId,
       boundaries,
+      {
+        ...documentGapOptions,
+        operatorUserId,
+      },
     );
 
-    if (!lacksUsers && !documentGaps.lacksDocuments && !lacksSignature) continue;
+    if (!lacksUsers && !documentGaps.lacksDocuments && !actionableGap.lacksActionableCompletion) {
+      continue;
+    }
 
     total += 1;
     if (lacksUsers) withoutUsers += 1;
@@ -250,7 +304,14 @@ export function countActivityAssociationGaps(
     if (documentGaps.lacksInvoice) withoutInvoice += 1;
     if (documentGaps.lacksDeliveryNote) withoutDeliveryNote += 1;
     if (documentGaps.lacksWorkReport) withoutWorkReport += 1;
-    if (lacksSignature) withoutSignatures += 1;
+    if (actionableGap.lacksActionableCompletion) {
+      withoutSignatures += 1;
+      if (actionableGap.actionableFocusWorkReport) {
+        withoutSubmitWorkReports += 1;
+      } else {
+        withoutSignableHours += 1;
+      }
+    }
   }
 
   return {
@@ -260,6 +321,8 @@ export function countActivityAssociationGaps(
     withoutInvoice,
     withoutDeliveryNote,
     withoutWorkReport,
+    withoutSignableHours,
+    withoutSubmitWorkReports,
     withoutSignatures,
   };
 }
@@ -278,14 +341,20 @@ function resolveActivityAssociationGap(
     ...documentGapOptions,
     operatorUserId: documentGapOptions.operatorUserId ?? signatureUserId,
   });
-  const lacksSignature = activityLacksSignableSignature(
+  const actionableGap = resolveActionableCompletionGap(
     activity,
     event,
     signatureUserId,
     boundaries,
+    {
+      ...documentGapOptions,
+      operatorUserId: documentGapOptions.operatorUserId ?? signatureUserId,
+    },
   );
 
-  if (!lacksUsers && !documentGaps.lacksDocuments && !lacksSignature) return null;
+  if (!lacksUsers && !documentGaps.lacksDocuments && !actionableGap.lacksActionableCompletion) {
+    return null;
+  }
 
   return {
     activity,
@@ -295,7 +364,8 @@ function resolveActivityAssociationGap(
     lacksDeliveryNote: documentGaps.lacksDeliveryNote,
     lacksWorkReport: documentGaps.lacksWorkReport,
     missingDocumentType: documentGaps.missingDocumentType,
-    lacksSignature,
+    lacksSignature: actionableGap.lacksActionableCompletion,
+    actionableFocusWorkReport: actionableGap.actionableFocusWorkReport,
   };
 }
 
@@ -391,7 +461,12 @@ export function getActivityAssociationGapSearchHaystack(
     lacksDocuments && !item.lacksInvoice && !item.lacksDeliveryNote && !item.lacksWorkReport
       ? `sin ${missingDocLabel} documento documentos vinculado vinculados vinculada`
       : '',
-    lacksSignature ? 'sin firma firmar firmada pendiente tramo finalizado' : '',
+    lacksSignature && !item.actionableFocusWorkReport
+      ? 'sin firma firmar firmada pendiente tramo finalizado'
+      : '',
+    item.actionableFocusWorkReport
+      ? 'informe de trabajo enviar enviado completar parte finalizada finalizado'
+      : '',
   ].join(' ');
 
   return `${clientName} ${typeLabel} ${activity.description} ${activity.date} ${eventText} ${gapLabels}`.toLowerCase();
@@ -462,10 +537,24 @@ function formatDocumentGapPhrases(counts: ActivityDocumentGapCounts, viewerIsAdm
   return sentences.join(' ');
 }
 
-function formatSignatureGapPhrase(count: number, subjectLabel: string): string {
+function formatActionableCompletionGapPhrase(
+  count: number,
+  subjectLabel: string,
+  useWorkReport: boolean,
+): string {
   const subject = subjectLabel.trim() || 'Tú';
-  const verb = subject === 'Tú' ? 'Puedes firmar' : `${subject} puede firmar`;
   const noun = count === 1 ? '1 actividad' : `${count} actividades`;
+
+  if (useWorkReport) {
+    const verb =
+      subject === 'Tú'
+        ? 'Puedes enviar el informe de trabajo en'
+        : `${subject} puede enviar el informe de trabajo en`;
+    const detail = count === 1 ? 'ya ha finalizado' : 'ya han finalizado';
+    return `${verb} ${noun}: ${detail}.`;
+  }
+
+  const verb = subject === 'Tú' ? 'Puedes firmar' : `${subject} puede firmar`;
   const detail =
     count === 1
       ? 'su tramo asignado ya ha terminado'
@@ -474,11 +563,40 @@ function formatSignatureGapPhrase(count: number, subjectLabel: string): string {
   return `${verb} ${noun}: ${detail}.`;
 }
 
+function formatActionableCompletionGapPhrases(
+  counts: Pick<
+    ActivityAssociationGapCounts,
+    'withoutSignableHours' | 'withoutSubmitWorkReports'
+  >,
+  subjectLabel: string,
+): string {
+  const sentences: string[] = [];
+  if (counts.withoutSubmitWorkReports > 0) {
+    sentences.push(
+      formatActionableCompletionGapPhrase(
+        counts.withoutSubmitWorkReports,
+        subjectLabel,
+        true,
+      ),
+    );
+  }
+  if (counts.withoutSignableHours > 0) {
+    sentences.push(
+      formatActionableCompletionGapPhrase(
+        counts.withoutSignableHours,
+        subjectLabel,
+        false,
+      ),
+    );
+  }
+  return sentences.join(' ');
+}
+
 function formatActivityAssociationGapMixedText(
   counts: ActivityAssociationGapCounts,
   context: ActivityAssociationGapBannerContext,
 ): string {
-  const { withoutUsers, withoutSignatures } = counts;
+  const { withoutUsers } = counts;
   const sentences: string[] = [];
 
   if (withoutUsers > 0) {
@@ -495,8 +613,12 @@ function formatActivityAssociationGapMixedText(
   if (documentText) {
     sentences.push(documentText);
   }
-  if (withoutSignatures > 0) {
-    sentences.push(formatSignatureGapPhrase(withoutSignatures, context.signatureSubjectLabel));
+  const actionableText = formatActionableCompletionGapPhrases(
+    counts,
+    context.signatureSubjectLabel,
+  );
+  if (actionableText) {
+    sentences.push(actionableText);
   }
 
   return sentences.join(' ');
@@ -533,7 +655,7 @@ export function formatActivityAssociationGapBanner(
     if (withoutUsers > 0) {
       text = formatUsersGapPhrase(withoutUsers);
     } else if (withoutSignatures > 0) {
-      text = formatSignatureGapPhrase(withoutSignatures, context.signatureSubjectLabel);
+      text = formatActionableCompletionGapPhrases(counts, context.signatureSubjectLabel);
     } else {
       text = documentText;
     }

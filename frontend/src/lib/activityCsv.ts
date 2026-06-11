@@ -8,21 +8,30 @@ import {
 import { getActivityHoursTotals } from '@/lib/activityTableFields';
 import type { ActivityTableContext } from '@/lib/activityTableView';
 
-const CSV_HEADERS = [
+const BASE_CSV_HEADERS = [
   'tipo',
-  'descripción',
+  'descripcion',
   'fecha',
   'contacto',
   'operario',
   'horas asignadas',
-  'horas firmadas',
   'documentos',
 ] as const;
+
+const SIGNED_HOURS_HEADER = 'horas firmadas' as const;
 
 export type ActivityCsvContext = ActivityTableContext;
 
 function escapeCsvField(value: string): string {
   return `"${value.replace(/"/g, '""')}"`;
+}
+
+function csvHeaders(ctx: ActivityCsvContext): string[] {
+  const headers = [...BASE_CSV_HEADERS];
+  if (ctx.workerSignaturesEnabled !== false) {
+    headers.splice(headers.indexOf('documentos'), 0, SIGNED_HOURS_HEADER);
+  }
+  return headers;
 }
 
 function formatActivityRow(activity: Activity, ctx: ActivityCsvContext): string[] {
@@ -36,22 +45,28 @@ function formatActivityRow(activity: Activity, ctx: ActivityCsvContext): string[
   const documentNumbers = documents.map((doc) => doc.number).join(', ');
   const { assignedHours, signedHours } = getActivityHoursTotals(activity, ctx);
 
-  return [
+  const row = [
     getActivityTypeLabel(activity.type, ctx.activityTypes),
     activity.description?.trim() ?? '',
     activity.date,
     client?.name ?? '',
     assigneeNames,
     formatHoursMinutes(assignedHours) ?? '',
-    formatHoursMinutes(signedHours) ?? '',
-    documentNumbers,
   ];
+
+  if (ctx.workerSignaturesEnabled !== false) {
+    row.push(formatHoursMinutes(signedHours) ?? '');
+  }
+
+  row.push(documentNumbers);
+  return row;
 }
 
 export function activitiesToCsv(activities: Activity[], ctx: ActivityCsvContext): string {
   const delimiter = ';';
+  const headers = csvHeaders(ctx);
   const lines = [
-    CSV_HEADERS.map((header) => escapeCsvField(header)).join(delimiter),
+    headers.map((header) => escapeCsvField(header)).join(delimiter),
     ...activities.map((activity) =>
       formatActivityRow(activity, ctx)
         .map((value) => escapeCsvField(value))

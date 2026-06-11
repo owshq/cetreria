@@ -6,7 +6,7 @@ import styles from './UserAvatar.module.css';
 type UserAvatarProps = {
   user: Pick<User, 'name' | 'avatarUrl'>;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 };
 
 export default function UserAvatar({ user, className, size = 'md' }: UserAvatarProps) {

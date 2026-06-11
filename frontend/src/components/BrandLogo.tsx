@@ -1,21 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { APP_EVENTS } from '@/lib/appEvents';
 import {
-  DEFAULT_APP_LOGO_LOGIN,
-  DEFAULT_APP_LOGO_LOGIN_DARK,
-  getAppLogoForScheme,
+  getAppLogoUrl,
   getAppLogoOnAccent,
   getAppLogoSize,
   getDefaultAppLogoUrl,
   type AppLogoSize,
-  type AppLogoVariant,
 } from '@/lib/appLogo';
 import { useTheme } from '@/context/ThemeContext';
 import type { ColorScheme } from '@/lib/colorScheme';
 import { cx } from '@/lib/cx';
 import styles from './BrandLogo.module.css';
 
-type BrandLogoTone = 'default' | 'onAccent' | 'login';
+type BrandLogoTone = 'default' | 'onAccent' | 'login' | 'loading';
 
 type BrandLogoProps = {
   size?: AppLogoSize;
@@ -24,20 +21,29 @@ type BrandLogoProps = {
   className?: string;
   onClick?: () => void;
   ariaLabel?: string;
+  /** En superficies claras (p. ej. topbar), usa wordmark a color en tema claro. */
+  adaptToColorScheme?: boolean;
 };
 
-function resolveLogoVariant(tone: BrandLogoTone, scheme: ColorScheme): AppLogoVariant {
-  if (tone === 'onAccent') return 'onAccent';
-  if (tone === 'login') return scheme === 'dark' ? 'dark' : 'light';
-  return scheme;
-}
-
-function resolveLogoUrl(tone: BrandLogoTone, scheme: ColorScheme) {
-  if (tone === 'login') {
-    return scheme === 'dark' ? DEFAULT_APP_LOGO_LOGIN_DARK : DEFAULT_APP_LOGO_LOGIN;
+function resolveLogoUrl(
+  tone: BrandLogoTone,
+  collapsed: boolean,
+  colorScheme: ColorScheme,
+  adaptToColorScheme: boolean,
+) {
+  if (tone === 'loading') {
+    return getAppLogoUrl('light');
   }
-  if (tone === 'onAccent') return getAppLogoOnAccent();
-  return getAppLogoForScheme(scheme);
+  if (tone === 'login') {
+    return colorScheme === 'dark' ? getAppLogoUrl('dark') : getAppLogoUrl('login');
+  }
+  if (tone === 'onAccent') {
+    if (adaptToColorScheme) {
+      return colorScheme === 'dark' ? getAppLogoUrl('dark') : getAppLogoUrl('login');
+    }
+    return getAppLogoOnAccent();
+  }
+  return getAppLogoUrl('light');
 }
 
 export default function BrandLogo({
@@ -47,18 +53,20 @@ export default function BrandLogo({
   className,
   onClick,
   ariaLabel,
+  adaptToColorScheme = false,
 }: BrandLogoProps) {
   const { colorScheme } = useTheme();
-  const logoVariant = resolveLogoVariant(tone, colorScheme);
-  const [displaySrc, setDisplaySrc] = useState(() => resolveLogoUrl(tone, colorScheme));
+  const [displaySrc, setDisplaySrc] = useState(() =>
+    resolveLogoUrl(tone, collapsed, colorScheme, adaptToColorScheme),
+  );
   const [usingFallback, setUsingFallback] = useState(false);
   const [configuredSize, setConfiguredSize] = useState(getAppLogoSize);
   const resolvedSize = size ?? configuredSize;
 
   const syncLogoUrl = useCallback(() => {
-    setDisplaySrc(resolveLogoUrl(tone, colorScheme));
+    setDisplaySrc(resolveLogoUrl(tone, collapsed, colorScheme, adaptToColorScheme));
     setUsingFallback(false);
-  }, [colorScheme, tone]);
+  }, [adaptToColorScheme, collapsed, colorScheme, tone]);
 
   useEffect(() => {
     syncLogoUrl();
@@ -75,16 +83,20 @@ export default function BrandLogo({
 
   const handleImageError = useCallback(() => {
     const fallback =
-      tone === 'login'
-        ? colorScheme === 'dark'
-          ? DEFAULT_APP_LOGO_LOGIN_DARK
-          : DEFAULT_APP_LOGO_LOGIN
-        : getDefaultAppLogoUrl(logoVariant);
+      tone === 'loading'
+        ? getDefaultAppLogoUrl('light')
+        : tone === 'login'
+        ? getDefaultAppLogoUrl(colorScheme === 'dark' ? 'dark' : 'login')
+        : tone === 'onAccent' && adaptToColorScheme
+          ? getDefaultAppLogoUrl(colorScheme === 'dark' ? 'dark' : 'login')
+          : tone === 'onAccent'
+            ? getDefaultAppLogoUrl('onAccent')
+            : getDefaultAppLogoUrl('light');
     if (!usingFallback && displaySrc !== fallback) {
       setDisplaySrc(fallback);
       setUsingFallback(true);
     }
-  }, [colorScheme, displaySrc, logoVariant, tone, usingFallback]);
+  }, [adaptToColorScheme, collapsed, colorScheme, displaySrc, tone, usingFallback]);
 
   useEffect(() => {
     const syncSize = () => setConfiguredSize(getAppLogoSize());
@@ -99,8 +111,10 @@ export default function BrandLogo({
     resolvedSize === 'lg' && styles.logoBoxLg,
     collapsed && styles.logoBoxCollapsed,
     tone === 'onAccent' && styles.logoBoxOnAccent,
-    tone === 'login' && styles.logoBoxLogin,
-    tone === 'login' && resolvedSize === 'lg' && styles.logoBoxLoginLg,
+    (tone === 'login' || tone === 'loading') && styles.logoBoxLogin,
+    (tone === 'login' || tone === 'loading') &&
+      resolvedSize === 'lg' &&
+      styles.logoBoxLoginLg,
     onClick && styles.logoBtn,
     className,
   );
@@ -110,7 +124,11 @@ export default function BrandLogo({
       key={displaySrc}
       src={displaySrc}
       alt=""
-      className={cx(styles.logo, tone === 'login' && styles.logoLoginImage)}
+      className={cx(
+        styles.logo,
+        (tone === 'login' || tone === 'loading') && styles.logoLoginImage,
+        tone === 'onAccent' && styles.logoOnAccentImage,
+      )}
       loading="eager"
       decoding="async"
       onError={handleImageError}

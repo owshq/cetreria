@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useMatch, useNavigate, useSearchParams } from 'react-router';
 import type { Activity, CalendarEvent } from '@shared/types';
+import { aggregateEventTimeRange, getAssigneeIdsFromSlots } from '@shared/types';
 import { activitiesService, eventsService } from '@/api';
 import ActivityFormModal from '@/components/ActivityFormModal';
 import { activityDetailPath, newActivityPath } from '@/lib/activityPaths';
@@ -253,6 +254,15 @@ export function ActivityModalProvider({ children }: { children: React.ReactNode 
 
   const handleActivityUpdated = useCallback((activity: Activity) => {
     setActivityToEdit((prev) => (prev?.id === activity.id ? activity : prev));
+    const slots = activity.assigneeSlots;
+    if (!slots?.length) return;
+    const { startTime, endTime } = aggregateEventTimeRange(slots);
+    const assignedTo = getAssigneeIdsFromSlots(slots);
+    setEventToEdit((prev) =>
+      prev?.activityId === activity.id
+        ? { ...prev, startTime, endTime, assignedTo, date: activity.date }
+        : prev,
+    );
   }, []);
 
   const handleSaved = useCallback(async () => {

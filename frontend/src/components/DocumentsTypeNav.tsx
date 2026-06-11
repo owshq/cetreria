@@ -210,6 +210,10 @@ export default function DocumentsTypeNav({
         savedViews={savedViews}
         activeSavedViewId={activeSavedViewId}
         onSelectView={onSelectView}
+        isAdmin={isAdmin}
+        onEditGroup={onEditGroup}
+        onDownloadGroup={onDownloadGroup}
+        onDeleteGroup={onDeleteGroup}
       />
     ) : null;
 

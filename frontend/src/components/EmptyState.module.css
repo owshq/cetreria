@@ -28,6 +28,7 @@
 
 .title {
   margin: 0;
+  font-family: var(--font-heading);
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--color-text-secondary);
@@ -35,7 +36,9 @@
 
 .description {
   margin: 0;
+  font-family: var(--font-description);
   font-size: 0.875rem;
+  font-weight: 600;
   color: var(--color-text-subtle);
   max-width: 22rem;
   line-height: 1.45;

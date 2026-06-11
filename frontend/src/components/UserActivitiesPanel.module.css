@@ -1,0 +1,20 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+}
+
+.meta {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.loading {
+  padding: 2rem 0;
+}
+
+.error {
+  margin: 0;
+}

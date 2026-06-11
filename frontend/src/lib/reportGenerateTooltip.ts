@@ -4,10 +4,10 @@ export function getReportGenerateTooltip(options: {
   invalidCustomRange: boolean;
   hasPeriodData: boolean;
   generating?: boolean;
-  entity?: 'contacto' | 'operario';
+  entity?: 'cliente' | 'operario';
   reportKind?: ReportKind;
 }): string {
-  const entity = options.entity ?? 'contacto';
+  const entity = options.entity ?? 'cliente';
   if (options.invalidCustomRange) {
     return 'Corrige el rango de fechas (inicio ≤ fin).';
   }
@@ -20,11 +20,11 @@ export function getReportGenerateTooltip(options: {
 
   switch (options.reportKind) {
     case 'general':
-      return 'Generar informe general (contactos + operarios + documentos)';
+      return 'Generar informe general (clientes + operarios + documentos)';
     case 'contacts_global':
       return 'Generar informe global de clientes';
     case 'contact':
-      return 'Generar informe del contacto';
+      return 'Generar informe del cliente';
     case 'workers_global':
       return 'Generar informe de equipo';
     case 'worker':

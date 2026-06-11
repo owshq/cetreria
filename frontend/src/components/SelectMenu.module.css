@@ -81,11 +81,41 @@
   justify-content: center;
 }
 
+.rootIconTrigger {
+  width: auto;
+  min-width: 0;
+}
+
+.triggerIconOnly {
+  justify-content: center;
+  gap: 0;
+  width: 2rem;
+  min-width: 2rem;
+  padding-inline: 0.25rem;
+}
+
+.triggerIconOnly .triggerLabel {
+  display: none;
+}
+
 .triggerCompact {
   min-height: 2rem;
-  padding: 0.3125rem 0.5625rem;
+  padding: 0.3125rem 0.4375rem;
   font-size: 0.8125rem;
-  gap: 0.375rem;
+  gap: 0.25rem;
+}
+
+.triggerCompact .triggerLabel {
+  flex: 0 1 auto;
+  min-width: 2ch;
+}
+
+.triggerCompact .triggerText {
+  flex-shrink: 0;
+  min-width: 2ch;
+  overflow: visible;
+  text-overflow: clip;
+  text-align: center;
 }
 
 .optionCompact {
@@ -204,7 +234,7 @@
   text-align: left;
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.875rem;
   color: var(--color-text-secondary);
   line-height: 1.3;

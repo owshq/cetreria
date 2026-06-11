@@ -10,18 +10,20 @@ import {
   writeWorkspaceScopedStorage,
 } from '@/lib/workspaceStorage';
 
-/** Pájaro verde, sin texto — modo claro. */
-export const DEFAULT_APP_LOGO_LIGHT = '/logo.png';
-/** Pájaro oscuro, sin texto — modo oscuro. */
-export const DEFAULT_APP_LOGO_DARK = '/logo_black.png';
-/** Pájaro blanco, sin texto — sobre fondo corporativo (sidebar). */
-export const DEFAULT_APP_LOGO_ON_ACCENT = '/logo_white.png';
+/** Logo completo de marca — logo de carga por defecto (mismo asset que login modo claro). */
+export const DEFAULT_APP_LOGO_LIGHT = '/logo_login.png';
+/** @deprecated Usar DEFAULT_APP_LOGO_LIGHT. Mismo asset en claro y oscuro. */
+export const DEFAULT_APP_LOGO_DARK = DEFAULT_APP_LOGO_LIGHT;
+/** Pájaro blanco, sin texto — sidebar colapsado (solo icono). */
+export const DEFAULT_APP_LOGO_ON_ACCENT_ICON = '/logo_white.png';
+/** Logo completo blanco con texto — sidebar expandido (fondo transparente). */
+export const DEFAULT_APP_LOGO_ON_ACCENT = '/logo_login_dark.png';
 /** Logo completo de marca — login modo claro (fondo transparente). */
 export const DEFAULT_APP_LOGO_LOGIN = '/logo_login.png';
 /** Logo completo de marca — login modo oscuro (blanco, fondo transparente). */
 export const DEFAULT_APP_LOGO_LOGIN_DARK = '/logo_login_dark.png';
 
-export type AppLogoVariant = 'light' | 'dark' | 'onAccent';
+export type AppLogoVariant = 'light' | 'dark' | 'onAccent' | 'login';
 export type AppLogoSize = 'sm' | 'md' | 'lg';
 
 export const DEFAULT_APP_LOGO_SIZE: AppLogoSize = 'md';
@@ -33,9 +35,16 @@ export const APP_LOGO_SIZE_LABELS: Record<AppLogoSize, string> = {
 };
 
 export const APP_LOGO_SIZE_DIMENSIONS: Record<AppLogoSize, string> = {
+  sm: '2.25rem',
+  md: '3rem',
+  lg: '3.75rem',
+};
+
+/** Altura del wordmark en sidebar (mas compacto que el icono cuadrado). */
+export const APP_LOGO_WORDMARK_HEIGHTS: Record<AppLogoSize, string> = {
   sm: '2rem',
-  md: '2.75rem',
-  lg: '3.5rem',
+  md: '2.5rem',
+  lg: '3rem',
 };
 
 export const APP_LOGO_HEADER_PADDING: Record<
@@ -43,19 +52,21 @@ export const APP_LOGO_HEADER_PADDING: Record<
   { top: string; bottom: string }
 > = {
   sm: { top: '0.5rem', bottom: '0.375rem' },
-  md: { top: '0.625rem', bottom: '0.5rem' },
-  lg: { top: '0.875rem', bottom: '0.625rem' },
+  md: { top: '0.75rem', bottom: '0.625rem' },
+  lg: { top: '1rem', bottom: '0.75rem' },
 };
 
 const LOGO_STORAGE_PART: Record<AppLogoVariant, string> = {
   light: 'app_logo_light',
   dark: 'app_logo_dark',
   onAccent: 'app_logo_on_accent',
+  login: 'app_logo_login',
 };
 
 function defaultLogoFor(variant: AppLogoVariant): string {
   if (variant === 'light') return DEFAULT_APP_LOGO_LIGHT;
-  if (variant === 'dark') return DEFAULT_APP_LOGO_DARK;
+  if (variant === 'dark') return DEFAULT_APP_LOGO_LOGIN_DARK;
+  if (variant === 'login') return DEFAULT_APP_LOGO_LOGIN;
   return DEFAULT_APP_LOGO_ON_ACCENT;
 }
 
@@ -87,6 +98,14 @@ export function getAppLogoOnAccent(): string {
   return getAppLogoUrl('onAccent');
 }
 
+export function getAppLogoLogin(): string {
+  return getAppLogoUrl('login');
+}
+
+export function getAppLogoLoginDark(): string {
+  return getAppLogoUrl('dark');
+}
+
 export function getAppLogoUrl(variant: AppLogoVariant): string {
   return resolveStoredAppLogoUrl(
     readWorkspaceScopedStorage(LOGO_STORAGE_PART[variant]),
@@ -94,8 +113,8 @@ export function getAppLogoUrl(variant: AppLogoVariant): string {
   );
 }
 
-export function getAppLogoForScheme(scheme: ColorScheme): string {
-  return getAppLogoUrl(scheme);
+export function getAppLogoForScheme(_scheme: ColorScheme): string {
+  return getAppLogoUrl('light');
 }
 
 export function hasCustomAppLogo(variant: AppLogoVariant): boolean {
@@ -134,6 +153,10 @@ export function applyAppLogoSize(size: AppLogoSize = getAppLogoSize()): void {
 
   const padding = APP_LOGO_HEADER_PADDING[size];
   document.documentElement.style.setProperty('--app-logo-size', APP_LOGO_SIZE_DIMENSIONS[size]);
+  document.documentElement.style.setProperty(
+    '--app-logo-wordmark-height',
+    APP_LOGO_WORDMARK_HEIGHTS[size],
+  );
   document.documentElement.style.setProperty('--app-logo-header-padding-top', padding.top);
   document.documentElement.style.setProperty(
     '--app-logo-header-padding-bottom',

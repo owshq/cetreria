@@ -340,6 +340,29 @@ export function buildDocumentDisplayNameForDocument(
   });
 }
 
+export type DocumentDisplayNameMigrationPolicy = 'keep' | 'update';
+
+export function hasDocumentNameFormatChanges(
+  before: WorkspaceDocumentFormats,
+  after: WorkspaceDocumentFormats,
+): boolean {
+  return (
+    JSON.stringify(before.invoice.name) !== JSON.stringify(after.invoice.name) ||
+    JSON.stringify(before['delivery-note'].name) !== JSON.stringify(after['delivery-note'].name)
+  );
+}
+
+/** Usa el nombre congelado del documento si existe; si no, lo calcula con el formato actual. */
+export function resolveDocumentDisplayName(
+  document: Pick<Document, 'type' | 'number' | 'date' | 'displayName'>,
+  clientName: string,
+  formats?: WorkspaceDocumentFormats | null,
+): string {
+  const frozen = document.displayName?.trim();
+  if (frozen) return frozen;
+  return buildDocumentDisplayNameForDocument(formats, document, clientName);
+}
+
 export function buildDocumentDisplayNamePreview(
   formats: WorkspaceDocumentFormats | null | undefined,
   type: Document['type'],

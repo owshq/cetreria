@@ -11,7 +11,7 @@ import type {
   WorkspaceMember,
 } from '@shared/types';
 import {
-  buildDocumentDisplayNameForDocument,
+  resolveDocumentDisplayName,
   DOCUMENT_TYPE_LABELS,
   getActivityAssigneeIds,
   getNotificationCategory,
@@ -746,10 +746,11 @@ export async function notifyDocumentChanged(
 
   if (recipients.size === 0) return;
 
-  let message = buildDocumentDisplayNameForDocument(
-    (await getWorkspaceBillingSettings(workspaceId)).documentFormats,
+  const billingSettings = await getWorkspaceBillingSettings(workspaceId);
+  let message = resolveDocumentDisplayName(
     document,
     client?.name ?? '',
+    billingSettings.documentFormats,
   );
   if (!message.trim()) {
     message = [document.number, client?.name].filter(Boolean).join(' · ');

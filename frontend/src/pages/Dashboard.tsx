@@ -214,13 +214,13 @@ export default function Dashboard() {
   const savedActivitiesChartPrefs = useMemo(() => readDashboardActivitiesChartPanelPrefs(), []);
   const savedWorkShiftsChartPrefs = useMemo(() => readDashboardWorkShiftsChartPanelPrefs(), []);
   const [chartsExpanded, setChartsExpanded] = useState(
-    hasStoredChartsPrefs ? savedChartsPrefs.expanded : true,
+    hasStoredChartsPrefs ? savedChartsPrefs.expanded : false,
   );
   const [selectedMetric, setSelectedMetric] = useState<DashboardMetricKey>(initialMetric);
   const [activitiesChartExpanded, setActivitiesChartExpanded] = useState(
     readWorkspaceScopedStorage(storageKeys.dashboardActivitiesChartPanel)
       ? savedActivitiesChartPrefs.expanded
-      : true,
+      : false,
   );
   const [activitiesChartGroupBy, setActivitiesChartGroupBy] = useState<ActivityGroupBy>(
     savedActivitiesChartPrefs.groupBy,
@@ -230,7 +230,7 @@ export default function Dashboard() {
   const [workShiftsChartExpanded, setWorkShiftsChartExpanded] = useState(
     readWorkspaceScopedStorage(storageKeys.dashboardWorkShiftsChartPanel)
       ? savedWorkShiftsChartPrefs.expanded
-      : true,
+      : false,
   );
   const [workShiftsChartGroupBy, setWorkShiftsChartGroupBy] = useState<WorkShiftsGroupBy>(
     savedWorkShiftsChartPrefs.groupBy,
