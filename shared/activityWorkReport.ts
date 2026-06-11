@@ -462,7 +462,10 @@ export function resolveWorkReportAssigneeDisplayName(
   const slotName = resolveAssigneeSlotDisplayName(activity, userId);
   if (slotName) return slotName;
   if (namesById) {
-    const name = namesById instanceof Map ? namesById.get(userId) : namesById[userId];
+    const name =
+      namesById instanceof Map
+        ? namesById.get(userId)
+        : (namesById as Readonly<Record<string, string>>)[userId];
     if (typeof name === 'string' && name.trim()) return name.trim();
   }
   return 'Operario sin nombre';
