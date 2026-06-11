@@ -3,6 +3,7 @@ import type { WorkspaceFeatureSettings } from '@shared/types';
 import {
   getWorkspaceFeatureSettings,
   saveWorkspaceFeatureSettings,
+  toWorkspaceFeatureSettingsView,
 } from '../services/workspaceFeatureSettings.js';
 import { DB_NAMES } from '../config.js';
 import {
@@ -36,21 +37,21 @@ router.get('/', async (req, res) => {
 router.put('/', workspaceAdminRequired, async (req, res) => {
   const workspaceId = req.workspaceId!;
   const body = req.body as Partial<WorkspaceFeatureSettings>;
-  const normalized = await saveWorkspaceFeatureSettings(workspaceId, body);
+  const persisted = await saveWorkspaceFeatureSettings(workspaceId, body);
 
   const existing = await getSettingsForWorkspace(workspaceId);
   if (existing) {
-    const updated = await updateDoc<WorkspaceFeatureSettings>(
+    await updateDoc<WorkspaceFeatureSettings>(
       DB_NAMES.workspaceFeatureSettings,
       existing.id,
-      normalized,
+      persisted,
     );
-    res.json(updated);
+    res.json(toWorkspaceFeatureSettingsView(persisted));
     return;
   }
 
-  await insertDoc(DB_NAMES.workspaceFeatureSettings, normalized);
-  res.status(201).json(normalized);
+  await insertDoc(DB_NAMES.workspaceFeatureSettings, persisted);
+  res.status(201).json(toWorkspaceFeatureSettingsView(persisted));
 });
 
 export default router;

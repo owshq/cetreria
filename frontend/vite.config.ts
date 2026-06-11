@@ -26,7 +26,8 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   server: {
-    host: '127.0.0.1',
+    // En Windows, localhost suele resolver a ::1; escuchar en :: acepta localhost y 127.0.0.1.
+    host: '::',
     port: frontendPort,
     strictPort: true,
     allowedHosts: true,

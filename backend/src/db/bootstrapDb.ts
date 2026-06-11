@@ -3,6 +3,7 @@ import { config } from '../config.js';
 import { initJsonDb, setDbAccessMode } from './store.js';
 import { seedIfEmpty } from './seed.js';
 import { migrateData } from './migrate.js';
+import { migrateDbHygiene } from './migrateDbHygiene.js';
 import { migrateWorkspaces } from './migrateWorkspaces.js';
 import { migrateHalconeriaUsers } from './migrateHalconeriaUsers.js';
 import { ensureActivityTypes } from './activityTypes.js';
@@ -31,6 +32,7 @@ export async function bootstrapDb(mode: BootstrapDbMode = 'default'): Promise<vo
   await initJsonDb();
   await seedIfEmpty();
   await migrateData();
+  await migrateDbHygiene();
   await migrateWorkspaces();
   await migrateHalconeriaUsers();
   await ensureActivityTypes();

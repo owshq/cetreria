@@ -1,6 +1,5 @@
 import type { Activity, ActivityType } from '@shared/types';
 import { DEFAULT_ACTIVITY_TYPES } from '../../../shared/activityTypes.js';
-import { DEFAULT_WORKSPACE_ID } from '@shared/types';
 import { DB_NAMES } from '../config.js';
 import { insertDoc, listAll, listAllInWorkspace, updateDoc, withDbTransaction } from './repository.js';
 
@@ -39,13 +38,17 @@ export async function ensureActivityTypes() {
   await withDbTransaction(async () => {
     const activities = await listAll<Activity & { workspaceId?: string }>(DB_NAMES.activities);
     for (const activity of activities) {
-      if (activity.workspaceId && activity.workspaceId !== DEFAULT_WORKSPACE_ID) continue;
-      const match = DEFAULT_ACTIVITY_TYPES.find(
-        (t) => t.id === activity.type || t.name === activity.type,
-      );
-      if (match && activity.type !== match.id) {
-        await updateDoc<Activity>(DB_NAMES.activities, activity.id, { type: match.id });
+      const canonicalType = resolveLegacyActivityTypeRef(activity.type);
+      if (canonicalType && activity.type !== canonicalType) {
+        await updateDoc<Activity>(DB_NAMES.activities, activity.id, { type: canonicalType });
       }
     }
   });
+}
+
+function resolveLegacyActivityTypeRef(typeRef: string): string | null {
+  if (!typeRef) return null;
+  if (typeRef === 'work') return 'at-1';
+  const match = DEFAULT_ACTIVITY_TYPES.find((t) => t.id === typeRef || t.name === typeRef);
+  return match?.id ?? null;
 }

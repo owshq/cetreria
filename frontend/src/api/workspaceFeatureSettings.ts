@@ -1,10 +1,12 @@
-import type { WorkspaceFeatureSettings } from '@shared/types';
+import type { WorkspaceFeatureSettingsView } from '@shared/types';
 import { apiFetch } from './client';
 
 export const workspaceFeatureSettingsService = {
-  get: (): Promise<WorkspaceFeatureSettings> => apiFetch('/workspace-feature-settings'),
+  get: (): Promise<WorkspaceFeatureSettingsView> => apiFetch('/workspace-feature-settings'),
 
-  update: (settings: Partial<WorkspaceFeatureSettings>): Promise<WorkspaceFeatureSettings> =>
+  update: (
+    settings: Partial<WorkspaceFeatureSettingsView>,
+  ): Promise<WorkspaceFeatureSettingsView> =>
     apiFetch('/workspace-feature-settings', {
       method: 'PUT',
       body: JSON.stringify(settings),

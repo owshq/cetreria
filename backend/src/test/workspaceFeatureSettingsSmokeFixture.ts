@@ -102,7 +102,7 @@ export async function seedWorkspaceFeatureToggleScenario(options?: {
       date: '2026-06-01',
       description: 'Actividad verifactu toggle',
       hours: 1,
-      type: 'work',
+      type: 'at-1',
       attachments: [],
       createdAt: '2026-06-01T08:00:00.000Z',
     });

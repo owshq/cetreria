@@ -2,6 +2,7 @@ import type { Workspace, WorkspaceBillingSettings } from '@shared/types';
 import { normalizeWorkspaceBillingSettings } from '@shared/types';
 import { DB_NAMES } from '../config.js';
 import { findByFieldInWorkspace, getById } from '../db/repository.js';
+import { effectiveWorkspaceVerifactuEnabled, isVerifactuModuleLicensedInDeployment } from './verifactuModuleCap.js';
 
 async function getRawSettings(workspaceId: string): Promise<WorkspaceBillingSettings | null> {
   const rows = await findByFieldInWorkspace<WorkspaceBillingSettings>(
@@ -25,7 +26,11 @@ export async function getWorkspaceBillingSettings(
     getWorkspaceName(workspaceId),
     getRawSettings(workspaceId),
   ]);
-  return normalizeWorkspaceBillingSettings(existing, workspaceId, workspaceName);
+  const normalized = normalizeWorkspaceBillingSettings(existing, workspaceId, workspaceName);
+  return {
+    ...normalized,
+    verifactuEnabled: effectiveWorkspaceVerifactuEnabled(normalized.verifactuEnabled === true),
+  };
 }
 
 export async function saveWorkspaceBillingSettings(
@@ -37,5 +42,13 @@ export async function saveWorkspaceBillingSettings(
     getRawSettings(workspaceId),
   ]);
   const merged = existing ? { ...existing, ...body } : body;
-  return normalizeWorkspaceBillingSettings(merged, workspaceId, workspaceName);
+  const normalized = normalizeWorkspaceBillingSettings(merged, workspaceId, workspaceName);
+  const storedVerifactuEnabled = isVerifactuModuleLicensedInDeployment()
+    ? normalized.verifactuEnabled
+    : false;
+
+  return {
+    ...normalized,
+    verifactuEnabled: storedVerifactuEnabled,
+  };
 }

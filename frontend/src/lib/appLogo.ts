@@ -16,6 +16,10 @@ export const DEFAULT_APP_LOGO_LIGHT = '/logo.png';
 export const DEFAULT_APP_LOGO_DARK = '/logo_black.png';
 /** Pájaro blanco, sin texto — sobre fondo corporativo (sidebar). */
 export const DEFAULT_APP_LOGO_ON_ACCENT = '/logo_white.png';
+/** Logo completo de marca — login modo claro (fondo transparente). */
+export const DEFAULT_APP_LOGO_LOGIN = '/logo_login.png';
+/** Logo completo de marca — login modo oscuro (blanco, fondo transparente). */
+export const DEFAULT_APP_LOGO_LOGIN_DARK = '/logo_login_dark.png';
 
 export type AppLogoVariant = 'light' | 'dark' | 'onAccent';
 export type AppLogoSize = 'sm' | 'md' | 'lg';

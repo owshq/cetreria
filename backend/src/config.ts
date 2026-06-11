@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { parseVerifactuModuleEnabled } from '../../shared/verifactuModule.js';
 import { PORTS } from '../../shared/ports.js';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -32,6 +33,10 @@ export const config = {
   },
   get documentStorageDir() {
     return resolveDocumentStorageDir();
+  },
+  /** Licencia de despliegue Veri*Factu (contrato/pago). Por defecto: desactivado. */
+  get verifactuModuleEnabled() {
+    return parseVerifactuModuleEnabled(process.env.VERIFACTU_MODULE_ENABLED);
   },
 };
 

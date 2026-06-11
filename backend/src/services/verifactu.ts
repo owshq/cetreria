@@ -1,6 +1,7 @@
 import QRCode from 'qrcode';
 import type { Client, Document, WorkspaceBillingSettings } from '@shared/types';
 import {
+  VERIFACTU_MODULE_DISABLED_MESSAGE,
   VERIFACTU_PROD_NOT_CONFIGURED_CODE,
   VERIFACTU_PRODUCTION_UNAVAILABLE_MESSAGE,
   buildVerifactuCsv,
@@ -12,6 +13,7 @@ import {
   type VerifactuStatus,
 } from '@shared/types';
 import { getWorkspaceBillingSettings, saveWorkspaceBillingSettings } from './workspaceBillingSettings.js';
+import { isVerifactuModuleLicensedInDeployment } from './verifactuModuleCap.js';
 import { syncDocumentPdf } from './documentFiles.js';
 import { DB_NAMES } from '../config.js';
 import {
@@ -92,6 +94,10 @@ export async function submitDocumentToVerifactu(
   workspaceId: string,
   documentId: string,
 ): Promise<SubmitVerifactuResult> {
+  if (!isVerifactuModuleLicensedInDeployment()) {
+    throw new Error(VERIFACTU_MODULE_DISABLED_MESSAGE);
+  }
+
   const document = await getByIdInWorkspace<Document>(
     DB_NAMES.documents,
     documentId,

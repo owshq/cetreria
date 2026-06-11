@@ -1,6 +1,7 @@
 import type {
   Activity,
   Client,
+  ClientGroup,
   Document,
   DocumentTypeGroup,
   User,
@@ -10,12 +11,13 @@ import type {
 } from '@shared/types';
 import { defaultWorkspaceDocumentFormats } from '@shared/types';
 import { DB_NAMES } from '../config.js';
-import { insertDoc } from '../db/repository.js';
+import { getById, insertDoc } from '../db/repository.js';
 
 export const VERIFACTU_WORKSPACE_ID = 'f7000001-0000-4000-8000-000000000001';
 export const VERIFACTU_ADMIN_ID = 'f7000002-0000-4000-8000-000000000001';
 export const VERIFACTU_OPERATOR_ID = 'f7000003-0000-4000-8000-000000000001';
 export const VERIFACTU_CLIENT_ID = 'f7000005-0000-4000-8000-000000000001';
+export const VERIFACTU_CLIENT_GROUP_ID = 'f7000006-0000-4000-8000-000000000001';
 export const VERIFACTU_INVOICE_GROUP_ID = 'f7000009-0000-4000-8000-000000000001';
 
 export const VERIFACTU_PENDING_INVOICE_ID = 'f700000a-0000-4000-8000-000000000001';
@@ -67,7 +69,7 @@ const verifactuMembers: WorkspaceMember[] = [
 export const verifactuClient: Client = {
   id: VERIFACTU_CLIENT_ID,
   workspaceId: VERIFACTU_WORKSPACE_ID,
-  groupId: 'f7000006-0000-4000-8000-000000000001',
+  groupId: VERIFACTU_CLIENT_GROUP_ID,
   name: 'Cliente Verifactu',
   email: 'cliente@test.local',
   phone: '',
@@ -84,6 +86,14 @@ export const verifactuClient: Client = {
   customFields: { NIF: '12345678Z' },
 };
 
+const verifactuClientGroup: ClientGroup = {
+  id: VERIFACTU_CLIENT_GROUP_ID,
+  workspaceId: VERIFACTU_WORKSPACE_ID,
+  name: 'Clientes',
+  isDefault: true,
+  createdAt: '2026-01-01T00:00:00.000Z',
+};
+
 const verifactuActivity: Activity = {
   id: 'f7000007-0000-4000-8000-000000000001',
   workspaceId: VERIFACTU_WORKSPACE_ID,
@@ -92,7 +102,7 @@ const verifactuActivity: Activity = {
   date: '2026-06-01',
   description: 'Actividad verifactu',
   hours: 1,
-  type: 'work',
+  type: 'at-1',
   attachments: [],
   createdAt: '2026-06-01T08:00:00.000Z',
 };
@@ -178,15 +188,16 @@ export const verifactuSandboxScenario: VerifactuSmokeScenario = {
 export async function seedVerifactuSmokeScenario(
   scenario: VerifactuSmokeScenario = verifactuSandboxScenario,
 ): Promise<void> {
-  await insertDoc(DB_NAMES.workspaces, verifactuWorkspace);
-  await insertDoc(DB_NAMES.users, verifactuAdminUser);
-  await insertDoc(DB_NAMES.users, verifactuOperatorUser);
+  await insertDocOnce(DB_NAMES.workspaces, verifactuWorkspace);
+  await insertDocOnce(DB_NAMES.users, verifactuAdminUser);
+  await insertDocOnce(DB_NAMES.users, verifactuOperatorUser);
   for (const member of verifactuMembers) {
-    await insertDoc(DB_NAMES.workspaceMembers, member);
+    await insertDocOnce(DB_NAMES.workspaceMembers, member);
   }
-  await insertDoc(DB_NAMES.clients, verifactuClient);
-  await insertDoc(DB_NAMES.activities, verifactuActivity);
-  await insertDoc(DB_NAMES.documentTypeGroups, verifactuInvoiceGroup);
+  await insertDocOnce(DB_NAMES.clientGroups, verifactuClientGroup);
+  await insertDocOnce(DB_NAMES.clients, verifactuClient);
+  await insertDocOnce(DB_NAMES.activities, verifactuActivity);
+  await insertDocOnce(DB_NAMES.documentTypeGroups, verifactuInvoiceGroup);
 
   const billing: WorkspaceBillingSettings = {
     id: VERIFACTU_WORKSPACE_ID,
@@ -204,9 +215,15 @@ export async function seedVerifactuSmokeScenario(
     verifactuEnvironment: scenario.billingSettings?.verifactuEnvironment ?? 'sandbox',
     issuerNif: scenario.billingSettings?.issuerNif ?? 'B12345678',
   };
-  await insertDoc(DB_NAMES.workspaceBillingSettings, billing);
+  await insertDocOnce(DB_NAMES.workspaceBillingSettings, billing);
 
   for (const document of scenario.documents) {
-    await insertDoc(DB_NAMES.documents, document);
+    await insertDocOnce(DB_NAMES.documents, document);
   }
+}
+
+async function insertDocOnce<T extends { id: string }>(dbName: string, entity: T): Promise<T> {
+  const existing = await getById<T>(dbName, entity.id);
+  if (existing) return existing;
+  return insertDoc(dbName, entity);
 }

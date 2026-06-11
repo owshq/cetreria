@@ -29,6 +29,7 @@ describe('workspace-feature-settings Veri*Factu toggle smoke', { concurrency: fa
     dbPath = path.join(tempDir, 'db.json');
     process.env.DB_PATH = dbPath;
     process.env.DOCUMENT_STORAGE_DIR = path.join(tempDir, 'document-pdfs');
+    process.env.VERIFACTU_MODULE_ENABLED = 'true';
     delete process.env.VERIFACTU_PRODUCTION_ENABLED;
 
     const dbMod = await import('../db/store.js');
@@ -70,6 +71,7 @@ describe('workspace-feature-settings Veri*Factu toggle smoke', { concurrency: fa
       server.close((error) => (error ? reject(error) : resolve()));
     });
     resetDb();
+    delete process.env.VERIFACTU_MODULE_ENABLED;
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 

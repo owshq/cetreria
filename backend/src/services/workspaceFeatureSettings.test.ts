@@ -19,8 +19,12 @@ describe('workspaceFeatureSettings service', { concurrency: false }, () => {
   let saveWorkspaceFeatureSettings: typeof import('./workspaceFeatureSettings.js').saveWorkspaceFeatureSettings;
   let getWorkspaceBillingSettings: typeof import('./workspaceBillingSettings.js').getWorkspaceBillingSettings;
   let findByFieldInWorkspace: typeof import('../db/repository.js').findByFieldInWorkspace;
+  let savedVerifactuModuleFlag: string | undefined;
 
   before(async () => {
+    savedVerifactuModuleFlag = process.env.VERIFACTU_MODULE_ENABLED;
+    process.env.VERIFACTU_MODULE_ENABLED = 'true';
+
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'crm-feature-settings-svc-'));
     dbPath = path.join(tempDir, 'db.json');
     process.env.DB_PATH = dbPath;
@@ -49,7 +53,29 @@ describe('workspaceFeatureSettings service', { concurrency: false }, () => {
 
   after(() => {
     resetDb();
+    if (savedVerifactuModuleFlag === undefined) {
+      delete process.env.VERIFACTU_MODULE_ENABLED;
+    } else {
+      process.env.VERIFACTU_MODULE_ENABLED = savedVerifactuModuleFlag;
+    }
     fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  it('sin licencia de despliegue no permite activar verifactuEnabled', async () => {
+    process.env.VERIFACTU_MODULE_ENABLED = 'false';
+    const saved = await saveWorkspaceFeatureSettings(VERIFACTU_WORKSPACE_ID, {
+      verifactuEnabled: true,
+    });
+    assert.equal(saved.verifactuEnabled, false);
+
+    const view = await getWorkspaceFeatureSettings(VERIFACTU_WORKSPACE_ID);
+    assert.equal(view.verifactuEnabled, false);
+    assert.equal(view.verifactuModuleLicensed, false);
+
+    const billing = await getWorkspaceBillingSettings(VERIFACTU_WORKSPACE_ID);
+    assert.equal(billing.verifactuEnabled, false);
+
+    process.env.VERIFACTU_MODULE_ENABLED = 'true';
   });
 
   it('GET devuelve verifactuEnabled false por defecto', async () => {

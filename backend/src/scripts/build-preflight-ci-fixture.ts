@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import bcrypt from 'bcryptjs';
 import { DEFAULT_ACTIVITY_TYPES } from '../../../shared/activityTypes.js';
 import { DEFAULT_WORKSPACE_ID } from '@shared/types';
 import type {
@@ -28,6 +27,9 @@ import {
 const WS = DEFAULT_WORKSPACE_ID;
 const GROUP_ID = 'a1000001-0000-4000-8000-000000000001';
 const MEMBER_ID = 'a1000002-0000-4000-8000-000000000002';
+/** Hash fijo de admin123 (cost 4) para que el fixture CI sea determinista. */
+const FIXTURE_ADMIN_PASSWORD_HASH =
+  '$2b$04$WiJYnPbvW4UtOPcIoSRh5uSS1PcUard77mQW4M3.Pjf1JINBXKLtu';
 
 const emptyCollections = Object.fromEntries(
   Object.values(DB_NAMES).map((name) => [name, []]),
@@ -37,7 +39,7 @@ const adminUser = toSeedUser(SEED_USER_IDS.admin, halconeriaUserSpec('admin'));
 const users: User[] = [
   {
     ...adminUser,
-    password: await bcrypt.hash(adminUser.password, 4),
+    password: FIXTURE_ADMIN_PASSWORD_HASH,
   },
 ];
 

@@ -13,6 +13,11 @@ export type WorkspaceFeatureSettings = {
   verifactuEnabled: boolean;
 };
 
+/** Respuesta API: incluye licencia de despliegue (solo lectura). */
+export type WorkspaceFeatureSettingsView = WorkspaceFeatureSettings & {
+  verifactuModuleLicensed: boolean;
+};
+
 export const DEFAULT_WORKSPACE_FEATURE_FLAGS = {
   workerSignaturesEnabled: false,
   shiftSchedulingEnabled: false,

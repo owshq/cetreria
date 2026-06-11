@@ -29,6 +29,7 @@ describe('submitDocumentToVerifactu service', { concurrency: false }, () => {
     dbPath = path.join(tempDir, 'db.json');
     process.env.DB_PATH = dbPath;
     process.env.DOCUMENT_STORAGE_DIR = path.join(tempDir, 'document-pdfs');
+    process.env.VERIFACTU_MODULE_ENABLED = 'true';
     savedProductionFlag = process.env.VERIFACTU_PRODUCTION_ENABLED;
     delete process.env.VERIFACTU_PRODUCTION_ENABLED;
 
@@ -63,6 +64,7 @@ describe('submitDocumentToVerifactu service', { concurrency: false }, () => {
     } else {
       process.env.VERIFACTU_PRODUCTION_ENABLED = savedProductionFlag;
     }
+    delete process.env.VERIFACTU_MODULE_ENABLED;
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 

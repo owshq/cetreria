@@ -29,6 +29,7 @@ describe('GET /api/electronic-invoicing/providers/es_verifactu/health smoke', {
     dbPath = path.join(tempDir, 'db.json');
     process.env.DB_PATH = dbPath;
     process.env.DOCUMENT_STORAGE_DIR = path.join(tempDir, 'document-pdfs');
+    process.env.VERIFACTU_MODULE_ENABLED = 'true';
     delete process.env.VERIFACTU_CERT_PATH;
 
     const fixtureMod = await import('../test/verifactuSmokeFixture.js');
@@ -77,6 +78,7 @@ describe('GET /api/electronic-invoicing/providers/es_verifactu/health smoke', {
       server.close((error) => (error ? reject(error) : resolve()));
     });
     resetDb();
+    delete process.env.VERIFACTU_MODULE_ENABLED;
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 

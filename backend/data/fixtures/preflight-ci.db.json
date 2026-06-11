@@ -174,24 +174,7 @@
       "createdAt": "2026-01-01"
     }
   ],
-  "document_type_groups": [
-    {
-      "id": "02cf10fc-b0ba-4b03-a0a9-58cdaaeba0f8",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "documentType": "invoice",
-      "name": "Facturas",
-      "isPublic": false,
-      "createdAt": "2026-06-10T08:09:37.502Z"
-    },
-    {
-      "id": "dd30e32a-4354-46af-b494-926487aeac7b",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "documentType": "delivery-note",
-      "name": "Albaranes",
-      "isPublic": true,
-      "createdAt": "2026-06-10T08:09:37.502Z"
-    }
-  ],
+  "document_type_groups": [],
   "invoice_concept_settings": [],
   "workspace_billing_settings": [],
   "workspace_schedule_settings": [],

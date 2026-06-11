@@ -22,6 +22,7 @@ export * from './documentVerifactuQr.js';
 export * from './documentSource.js';
 export * from './documentXml.js';
 export * from './verifactu.js';
+export * from './verifactuModule.js';
 export * from './electronicInvoicing.js';
 export * from './electronicInvoicingGate.js';
 export * from './electronicInvoicingProviderHealth.js';

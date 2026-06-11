@@ -66,8 +66,6 @@ export async function ensureDefaultClientGroup(workspaceId: string): Promise<Cli
     return null;
   }
 
-  if (workspace.defaultClientGroupSeeded) return null;
-
   const created: ClientGroup = {
     id: crypto.randomUUID(),
     workspaceId,

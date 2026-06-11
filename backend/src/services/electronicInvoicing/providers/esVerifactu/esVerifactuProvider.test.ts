@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { after, before, beforeEach, describe, it } from 'node:test';
-import type { WorkspaceBillingSettings } from '@shared/types';
+import type { Client, Document, WorkspaceBillingSettings } from '@shared/types';
 import { defaultWorkspaceDocumentFormats } from '@shared/types';
 import { getElectronicInvoicingProvider } from '../../providerRegistry.js';
 import { esVerifactuProvider } from './esVerifactuProvider.js';
@@ -23,6 +23,7 @@ describe('esVerifactuProvider (Fase 2A)', { concurrency: false }, () => {
     dbPath = path.join(tempDir, 'db.json');
     process.env.DB_PATH = dbPath;
     process.env.DOCUMENT_STORAGE_DIR = path.join(tempDir, 'document-pdfs');
+    process.env.VERIFACTU_MODULE_ENABLED = 'true';
     delete process.env.VERIFACTU_PRODUCTION_ENABLED;
 
     const fixtureMod = await import('../../../../test/verifactuSmokeFixture.js');
@@ -45,6 +46,7 @@ describe('esVerifactuProvider (Fase 2A)', { concurrency: false }, () => {
 
   after(() => {
     resetDb();
+    delete process.env.VERIFACTU_MODULE_ENABLED;
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
@@ -145,12 +147,12 @@ describe('esVerifactuProvider (Fase 2A)', { concurrency: false }, () => {
     const { DB_NAMES } = await import('../../../../config.js');
     const { getWorkspaceBillingSettings } = await import('../../../workspaceBillingSettings.js');
 
-    const document = await getByIdInWorkspace(
+    const document = await getByIdInWorkspace<Document>(
       DB_NAMES.documents,
       VERIFACTU_PENDING_INVOICE_ID,
       VERIFACTU_WORKSPACE_ID,
     );
-    const client = await getByIdInWorkspace(
+    const client = await getByIdInWorkspace<Client>(
       DB_NAMES.clients,
       document!.clientId,
       VERIFACTU_WORKSPACE_ID,

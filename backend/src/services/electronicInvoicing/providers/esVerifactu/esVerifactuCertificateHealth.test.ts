@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { after, describe, it } from 'node:test';
+import { defaultWorkspaceDocumentFormats } from '@shared/types';
 import { resolveEsVerifactuConfig } from './esVerifactuConfig.js';
 import { getEsVerifactuCertificateHealth } from './esVerifactuCertificateHealth.js';
 
@@ -17,7 +18,7 @@ const baseSettings = {
   country: 'ES',
   state: '',
   defaultTaxRate: 21,
-  documentFormats: {},
+  documentFormats: defaultWorkspaceDocumentFormats(),
   verifactuEnabled: true,
   verifactuEnvironment: 'sandbox' as const,
   issuerNif: 'B12345678',

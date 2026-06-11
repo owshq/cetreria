@@ -59,8 +59,29 @@
   transition: transform 0.2s ease;
 }
 
-.logoLoginBlackBird {
-  filter: brightness(0);
+.logoBoxLogin {
+  width: auto;
+  height: auto;
+  aspect-ratio: unset;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:global([data-theme='dark']) .logoBoxLogin {
+  background: transparent;
+}
+
+.logoBoxLoginLg {
+  max-width: min(16rem, 80vw);
+}
+
+.logoLoginImage {
+  width: auto;
+  height: 5rem;
+  max-width: 100%;
+  flex: 0 0 auto;
 }
 
 .logoBtn {

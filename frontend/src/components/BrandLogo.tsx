@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { APP_EVENTS } from '@/lib/appEvents';
 import {
+  DEFAULT_APP_LOGO_LOGIN,
+  DEFAULT_APP_LOGO_LOGIN_DARK,
   getAppLogoForScheme,
   getAppLogoOnAccent,
   getAppLogoSize,
@@ -25,12 +27,16 @@ type BrandLogoProps = {
 };
 
 function resolveLogoVariant(tone: BrandLogoTone, scheme: ColorScheme): AppLogoVariant {
-  if (tone === 'onAccent' || tone === 'login') return 'onAccent';
+  if (tone === 'onAccent') return 'onAccent';
+  if (tone === 'login') return scheme === 'dark' ? 'dark' : 'light';
   return scheme;
 }
 
 function resolveLogoUrl(tone: BrandLogoTone, scheme: ColorScheme) {
-  if (tone === 'onAccent' || tone === 'login') return getAppLogoOnAccent();
+  if (tone === 'login') {
+    return scheme === 'dark' ? DEFAULT_APP_LOGO_LOGIN_DARK : DEFAULT_APP_LOGO_LOGIN;
+  }
+  if (tone === 'onAccent') return getAppLogoOnAccent();
   return getAppLogoForScheme(scheme);
 }
 
@@ -68,12 +74,17 @@ export default function BrandLogo({
   }, [syncLogoUrl]);
 
   const handleImageError = useCallback(() => {
-    const fallback = getDefaultAppLogoUrl(logoVariant);
+    const fallback =
+      tone === 'login'
+        ? colorScheme === 'dark'
+          ? DEFAULT_APP_LOGO_LOGIN_DARK
+          : DEFAULT_APP_LOGO_LOGIN
+        : getDefaultAppLogoUrl(logoVariant);
     if (!usingFallback && displaySrc !== fallback) {
       setDisplaySrc(fallback);
       setUsingFallback(true);
     }
-  }, [displaySrc, logoVariant, usingFallback]);
+  }, [colorScheme, displaySrc, logoVariant, tone, usingFallback]);
 
   useEffect(() => {
     const syncSize = () => setConfiguredSize(getAppLogoSize());
@@ -87,7 +98,9 @@ export default function BrandLogo({
     resolvedSize === 'md' && styles.logoBoxMd,
     resolvedSize === 'lg' && styles.logoBoxLg,
     collapsed && styles.logoBoxCollapsed,
-    (tone === 'onAccent' || tone === 'login') && styles.logoBoxOnAccent,
+    tone === 'onAccent' && styles.logoBoxOnAccent,
+    tone === 'login' && styles.logoBoxLogin,
+    tone === 'login' && resolvedSize === 'lg' && styles.logoBoxLoginLg,
     onClick && styles.logoBtn,
     className,
   );
@@ -97,10 +110,7 @@ export default function BrandLogo({
       key={displaySrc}
       src={displaySrc}
       alt=""
-      className={cx(
-        styles.logo,
-        tone === 'login' && colorScheme === 'light' && styles.logoLoginBlackBird,
-      )}
+      className={cx(styles.logo, tone === 'login' && styles.logoLoginImage)}
       loading="eager"
       decoding="async"
       onError={handleImageError}

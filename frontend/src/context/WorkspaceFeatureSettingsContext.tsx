@@ -9,27 +9,28 @@ import {
 } from 'react';
 import {
   DEFAULT_WORKSPACE_FEATURE_FLAGS,
-  type WorkspaceFeatureSettings,
+  type WorkspaceFeatureSettingsView,
 } from '@shared/types';
 import { workspaceFeatureSettingsService } from '@/api/workspaceFeatureSettings';
 
 type WorkspaceFeatureSettingsContextValue = {
-  settings: WorkspaceFeatureSettings | null;
+  settings: WorkspaceFeatureSettingsView | null;
   workerSignaturesEnabled: boolean;
   shiftSchedulingEnabled: boolean;
   activityWorkReportsEnabled: boolean;
   invoiceConceptFreeCreationEnabled: boolean;
   verifactuEnabled: boolean;
+  verifactuModuleLicensed: boolean;
   loading: boolean;
   refresh: () => Promise<void>;
-  update: (patch: Partial<WorkspaceFeatureSettings>) => Promise<WorkspaceFeatureSettings>;
+  update: (patch: Partial<WorkspaceFeatureSettingsView>) => Promise<WorkspaceFeatureSettingsView>;
 };
 
 const WorkspaceFeatureSettingsContext =
   createContext<WorkspaceFeatureSettingsContextValue | null>(null);
 
 export function WorkspaceFeatureSettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<WorkspaceFeatureSettings | null>(null);
+  const [settings, setSettings] = useState<WorkspaceFeatureSettingsView | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -52,7 +53,7 @@ export function WorkspaceFeatureSettingsProvider({ children }: { children: React
     };
   }, [refresh]);
 
-  const update = useCallback(async (patch: Partial<WorkspaceFeatureSettings>) => {
+  const update = useCallback(async (patch: Partial<WorkspaceFeatureSettingsView>) => {
     const saved = await workspaceFeatureSettingsService.update(patch);
     setSettings(saved);
     return saved;
@@ -70,6 +71,7 @@ export function WorkspaceFeatureSettingsProvider({ children }: { children: React
     DEFAULT_WORKSPACE_FEATURE_FLAGS.invoiceConceptFreeCreationEnabled;
   const verifactuEnabled =
     settings?.verifactuEnabled ?? DEFAULT_WORKSPACE_FEATURE_FLAGS.verifactuEnabled;
+  const verifactuModuleLicensed = settings?.verifactuModuleLicensed ?? false;
 
   const value = useMemo(
     () => ({
@@ -79,6 +81,7 @@ export function WorkspaceFeatureSettingsProvider({ children }: { children: React
       activityWorkReportsEnabled,
       invoiceConceptFreeCreationEnabled,
       verifactuEnabled,
+      verifactuModuleLicensed,
       loading,
       refresh,
       update,
@@ -90,6 +93,7 @@ export function WorkspaceFeatureSettingsProvider({ children }: { children: React
       activityWorkReportsEnabled,
       invoiceConceptFreeCreationEnabled,
       verifactuEnabled,
+      verifactuModuleLicensed,
       loading,
       refresh,
       update,
