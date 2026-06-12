@@ -131,7 +131,7 @@
   max-width: 100%;
   overflow-x: hidden;
   background: var(--dashboard-surface-bg);
-  padding-bottom: 1.5rem;
+  padding-bottom: 2rem;
 }
 
 .dashboardTwoColGrid {
@@ -173,7 +173,7 @@
 
 @media (max-width: 767px) {
   .dashboardPage {
-    padding-bottom: 1.5rem;
+    padding-bottom: 2rem;
   }
 }
 

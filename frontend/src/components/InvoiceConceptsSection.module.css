@@ -243,9 +243,7 @@
 }
 
 .cardShellCollapsible {
-  position: relative;
-  overflow: visible;
-  padding-bottom: 1rem;
+  composes: collapsibleCardShell from './ChartSectionToggle.module.css';
 }
 
 .chartToggleRow {

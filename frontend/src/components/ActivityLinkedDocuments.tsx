@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router';
 import type { Client, Document } from '@shared/types';
 import { DOCUMENT_TYPE_LABELS } from '@shared/types';
 import { openDocumentPdf, openDocumentPdfLocally } from '@/lib/documentPdf';
@@ -11,6 +12,8 @@ type Props = {
 };
 
 export default function ActivityLinkedDocuments({ documents, clientsMap, className }: Props) {
+  const navigate = useNavigate();
+
   if (documents.length === 0) return null;
 
   const handleOpen = async (doc: Document, event: React.MouseEvent) => {
@@ -20,7 +23,15 @@ export default function ActivityLinkedDocuments({ documents, clientsMap, classNa
     try {
       await openDocumentPdf(doc, client);
     } catch {
-      if (client) openDocumentPdfLocally(doc, client);
+      if (client) {
+        try {
+          await openDocumentPdfLocally(doc, client);
+          return;
+        } catch {
+          // fallback abajo
+        }
+      }
+      navigate(`/docs/${doc.id}`);
     }
   };
 

@@ -140,7 +140,7 @@ export const documentsService = {
     return URL.createObjectURL(blob);
   },
 
-  /** URL para vista previa: S3 firmada cuando exista; si no, blob: con auth (evita abrir /api sin token). */
+  /** URL remota (p. ej. S3 firmada) para abrir en pestaña nueva. Visores embebidos: getPdfObjectUrl. */
   getPdfPreviewUrl: async (id: string): Promise<string> => {
     const view = await documentsService.getPdfView(id);
     if (view.url) return view.url;
@@ -154,16 +154,9 @@ export function revokePdfObjectUrl(url: string): void {
   }
 }
 
-export function openPdfUrl(url: string): void {
-  const tab = window.open(url, '_blank', 'noopener,noreferrer');
-  if (!tab && url.startsWith('blob:')) {
-    URL.revokeObjectURL(url);
-  }
-}
-
 export async function openDocumentPdfById(id: string): Promise<void> {
-  const url = await documentsService.getPdfObjectUrl(id);
-  openPdfUrl(url);
+  const { openDocumentPdfByStoredId } = await import('@/lib/documentPdf');
+  return openDocumentPdfByStoredId(id);
 }
 
 export function triggerFileDownload(blob: Blob, filename: string): void {

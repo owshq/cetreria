@@ -17,7 +17,7 @@ export async function resolveDocumentAttachmentPreviewUrl(
   client: Client,
 ): Promise<string> {
   try {
-    return await documentsService.getPdfPreviewUrl(doc.id);
+    return await documentsService.getPdfObjectUrl(doc.id);
   } catch {
     return getDocumentPdfLocalObjectUrl(doc, client);
   }

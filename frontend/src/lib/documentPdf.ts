@@ -4,9 +4,136 @@ import { apiFetchBlob } from '@/api/client';
 import {
   documentsService,
   downloadDocumentPdfById,
-  openPdfUrl,
   triggerFileDownload,
 } from '@/api/documents';
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function isRemotePdfUrl(url: string): boolean {
+  return url.startsWith('http://') || url.startsWith('https://');
+}
+
+function scheduleBlobUrlRevoke(url: string): void {
+  if (url.startsWith('blob:')) {
+    window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
+  }
+}
+
+/** Embed en pestaña popup (fallback si data: URL no esta disponible). */
+function renderPdfBlobInWindow(win: Window, blob: Blob, title: string): void {
+  const safeTitle = escapeHtml(title.replace(/\.pdf$/i, ''));
+  const url = URL.createObjectURL(blob);
+  win.document.open();
+  win.document.write(
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${safeTitle}</title>` +
+      `<style>html,body{margin:0;height:100%;overflow:hidden;background:#525659}` +
+      `object,embed{display:block;width:100%;height:100%;border:0}</style></head><body>` +
+      `<object data="${url}" type="application/pdf"><embed src="${url}" type="application/pdf" /></object>` +
+      `</body></html>`,
+  );
+  win.document.close();
+  scheduleBlobUrlRevoke(url);
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') resolve(reader.result);
+      else reject(new Error('No se pudo leer el PDF.'));
+    };
+    reader.onerror = () => reject(reader.error ?? new Error('No se pudo leer el PDF.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function openRemotePdfInWindow(win: Window | null, url: string, title: string): void {
+  const docTitle = title.replace(/\.pdf$/i, '');
+  if (win && !win.closed) {
+    win.location.href = url;
+    win.document.title = docTitle;
+    return;
+  }
+  const tab = window.open(url, '_blank', 'noopener,noreferrer');
+  if (tab) tab.document.title = docTitle;
+}
+
+function closePreviewTab(tab: Window | null): void {
+  if (tab && !tab.closed) tab.close();
+}
+
+function previewTabLooksReady(win: Window): boolean {
+  try {
+    const href = win.location.href;
+    if (href.startsWith('data:application/pdf')) return true;
+    if (isRemotePdfUrl(href)) return true;
+    return win.document.querySelector('object[data], embed[src]') != null;
+  } catch {
+    return false;
+  }
+}
+
+function openDocumentDetailInNewTab(documentId: string): void {
+  const path = `/docs/${documentId}`;
+  const opened = window.open(path, '_blank', 'noopener,noreferrer');
+  if (!opened) window.location.assign(path);
+}
+
+async function waitForPreviewTabReady(tab: Window): Promise<boolean> {
+  await new Promise((resolve) => window.setTimeout(resolve, 400));
+  return previewTabLooksReady(tab);
+}
+
+async function openPdfBlobInPreviewTab(
+  blob: Blob,
+  title: string,
+  previewTab: Window | null,
+): Promise<boolean> {
+  const docTitle = title.replace(/\.pdf$/i, '');
+
+  if (previewTab && !previewTab.closed) {
+    try {
+      const dataUrl = await blobToDataUrl(blob);
+      previewTab.location.replace(dataUrl);
+      previewTab.document.title = docTitle;
+      return waitForPreviewTabReady(previewTab);
+    } catch {
+      try {
+        renderPdfBlobInWindow(previewTab, blob, title);
+        return waitForPreviewTabReady(previewTab);
+      } catch {
+        // fallback abajo
+      }
+    }
+  }
+
+  const tab = openDocumentPreviewTab();
+  if (tab && !tab.closed) {
+    try {
+      const dataUrl = await blobToDataUrl(blob);
+      tab.location.replace(dataUrl);
+      tab.document.title = docTitle;
+      return waitForPreviewTabReady(tab);
+    } catch {
+      try {
+        renderPdfBlobInWindow(tab, blob, title);
+        return waitForPreviewTabReady(tab);
+      } catch {
+        // fallback abajo
+      }
+    }
+  }
+
+  triggerFileDownload(blob, title);
+  return true;
+}
 
 function extractDocumentPdfApiPath(src: string): string | null {
   const match = src.match(/\/documents\/([^/?#]+)\/pdf(?:\?|$|#)/);
@@ -50,26 +177,54 @@ export async function printPdfFromPreviewUrl(src: string): Promise<void> {
 
 export async function openDocumentPdf(doc: Document, client?: Client): Promise<void> {
   const previewTab = openDocumentPreviewTab();
+  const fileName = doc.number.endsWith('.pdf') ? doc.number : `${doc.number}.pdf`;
   try {
-    const url = await documentsService.getPdfPreviewUrl(doc.id);
-    if (previewTab && !previewTab.closed) {
-      previewTab.location.href = url;
-      if (url.startsWith('blob:')) {
-        window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
-      }
+    const view = await documentsService.getPdfView(doc.id);
+    if (view.url && isRemotePdfUrl(view.url)) {
+      openRemotePdfInWindow(previewTab, view.url, fileName);
       return;
     }
-    openPdfUrl(url);
+    const blob = await documentsService.getPdfBlob(doc.id);
+    const opened = await openPdfBlobInPreviewTab(blob, fileName, previewTab);
+    if (!opened) {
+      closePreviewTab(previewTab);
+      openDocumentDetailInNewTab(doc.id);
+    }
   } catch {
     if (client) {
-      openDocumentPdfLocally(doc, client, undefined, previewTab);
+      try {
+        await openDocumentPdfLocally(doc, client, undefined, previewTab);
+        return;
+      } catch {
+        // fallback abajo
+      }
+    }
+    closePreviewTab(previewTab);
+    openDocumentDetailInNewTab(doc.id);
+  }
+}
+
+export async function openDocumentPdfByStoredId(
+  id: string,
+  title = 'documento.pdf',
+): Promise<void> {
+  const previewTab = openDocumentPreviewTab();
+  const fileName = title.endsWith('.pdf') ? title : `${title}.pdf`;
+  try {
+    const view = await documentsService.getPdfView(id);
+    if (view.url && isRemotePdfUrl(view.url)) {
+      openRemotePdfInWindow(previewTab, view.url, fileName);
       return;
     }
-    if (previewTab && !previewTab.closed) {
-      previewTab.document.body.innerHTML =
-        '<p style="font-family:system-ui,sans-serif;padding:2rem;color:#b91c1c">No se pudo abrir el documento.</p>';
+    const blob = await documentsService.getPdfBlob(id);
+    const opened = await openPdfBlobInPreviewTab(blob, fileName, previewTab);
+    if (!opened) {
+      closePreviewTab(previewTab);
+      openDocumentDetailInNewTab(id);
     }
-    throw new Error('No se pudo abrir el documento.');
+  } catch {
+    closePreviewTab(previewTab);
+    openDocumentDetailInNewTab(id);
   }
 }
 
@@ -107,12 +262,12 @@ export function openDocumentPreviewTab(): Window | null {
  * Genera el PDF en el cliente y lo abre en una pestaña.
  * `previewTab` debe abrirse con {@link openDocumentPreviewTab} en el mismo clic del usuario.
  */
-export function openDocumentPdfLocally(
+export async function openDocumentPdfLocally(
   doc: Document,
   client: Client,
   company?: WorkspaceBillingSettings | null,
   previewTab: Window | null = null,
-): void {
+): Promise<void> {
   const fileName = doc.number.endsWith('.pdf') ? doc.number : `${doc.number}.pdf`;
   let tab = previewTab;
 
@@ -122,16 +277,7 @@ export function openDocumentPdfLocally(
 
   try {
     const blob = buildDocumentPdfBlob(doc, client, company);
-    const url = URL.createObjectURL(blob);
-
-    if (tab && !tab.closed) {
-      tab.location.href = url;
-      tab.document.title = fileName.replace(/\.pdf$/i, '');
-      window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
-      return;
-    }
-
-    triggerFileDownload(blob, fileName);
+    await openPdfBlobInPreviewTab(blob, fileName, tab);
   } catch (err) {
     if (tab && !tab.closed) {
       tab.document.body.innerHTML =

@@ -225,7 +225,7 @@ export default function DocumentDetail() {
         clientList.find((item) => item.id === doc.clientId) ??
         (await clientsService.getById(doc.clientId));
 
-      const pdfPromise = documentsService.getPdfPreviewUrl(id).catch(() => null);
+      const pdfPromise = documentsService.getPdfObjectUrl(id).catch(() => null);
       const activityList = bootstrap.activities.filter((item) => item.clientId === doc.clientId);
 
       if (cancelled) return;
@@ -409,7 +409,7 @@ export default function DocumentDetail() {
     await refreshDocumentList();
     setPdfError(false);
     try {
-      const url = await documentsService.getPdfPreviewUrl(updated.id);
+      const url = await documentsService.getPdfObjectUrl(updated.id);
       setPdfUrl((current) => {
         if (current?.startsWith('blob:')) revokePdfObjectUrl(current);
         return url;
@@ -449,7 +449,7 @@ export default function DocumentDetail() {
     setPdfError(false);
 
     try {
-      const url = await documentsService.getPdfPreviewUrl(savedDocId);
+      const url = await documentsService.getPdfObjectUrl(savedDocId);
       setPdfUrl((current) => {
         if (current?.startsWith('blob:')) revokePdfObjectUrl(current);
         return url;
@@ -546,7 +546,7 @@ export default function DocumentDetail() {
         url = pdfUrl;
       } else {
         try {
-          url = await documentsService.getPdfPreviewUrl(targetDoc.id);
+          url = await documentsService.getPdfObjectUrl(targetDoc.id);
         } catch {
           const docClient = clientsMap.get(targetDoc.clientId);
           if (docClient) {

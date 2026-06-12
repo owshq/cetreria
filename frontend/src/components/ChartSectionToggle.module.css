@@ -1,3 +1,11 @@
+.collapsibleCardShell {
+  position: relative;
+  overflow: visible;
+  padding-bottom: 1rem;
+  /* Mitad del boton (2rem) sobresale bajo la tarjeta; reserva hueco inferior. */
+  margin-bottom: 1.5rem;
+}
+
 .toggleRow {
   position: absolute;
   left: 50%;

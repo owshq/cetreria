@@ -1119,10 +1119,10 @@
       "createdAt": "2026-06-11T12:09:06.525Z",
       "pdfSource": "generated",
       "pdfKey": "workspaces/a0000001-0000-4000-8000-000000000001/documents/e5731123-7513-4354-a66d-acb5be83b588/90408e57-ffd5-4c3e-87ed-6fcd8235ea7b.pdf",
-      "pdfGeneratedAt": "2026-06-11T12:09:07.556Z",
+      "pdfGeneratedAt": "2026-06-12T11:03:56.213Z",
       "templateId": "classic",
       "templateColor": "#5e6a37",
-      "pdfRenderVersion": 15,
+      "pdfRenderVersion": 17,
       "displayName": "A-2026-001-Almacenes del Norte",
       "workerUserId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429"
     },
@@ -2560,7 +2560,7 @@
       "entityId": "6d6688fa-982c-43ee-8cbc-3544c788db5e",
       "actorUserId": "system",
       "actorUserName": "Sistema",
-      "createdAt": "2026-06-11T22:20:21.145Z",
+      "createdAt": "2026-06-12T11:19:46.787Z",
       "dedupeKey": "reminder:overdue:6d6688fa-982c-43ee-8cbc-3544c788db5e"
     },
     {
@@ -2703,7 +2703,7 @@
       "entityId": "4a6b2bd6-3601-4f86-ae88-f9e776bbbc72",
       "actorUserId": "system",
       "actorUserName": "Sistema",
-      "createdAt": "2026-06-11T22:20:21.150Z",
+      "createdAt": "2026-06-12T11:19:46.796Z",
       "dedupeKey": "reminder:overdue:4a6b2bd6-3601-4f86-ae88-f9e776bbbc72"
     },
     {
@@ -2767,7 +2767,7 @@
       "entityId": "db9a452b-56d5-4766-912b-21f6c82663a5",
       "actorUserId": "system",
       "actorUserName": "Sistema",
-      "createdAt": "2026-06-11T22:20:21.155Z",
+      "createdAt": "2026-06-12T11:19:46.799Z",
       "dedupeKey": "reminder:upcoming:db9a452b-56d5-4766-912b-21f6c82663a5"
     },
     {
@@ -2815,7 +2815,7 @@
       "entityId": "31b65a26-f51c-44ee-b125-452c046464ac",
       "actorUserId": "system",
       "actorUserName": "Sistema",
-      "createdAt": "2026-06-11T22:20:21.161Z",
+      "createdAt": "2026-06-12T11:19:46.804Z",
       "dedupeKey": "reminder:upcoming:31b65a26-f51c-44ee-b125-452c046464ac"
     },
     {
@@ -2863,7 +2863,7 @@
       "entityId": "be29e76e-8c5a-4ec9-ac8f-73b99d46b7aa",
       "actorUserId": "system",
       "actorUserName": "Sistema",
-      "createdAt": "2026-06-11T22:20:21.139Z",
+      "createdAt": "2026-06-12T11:19:46.770Z",
       "dedupeKey": "reminder:overdue:be29e76e-8c5a-4ec9-ac8f-73b99d46b7aa"
     },
     {
