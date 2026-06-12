@@ -1,0 +1,2 @@
+# JSON de datos y fixtures: LF fijo (CI Linux vs dev Windows).
+backend/data/**/*.json text eol=lf
