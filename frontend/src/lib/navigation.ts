@@ -13,7 +13,8 @@ export function getReturnPath(state: unknown, fallback = '/clients'): string {
     'returnTo' in state &&
     typeof (state as ReturnNavigationState).returnTo === 'string'
   ) {
-    return (state as ReturnNavigationState).returnTo;
+    const path = (state as ReturnNavigationState).returnTo.trim();
+    if (path) return path;
   }
   return fallback;
 }

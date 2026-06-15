@@ -146,14 +146,6 @@ export default function DocumentDetail() {
   );
 
   const handleBack = () => {
-    if (
-      location.state &&
-      typeof location.state === 'object' &&
-      'returnTo' in location.state
-    ) {
-      navigate(-1);
-      return;
-    }
     navigate(returnPath);
   };
 
