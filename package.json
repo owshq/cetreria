@@ -35,7 +35,7 @@
     "test:verifactu:aeat-core": "node --import tsx --test --test-concurrency=1 backend/src/services/aeat/verifactuAeatCore.test.ts",
     "smoke:documents-bootstrap": "node --import tsx --test --test-concurrency=1 backend/src/routes/documents.bootstrap.smoke.test.ts",
     "test:resource-access": "node --import tsx --test shared/tests/resourceAccess.test.ts",
-    "build": "vite build --config frontend/vite.config.ts",
+    "build": "vite build --config frontend/vite.config.ts && node scripts/bundle-api.mjs",
     "build:vercel": "node scripts/build-vercel.mjs",
     "preview": "cross-env NODE_OPTIONS=--max-http-header-size=32768 vite preview --config frontend/vite.config.ts",
     "tunnel": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/cloudflared-tunnel.ps1"

@@ -1,18 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createApp } from '../backend/src/app.js';
-import { bootstrapDb } from '../backend/src/db/bootstrapDb.js';
-import { pullDbFromS3, pushDbToS3 } from '../backend/src/vercel/dbS3Sync.js';
-import { prepareVercelRuntime } from '../backend/src/vercel/prepareRuntime.js';
+import { createApp } from '../app.js';
+import { bootstrapDb } from '../db/bootstrapDb.js';
+import { pullDbFromS3, pushDbToS3 } from './dbS3Sync.js';
+import { prepareVercelRuntime } from './prepareRuntime.js';
 
-const funcDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(funcDir, '..');
+const repoRoot = path.resolve(process.cwd());
 
 function resolveSeedDbPath(): string | null {
   const candidates = [
-    path.join(funcDir, 'seed-db.json'),
     path.join(repoRoot, 'backend/data/db.json'),
     path.join(process.cwd(), 'backend/data/db.json'),
   ];
