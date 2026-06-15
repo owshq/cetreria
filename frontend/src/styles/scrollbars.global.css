@@ -1,0 +1,112 @@
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.15s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background-color: var(--scrollbar-thumb-active);
+}
+
+*::-webkit-scrollbar-button,
+*::-webkit-scrollbar-button:single-button,
+*::-webkit-scrollbar-button:double-button,
+*::-webkit-scrollbar-button:vertical,
+*::-webkit-scrollbar-button:horizontal,
+*::-webkit-scrollbar-button:vertical:decrement,
+*::-webkit-scrollbar-button:vertical:increment,
+*::-webkit-scrollbar-button:horizontal:decrement,
+*::-webkit-scrollbar-button:horizontal:increment {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+[data-scroll-region] {
+  min-height: 0;
+  overscroll-behavior: var(--scroll-overscroll-behavior, contain);
+}
+
+[data-popup-open] [data-scroll-region] {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Paneles modales (p. ej. Vistas y filtros) deben seguir pudiendo hacer scroll. */
+[data-popup-open]
+  :is([role='dialog'], [role='alertdialog'], [data-popup-layer])
+  [data-scroll-region] {
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Sobrescribe * en contenedores marcados con data-scroll-region.
+ * html aumenta especificidad para ganar al bundling global.
+ * Thumb transparente + ancho fijo: sin salto de layout al hover.
+ */
+html [data-scroll-region] {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+html [data-scroll-region]:hover,
+html [data-scroll-region]:focus-within {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+html [data-scroll-region]::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+html [data-scroll-region]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html [data-scroll-region]::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.15s ease;
+}
+
+html [data-scroll-region]:hover::-webkit-scrollbar-thumb,
+html [data-scroll-region]:focus-within::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+}
+
+html [data-scroll-region]::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+html [data-scroll-region]::-webkit-scrollbar-thumb:active {
+  background-color: var(--scrollbar-thumb-active);
+}

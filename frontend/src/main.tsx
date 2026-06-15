@@ -6,8 +6,8 @@ import { applyAppLogoSize } from './lib/appLogo';
 import { ensureDefaultAppAccentColor, migrateAppAccentColor } from './lib/appTheme';
 import { applyDefaultWorkspaceTypography } from './lib/workspaceTypography';
 import { migrateLegacyStorage } from './lib/storageKeys';
-import './styles/global.module.css';
-import './styles/scrollbars.module.css';
+import './styles/global.css';
+import './styles/scrollbars.global.css';
 
 migrateLegacyStorage();
 migrateAppAccentColor();

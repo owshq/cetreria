@@ -1,5 +1,5 @@
 /* ── Layout, typography & chrome (theme-agnostic) ── */
-:global(:root) {
+:root {
   --font-body: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-heading: 'Oswald', sans-serif;
   --font-description: var(--font-body);
@@ -83,17 +83,17 @@
 }
 
 /* Portaled dropdowns must sit above modals (see --z-modal). */
-:global([data-popup-open]) {
+[data-popup-open] {
   --z-dropdown-portal: 220;
 }
 
-:global([data-theme='dark'][data-popup-open]) {
+[data-theme='dark'][data-popup-open] {
   --color-bg-surface: var(--color-bg-modal);
 }
 
 /* ── Light theme: oklch foundation + semantic aliases ── */
-:global(:root),
-:global([data-theme='light']) {
+:root,
+[data-theme='light'] {
   color-scheme: light;
 
   /* Foundation */
@@ -278,7 +278,7 @@
 }
 
 /* ── Dark theme: oklch foundation + corporate chrome ── */
-:global([data-theme='dark']) {
+[data-theme='dark'] {
   color-scheme: dark;
 
   /* Foundation */
@@ -463,26 +463,26 @@
   --color-pdf-viewer-border: var(--stroke-gray-medium);
 }
 
-:global(*),
-:global(*::before),
-:global(*::after) {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-:global(html) {
+html {
   font-size: 16px;
 }
 
-:global(body),
-:global(p),
-:global(table),
-:global(input),
-:global(select),
-:global(textarea) {
+body,
+p,
+table,
+input,
+select,
+textarea {
   font-family: var(--font-body);
 }
 
-:global(body) {
+body {
   margin: 0;
   background: var(--color-bg-page);
   color: var(--color-text-primary);
@@ -491,24 +491,24 @@
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-:global(h1),
-:global(h2),
-:global(h3),
-:global(h4),
-:global(h5),
-:global(h6),
-:global(.titulo-crm) {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.titulo-crm {
   font-family: var(--font-heading);
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.01em;
 }
 
-:global(h1) {
+h1 {
   font-weight: 700;
 }
 
-:global(button) {
+button {
   font-family: var(--font-body);
   font-weight: 500;
   text-transform: none;
@@ -516,16 +516,16 @@
   line-height: inherit;
 }
 
-:global(a) {
+a {
   color: inherit;
 }
 
-:global(#root) {
+#root {
   min-height: 100vh;
 }
 
 @media (max-width: 767px) {
-  :global(:root) {
+  :root {
     --layout-main-padding-inline: 1rem;
   }
 
@@ -533,15 +533,15 @@
    * iOS Safari auto-zooms focused fields when font-size < 16px.
    * !important overrides CSS-module control classes (e.g. 0.875rem).
    */
-  :global(
+  
     input:not([type='checkbox']):not([type='radio']):not([type='button']):not(
         [type='submit']
       ):not([type='reset']):not([type='hidden']):not([type='file']):not([type='image']):not(
         [type='range']
       ):not([type='color'])
-  ),
-  :global(select),
-  :global(textarea) {
+  ,
+  select,
+  textarea {
     font-size: 16px !important;
   }
 }
