@@ -14,6 +14,7 @@ import { activitiesService } from '@/api/activities';
 import { ApiError } from '@/api/client';
 import { Input, Textarea } from '@/components/forms';
 import { cx } from '@/lib/cx';
+import { createId } from '@/lib/tableViews';
 import ui from '@/styles/shared.module.css';
 import styles from '@/pages/Calendar.module.css';
 
@@ -45,7 +46,7 @@ const DEFAULT_WORK_REPORT_ZONE_ID = 'work-report-zone-default';
 
 function createZoneDraft(index: number): WorkReportZoneDraft {
   return {
-    id: index === 0 ? DEFAULT_WORK_REPORT_ZONE_ID : crypto.randomUUID(),
+    id: index === 0 ? DEFAULT_WORK_REPORT_ZONE_ID : createId(),
     title: index === 0 ? 'Zona 1' : `Zona ${index + 1}`,
     notes: '',
     images: [],

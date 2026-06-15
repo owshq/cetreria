@@ -145,8 +145,16 @@ export const FILTER_OPERATOR_SYMBOLS: Record<FilterOperator, string> = {
 
 const STORAGE_PREFIX = storageKeys.tableViewsV2;
 
-export function createId() {
-  return crypto.randomUUID();
+export function createId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // Fallback for non-secure contexts (e.g. HTTP on LAN IP).
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    const rnd = (Math.random() * 16) | 0;
+    const val = char === 'x' ? rnd : (rnd & 0x3) | 0x8;
+    return val.toString(16);
+  });
 }
 
 export function createEmptyCondition(columnId = ''): FilterCondition {

@@ -27,6 +27,7 @@ import {
   sortViewItems,
   stripInactiveFilterRules,
   viewDiffersFromDefault,
+  createId,
   type DisplayColumnDef,
   type SavedTableView,
   type TableViewConfig,
@@ -463,7 +464,7 @@ export function useTableView<T, Ctx = undefined>(
       const prepared = prepareViewConfig(source, displayColumns, dataColumns, defaultFilterColumnId);
       const userId = authService.getCurrentUser()?.id;
       const view: SavedTableView = {
-        id: crypto.randomUUID(),
+        id: createId(),
         name: trimmed,
         description: description.trim(),
         icon: icon || '🔎',

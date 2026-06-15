@@ -1,3 +1,4 @@
+import { createId } from '@/lib/tableViews';
 import {
   readWorkspaceScopedStorage,
   writeWorkspaceScopedStorage,
@@ -59,7 +60,7 @@ export function upsertSavedDocumentTemplate(
   const templates = readSavedDocumentTemplates();
   const now = new Date().toISOString();
   const next: SavedDocumentTemplate = {
-    id: existingId ?? crypto.randomUUID(),
+    id: existingId ?? createId(),
     name: trimmedName,
     html: trimmedHtml,
     updatedAt: now,
