@@ -31,6 +31,8 @@ export const config = {
     return resolveDbPath();
   },
   jwtSecret: process.env.JWT_SECRET ?? 'crm-cetreria-dev-secret',
+  /** Clave S3 del snapshot db.json en despliegues serverless (Vercel). */
+  dbS3Key: process.env.DB_S3_KEY ?? 'crm-cetreria/db.json',
   s3: {
     bucket: process.env.S3_BUCKET ?? '',
     region: process.env.AWS_REGION ?? process.env.S3_REGION ?? 'eu-west-1',

@@ -36,6 +36,7 @@
     "smoke:documents-bootstrap": "node --import tsx --test --test-concurrency=1 backend/src/routes/documents.bootstrap.smoke.test.ts",
     "test:resource-access": "node --import tsx --test shared/tests/resourceAccess.test.ts",
     "build": "vite build --config frontend/vite.config.ts",
+    "build:vercel": "node scripts/build-vercel.mjs",
     "preview": "cross-env NODE_OPTIONS=--max-http-header-size=32768 vite preview --config frontend/vite.config.ts",
     "tunnel": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/cloudflared-tunnel.ps1"
   },
@@ -63,6 +64,7 @@
     "ws": "^8.21.0"
   },
   "devDependencies": {
+    "@vercel/node": "^5.1.14",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
@@ -75,6 +77,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.2.1",
     "cross-env": "^7.0.3",
+    "esbuild": "^0.25.5",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
     "vite": "^6.2.3"

@@ -8,7 +8,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { config } from '../config.js';
 import type { DocumentStorage } from './types.js';
 
-function createS3Client(): S3Client {
+export function createS3Client(): S3Client {
   const { region, endpoint, accessKeyId, secretAccessKey } = config.s3;
   const clientConfig: ConstructorParameters<typeof S3Client>[0] = { region };
 

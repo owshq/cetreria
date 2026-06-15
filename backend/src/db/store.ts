@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { JSONFilePreset } from 'lowdb/node';
 import { DB_NAMES, LEGACY_DB_NAMES, config } from '../config.js';
+import { pushDbToS3 } from '../vercel/dbS3Sync.js';
 
 type DbRecord = { id: string } & Record<string, unknown>;
 
@@ -57,6 +58,12 @@ function readDbMtimeMs(): number | null {
 /** Tras escribir en memoria, el JSON en disco coincide hasta que otro proceso lo modifique. */
 export function markDbWritten(): void {
   cachedDbMtimeMs = readDbMtimeMs();
+}
+
+/** Persiste db.json en S3 cuando el runtime es Vercel y hay bucket configurado. */
+export async function persistDbAfterWrite(): Promise<void> {
+  markDbWritten();
+  await pushDbToS3(config.dbPath);
 }
 
 export async function getDb(): Promise<LowdbInstance> {

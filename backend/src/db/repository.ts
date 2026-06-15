@@ -1,6 +1,6 @@
 import { DEFAULT_WORKSPACE_ID } from '@shared/types';
 import { DB_NAMES, config } from '../config.js';
-import { markDbWritten, refreshDbFromDisk } from './store.js';
+import { persistDbAfterWrite, refreshDbFromDisk } from './store.js';
 
 type DbName = (typeof DB_NAMES)[keyof typeof DB_NAMES];
 
@@ -58,7 +58,7 @@ export async function withDbTransaction<T>(fn: () => Promise<T>): Promise<T> {
       const result = await fn();
       if (activeTx.changed) {
         await activeTx.db.write();
-        markDbWritten();
+        await persistDbAfterWrite();
       }
       return result;
     } finally {
@@ -96,7 +96,7 @@ export async function insertDoc<T extends { id: string }>(
     const db = await refreshDbFromDisk();
     db.data[getCollection(dbName)].push({ ...entity });
     await db.write();
-    markDbWritten();
+    await persistDbAfterWrite();
     return entity;
   });
 }
@@ -127,7 +127,7 @@ export async function updateDoc<T extends { id: string }>(
     const merged = { ...collection[index], ...updates, id };
     collection[index] = merged;
     await db.write();
-    markDbWritten();
+    await persistDbAfterWrite();
     return merged as T;
   });
 }
@@ -152,7 +152,7 @@ export async function deleteDoc(dbName: string, id: string): Promise<boolean> {
 
     collection.splice(index, 1);
     await db.write();
-    markDbWritten();
+    await persistDbAfterWrite();
     return true;
   });
 }
