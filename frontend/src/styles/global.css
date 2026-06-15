@@ -446,7 +446,7 @@
   --metric-accent: var(--foreground);
 
   --color-table-head-bg: var(--app-accent-soft);
-  --color-table-head-text: var(--app-accent);
+  --color-table-head-text: var(--foreground);
   --color-table-head-border: color-mix(in srgb, var(--app-accent) 30%, transparent);
   --color-table-group-bg: var(--background);
   --color-table-cell-text: var(--muted-foreground);

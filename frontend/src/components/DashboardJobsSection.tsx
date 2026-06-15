@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { format, isBefore, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ArrowDownToLine, ChevronDown, Search } from 'lucide-react';
+import { ArrowDownToLine, Search } from 'lucide-react';
 import type {
   Activity,
   ActivityType,
@@ -18,8 +18,9 @@ import CalendarEventButton from '@/components/CalendarEventButton';
 import EmptyState from '@/components/EmptyState';
 import { SearchField } from '@/components/forms';
 import WorkShiftsBarChart, { WorkShiftsChartToggles } from '@/components/WorkShiftsBarChart';
+import ChartSectionToggle from '@/components/ChartSectionToggle';
 import { useActivityModal } from '@/context/ActivityModalContext';
-import { scrollRegionProps } from '@/lib/scrollRegion';
+import { scrollRegionProps, scrollSecondaryRegionProps } from '@/lib/scrollRegion';
 import { useWorkspaceFeatureSettings } from '@/context/WorkspaceFeatureSettingsContext';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import ActivityAssociationGapBanner from '@/components/ActivityAssociationGapBanner';
@@ -943,6 +944,13 @@ export default function DashboardJobsSection({
   return (
     <>
       <div className={plainSectionHeader ? ui.pageSectionTitleRow : ui.pageSectionHeading}>
+        {showChartToggle ? (
+          <ChartSectionToggle
+            expanded={chartExpanded}
+            onToggle={onChartToggle!}
+            controlsId="dashboard-work-shifts-chart-panel"
+          />
+        ) : null}
         <h2 className={ui.pageSectionTitle}>Horas de actividad</h2>
         <div className={styles.sectionTitleActions}>
           {isDesktop ? chartToggles : null}
@@ -968,33 +976,11 @@ export default function DashboardJobsSection({
           ui.card,
           cardClassName,
           styles.cardShell,
-          showChartToggle && styles.cardShellCollapsible,
         )}
       >
-        <div className={cx(styles.cardBody, cardBodyClassName)}>{bodyContent}</div>
-        {showChartToggle ? (
-          <div className={styles.chartToggleRow}>
-            <button
-              type="button"
-              className={styles.chartToggleBtn}
-              onClick={onChartToggle}
-              aria-expanded={chartExpanded}
-              aria-controls="dashboard-work-shifts-chart-panel"
-              aria-label={chartExpanded ? 'Ocultar gráfico' : 'Mostrar gráfico'}
-              title={chartExpanded ? 'Ocultar gráfico' : 'Mostrar gráfico'}
-            >
-              <ChevronDown
-                size={18}
-                strokeWidth={2.25}
-                className={cx(
-                  styles.chartToggleChevron,
-                  chartExpanded && styles.chartToggleChevronOpen,
-                )}
-                aria-hidden
-              />
-            </button>
-          </div>
-        ) : null}
+        <div className={cx(styles.cardBody, cardBodyClassName)} {...scrollSecondaryRegionProps}>
+          {bodyContent}
+        </div>
       </div>
     </>
   );

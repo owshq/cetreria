@@ -19,6 +19,7 @@ import ui from '@/styles/shared.module.css';
 import { useActivityModal } from '@/context/ActivityModalContext';
 import { useActivityTypes } from '@/context/ActivityTypesContext';
 import DatePeriodFilters from '@/components/DatePeriodFilters';
+import ChartSectionToggle from '@/components/ChartSectionToggle';
 import DashboardJobsSection from '@/components/DashboardJobsSection';
 import RecentActivitiesSection from '@/components/RecentActivitiesSection';
 import type { ActivityGroupBy, ActivityValueMeasure } from '@/components/clientCharts/utils';
@@ -456,6 +457,14 @@ export default function Dashboard() {
         sectionLayout
         className={styles.filtersSection}
         panelClassName={styles.filtersCardAccent}
+        headingStart={
+          <ChartSectionToggle
+            expanded={chartsExpanded}
+            onToggle={handleChartsToggle}
+            controlsId="dashboard-charts-panel"
+            plural
+          />
+        }
         headingTrailing={
           isDesktop ? (
             <div
@@ -482,7 +491,6 @@ export default function Dashboard() {
           selectedMetricId={selectedMetric}
           chartsExpanded={chartsExpanded}
           onMetricSelect={(metricId, chartMetric) => handleMetricSelect(chartMetric)}
-          onChartsToggle={handleChartsToggle}
           onChartDimensionChange={handleChartDimensionChange}
           defaultMetricId={defaultMetricId}
           chartsPanelId="dashboard-charts-panel"

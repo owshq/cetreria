@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router';
-import { ArrowLeft, ChevronDown, Search } from 'lucide-react';
+import { ArrowLeft, Search } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Client, ClientScope, Document, DocumentConceptSummary } from '@shared/types';
@@ -14,11 +14,12 @@ import {
 } from '@shared/types';
 import { authService } from '@/api';
 import ConceptByClientDonutChart from '@/components/ConceptByClientDonutChart';
+import ChartSectionToggle from '@/components/ChartSectionToggle';
 import ConceptEmojiEditor from '@/components/ConceptEmojiEditor';
 import { SearchField } from '@/components/forms';
 import { useWorkspace } from '@/context/useWorkspace';
 import { cx } from '@/lib/cx';
-import { scrollRegionProps } from '@/lib/scrollRegion';
+import { scrollSecondaryRegionProps } from '@/lib/scrollRegion';
 import { navigationStateForReturn } from '@/lib/navigation';
 import ui from '@/styles/shared.module.css';
 import EmptyState from '@/components/EmptyState';
@@ -466,8 +467,15 @@ export default function InvoiceConceptsSection({
         ) : (
           <>
             <div className={plainSectionHeader ? ui.pageSectionTitleRow : ui.pageSectionHeading}>
+              {showConceptChartToggle ? (
+                <ChartSectionToggle
+                  expanded={donutChartExpanded}
+                  onToggle={onDonutChartToggle!}
+                  controlsId="dashboard-concepts-chart-panel"
+                />
+              ) : null}
               <h2 className={ui.pageSectionTitle}>Conceptos de Factura</h2>
-              {searchToggle}
+              <div className={styles.sectionTitleActions}>{searchToggle}</div>
             </div>
             {searchField}
           </>
@@ -477,38 +485,14 @@ export default function InvoiceConceptsSection({
             ui.card,
             cardClassName,
             styles.cardShell,
-            showConceptChartToggle && styles.cardShellCollapsible,
           )}
         >
           <div
             className={cx(styles.cardBody, ui.listPanelShell, cardBodyClassName)}
-            {...scrollRegionProps}
+            {...scrollSecondaryRegionProps}
           >
             {bodyContent}
           </div>
-          {showConceptChartToggle && (
-            <div className={styles.chartToggleRow}>
-              <button
-                type="button"
-                className={styles.chartToggleBtn}
-                onClick={onDonutChartToggle}
-                aria-expanded={donutChartExpanded}
-                aria-controls="dashboard-concepts-chart-panel"
-                aria-label={donutChartExpanded ? 'Ocultar gráfico' : 'Mostrar gráfico'}
-                title={donutChartExpanded ? 'Ocultar gráfico' : 'Mostrar gráfico'}
-              >
-                <ChevronDown
-                  size={18}
-                  strokeWidth={2.25}
-                  className={cx(
-                    styles.chartToggleChevron,
-                    donutChartExpanded && styles.chartToggleChevronOpen,
-                  )}
-                  aria-hidden
-                />
-              </button>
-            </div>
-          )}
         </div>
       </>
     );

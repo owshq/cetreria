@@ -1,5 +1,4 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { ChevronDown } from 'lucide-react';
 import type {
   Activity,
   ActivityType,
@@ -48,7 +47,6 @@ type PeriodMetricsChartSectionProps = {
   selectedMetricId: string | null;
   chartsExpanded: boolean;
   onMetricSelect: (id: string, chartMetric: DashboardMetricKey) => void;
-  onChartsToggle?: () => void;
   onChartDimensionChange?: (dimension: MetricDimension) => void;
   defaultMetricId: string;
   chartsPanelId: string;
@@ -75,7 +73,6 @@ export default function PeriodMetricsChartSection({
   selectedMetricId,
   chartsExpanded,
   onMetricSelect,
-  onChartsToggle,
   onChartDimensionChange,
   chartsPanelId,
   activities,
@@ -262,30 +259,6 @@ export default function PeriodMetricsChartSection({
           </div>
         )}
       </div>
-
-      {onChartsToggle ? (
-        <div className={dashboardStyles.chartsToggleRow}>
-          <button
-            type="button"
-            className={dashboardStyles.chartsToggleBtn}
-            onClick={onChartsToggle}
-            aria-expanded={chartsExpanded}
-            aria-controls={chartsPanelId}
-            aria-label={chartsExpanded ? 'Ocultar gráficos' : 'Mostrar gráficos'}
-            title={chartsExpanded ? 'Ocultar gráficos' : 'Mostrar gráficos'}
-          >
-            <ChevronDown
-              size={18}
-              strokeWidth={2.25}
-              className={cx(
-                dashboardStyles.chartsToggleChevron,
-                chartsExpanded && dashboardStyles.chartsToggleChevronOpen,
-              )}
-              aria-hidden
-            />
-          </button>
-        </div>
-      ) : null}
     </>
   );
 }

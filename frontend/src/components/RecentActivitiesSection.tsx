@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDownToLine, ChevronDown, Search } from 'lucide-react';
+import { ArrowDownToLine, Search } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type {
@@ -24,6 +24,7 @@ import InfiniteScrollSentinel from '@/components/InfiniteScrollSentinel';
 import { useInfiniteScrollList } from '@/hooks/useInfiniteScrollList';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import ActivityTypeDonutChart, { ActivityChartToggles } from '@/components/ActivityTypeDonutChart';
+import ChartSectionToggle from '@/components/ChartSectionToggle';
 import type { ActivityGroupBy, ActivityValueMeasure } from '@/components/clientCharts/utils';
 import { hasActivityChartData } from '@/components/clientCharts/utils';
 import ActivityLinkedDocuments from '@/components/ActivityLinkedDocuments';
@@ -34,7 +35,7 @@ import { formatActivityHourRange } from '@/lib/activityPreview';
 import { findEventForActivity, isPastActivity } from '@/lib/activityUtils';
 import { ACTIVITY_EMOJI } from '@/lib/activityIcons';
 import { useActivityModal } from '@/context/ActivityModalContext';
-import { scrollRegionProps } from '@/lib/scrollRegion';
+import { scrollRegionProps, scrollSecondaryRegionProps } from '@/lib/scrollRegion';
 import { useWorkspaceScheduleSettings } from '@/context/WorkspaceScheduleSettingsContext';
 import { useWorkspaceFeatureSettings } from '@/context/WorkspaceFeatureSettingsContext';
 import { cx } from '@/lib/cx';
@@ -453,6 +454,13 @@ export default function RecentActivitiesSection({
   return (
     <>
       <div className={plainSectionHeader ? ui.pageSectionTitleRow : ui.pageSectionHeading}>
+        {collapsibleDonutChart && hasActivityDonutData && onDonutChartToggle ? (
+          <ChartSectionToggle
+            expanded={donutChartExpanded}
+            onToggle={onDonutChartToggle}
+            controlsId="dashboard-activities-chart-panel"
+          />
+        ) : null}
         <h2 className={ui.pageSectionTitle}>Actividades</h2>
         <div className={styles.sectionTitleActions}>
           {isDesktop ? chartToggles : null}
@@ -466,41 +474,14 @@ export default function RecentActivitiesSection({
           ui.card,
           cardClassName,
           styles.cardShell,
-          collapsibleDonutChart &&
-            hasActivityDonutData &&
-            onDonutChartToggle &&
-            styles.cardShellCollapsible,
         )}
       >
         <div
           className={cx(styles.cardBody, ui.listPanelShell, cardBodyClassName)}
-          {...scrollRegionProps}
+          {...scrollSecondaryRegionProps}
         >
           {bodyContent}
         </div>
-        {collapsibleDonutChart && hasActivityDonutData && onDonutChartToggle ? (
-          <div className={styles.chartToggleRow}>
-            <button
-              type="button"
-              className={styles.chartToggleBtn}
-              onClick={onDonutChartToggle}
-              aria-expanded={donutChartExpanded}
-              aria-controls="dashboard-activities-chart-panel"
-              aria-label={donutChartExpanded ? 'Ocultar gráfico' : 'Mostrar gráfico'}
-              title={donutChartExpanded ? 'Ocultar gráfico' : 'Mostrar gráfico'}
-            >
-              <ChevronDown
-                size={18}
-                strokeWidth={2.25}
-                className={cx(
-                  styles.chartToggleChevron,
-                  donutChartExpanded && styles.chartToggleChevronOpen,
-                )}
-                aria-hidden
-              />
-            </button>
-          </div>
-        ) : null}
       </div>
     </>
   );

@@ -3,7 +3,6 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   ArrowDownToLine,
   ArrowLeft,
-  ChevronDown,
   ExternalLink,
   FilePlus,
   Plus,
@@ -60,7 +59,7 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import ui from '@/styles/shared.module.css';
 import { cx } from '@/lib/cx';
-import { scrollRegionProps } from '@/lib/scrollRegion';
+import { scrollRegionProps, scrollPaneProps } from '@/lib/scrollRegion';
 import { SearchField } from '@/components/forms';
 import PdfViewer from '@/components/PdfViewer/PdfViewer';
 import SidebarToggle from '@/components/SidebarToggle';
@@ -69,6 +68,7 @@ import { buildReportPreviewHeader, type ReportPreviewAuthor, type ReportPreviewH
 import EmptyState from '@/components/EmptyState';
 import ContextMenu from '@/components/ContextMenu';
 import DatePeriodFilters from '@/components/DatePeriodFilters';
+import ChartSectionToggle from '@/components/ChartSectionToggle';
 import { computeClientPeriodStats } from '@/lib/clientPeriodStats';
 import {
   buildTeamShiftBreakdown,
@@ -2310,21 +2310,31 @@ export default function Reports() {
               isMobile && styles.reportsPeriodSection,
             )}
             headingStart={
-              isMobile ? (
-                <SecondaryNavToggle
-                  expanded={false}
-                  onToggle={handleBackToMobileList}
-                  controlsId="reports-secondary-nav"
-                  className={styles.secondaryNavExpandBtn}
-                />
-              ) : secondaryNavCollapsed ? (
-                <SecondaryNavToggle
-                  expanded={false}
-                  onToggle={toggleSecondaryNav}
-                  controlsId="reports-secondary-nav"
-                  className={styles.secondaryNavExpandBtn}
-                />
-              ) : null
+              <>
+                {isMobile ? (
+                  <SecondaryNavToggle
+                    expanded={false}
+                    onToggle={handleBackToMobileList}
+                    controlsId="reports-secondary-nav"
+                    className={styles.secondaryNavExpandBtn}
+                  />
+                ) : secondaryNavCollapsed ? (
+                  <SecondaryNavToggle
+                    expanded={false}
+                    onToggle={toggleSecondaryNav}
+                    controlsId="reports-secondary-nav"
+                    className={styles.secondaryNavExpandBtn}
+                  />
+                ) : null}
+                {activeGenerateTab === 'summary' ? (
+                  <ChartSectionToggle
+                    expanded={chartsExpanded}
+                    onToggle={handleChartsToggle}
+                    controlsId="reports-charts-panel"
+                    plural
+                  />
+                ) : null}
+              </>
             }
             headingTrailing={
               isDesktop ? (
@@ -2375,7 +2385,7 @@ export default function Reports() {
           </div>
         </div>
 
-        <div className={cx(ui.tableBody, styles.reportsTableBody)}>
+        <div className={cx(ui.tableBody, styles.reportsTableBody)} {...scrollPaneProps}>
         {dataError ? (
           <p className={cx(ui.alertError, styles.reportsDataError)} role="alert">
             {dataError}
@@ -2391,6 +2401,13 @@ export default function Reports() {
           >
           <section className={cx(ui.pageSection, styles.reportsMobileSection)}>
             <div className={ui.pageSectionTitleRow}>
+              {showClientsChartToggle ? (
+                <ChartSectionToggle
+                  expanded={clientsChartExpanded}
+                  onToggle={() => setClientsChartExpanded((expanded) => !expanded)}
+                  controlsId="reports-clients-chart-panel"
+                />
+              ) : null}
               <h2 className={ui.pageSectionTitle}>Clientes del periodo</h2>
               <div className={styles.sectionTitleActions}>
                 {isDesktop && showClientsChart ? (
@@ -2429,7 +2446,6 @@ export default function Reports() {
             <div
               className={cx(
                 ui.card,
-                showClientsChartToggle && styles.cardShellCollapsible,
                 styles.reportsSectionCard,
               )}
             >
@@ -2566,29 +2582,6 @@ export default function Reports() {
               </div>
             )}
             </div>
-            {showClientsChartToggle && (
-              <div className={styles.chartToggleRow}>
-                <button
-                  type="button"
-                  className={styles.chartToggleBtn}
-                  onClick={() => setClientsChartExpanded((expanded) => !expanded)}
-                  aria-expanded={clientsChartExpanded}
-                  aria-controls="reports-clients-chart-panel"
-                  aria-label={clientsChartExpanded ? 'Ocultar gráfico' : 'Mostrar gráfico'}
-                  title={clientsChartExpanded ? 'Ocultar gráfico' : 'Mostrar gráfico'}
-                >
-                  <ChevronDown
-                    size={18}
-                    strokeWidth={2.25}
-                    className={cx(
-                      styles.chartToggleChevron,
-                      clientsChartExpanded && styles.chartToggleChevronOpen,
-                    )}
-                    aria-hidden
-                  />
-                </button>
-              </div>
-            )}
             </div>
           </section>
           {isAdmin ? (
@@ -2608,6 +2601,13 @@ export default function Reports() {
           >
           <section className={cx(ui.pageSection, styles.reportsMobileSection)}>
             <div className={ui.pageSectionTitleRow}>
+              {showWorkersChartToggle ? (
+                <ChartSectionToggle
+                  expanded={workersChartExpanded}
+                  onToggle={() => setWorkersChartExpanded((expanded) => !expanded)}
+                  controlsId="reports-workers-chart-panel"
+                />
+              ) : null}
               <h2 className={ui.pageSectionTitle}>Operarios del periodo</h2>
               <div className={styles.sectionTitleActions}>
                 {isDesktop && showWorkersChart ? (
@@ -2647,7 +2647,6 @@ export default function Reports() {
             <div
               className={cx(
                 ui.card,
-                showWorkersChartToggle && styles.cardShellCollapsible,
                 styles.reportsSectionCard,
               )}
             >
@@ -2829,29 +2828,6 @@ export default function Reports() {
               </div>
             )}
             </div>
-            {showWorkersChartToggle && (
-              <div className={styles.chartToggleRow}>
-                <button
-                  type="button"
-                  className={styles.chartToggleBtn}
-                  onClick={() => setWorkersChartExpanded((expanded) => !expanded)}
-                  aria-expanded={workersChartExpanded}
-                  aria-controls="reports-workers-chart-panel"
-                  aria-label={workersChartExpanded ? 'Ocultar gráfico' : 'Mostrar gráfico'}
-                  title={workersChartExpanded ? 'Ocultar gráfico' : 'Mostrar gráfico'}
-                >
-                  <ChevronDown
-                    size={18}
-                    strokeWidth={2.25}
-                    className={cx(
-                      styles.chartToggleChevron,
-                      workersChartExpanded && styles.chartToggleChevronOpen,
-                    )}
-                    aria-hidden
-                  />
-                </button>
-              </div>
-            )}
             </div>
           </section>
           {isAdmin ? (
@@ -2894,7 +2870,6 @@ export default function Reports() {
                 selectedMetricId={selectedPeriodMetricId}
                 chartsExpanded={chartsExpanded}
                 onMetricSelect={handlePeriodMetricSelect}
-                onChartsToggle={handleChartsToggle}
                 onChartDimensionChange={handleChartDimensionChange}
                 defaultMetricId={reportsDefaultMetricId}
                 chartsPanelId="reports-charts-panel"

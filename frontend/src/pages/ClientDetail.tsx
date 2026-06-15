@@ -51,6 +51,7 @@ import DocumentFormModal from '@/components/DocumentFormModal';
 import ContextMenu, { type ContextMenuItem } from '@/components/ContextMenu';
 import StatusDot from '@/components/StatusDot';
 import DatePeriodFilters from '@/components/DatePeriodFilters';
+import ChartSectionToggle from '@/components/ChartSectionToggle';
 import PeriodMetricsChartSection, {
   type PeriodMetricButtonConfig,
 } from '@/components/PeriodMetricsChartSection';
@@ -195,17 +196,9 @@ export default function ClientDetail() {
   const navigate = useNavigate();
   const location = useLocation();
   const returnPath = getReturnPath(location.state);
-  const hasCustomReturn =
-    location.state &&
-    typeof location.state === 'object' &&
-    'returnTo' in location.state;
 
   const handleBack = () => {
-    if (hasCustomReturn) {
-      navigate(-1);
-      return;
-    }
-    navigate('/clients');
+    navigate(returnPath);
   };
   const currentUser = authService.getCurrentUser();
   const isAdmin = currentUser?.role === 'admin';
@@ -1134,6 +1127,14 @@ export default function ClientDetail() {
               sectionLayout
               className={styles.periodSection}
               panelClassName={cx(dashboardStyles.filtersCardAccent, styles.periodCard)}
+              headingStart={
+                <ChartSectionToggle
+                  expanded={chartsExpanded}
+                  onToggle={handleChartsToggle}
+                  controlsId="client-detail-charts-panel"
+                  plural
+                />
+              }
               period={period}
               customFrom={customFrom}
               customTo={customTo}
@@ -1150,7 +1151,6 @@ export default function ClientDetail() {
                 selectedMetricId={selectedPeriodMetricId}
                 chartsExpanded={chartsExpanded}
                 onMetricSelect={handlePeriodMetricSelect}
-                onChartsToggle={handleChartsToggle}
                 onChartDimensionChange={handleChartDimensionChange}
                 defaultMetricId="documents"
                 chartsPanelId="client-detail-charts-panel"

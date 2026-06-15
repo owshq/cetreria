@@ -1,9 +1,6 @@
 .collapsibleCardShell {
   position: relative;
   overflow: visible;
-  padding-bottom: 1rem;
-  /* Mitad del boton (2rem) sobresale bajo la tarjeta; reserva hueco inferior. */
-  margin-bottom: 1.5rem;
 }
 
 .toggleRow {
@@ -53,5 +50,45 @@
 }
 
 .toggleChevronOpen {
+  transform: rotate(180deg);
+}
+
+.chartSectionToggleBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  padding: 0;
+  border: 1px solid var(--app-accent);
+  border-radius: 50%;
+  background: var(--app-accent);
+  color: #fff;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.chartSectionToggleBtn:hover {
+  background: var(--app-accent-hover);
+  border-color: var(--app-accent-hover);
+  color: #fff;
+}
+
+.chartSectionToggleBtn:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 2px;
+}
+
+.chartSectionToggleChevron {
+  color: #fff;
+  transition: transform 0.2s ease;
+}
+
+.chartSectionToggleChevronOpen {
   transform: rotate(180deg);
 }
