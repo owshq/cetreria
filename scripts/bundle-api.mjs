@@ -11,7 +11,7 @@ await esbuild.build({
   outfile: outFile,
   bundle: true,
   platform: 'node',
-  target: 'node20',
+  target: 'node24',
   format: 'esm',
   sourcemap: true,
   logLevel: 'info',

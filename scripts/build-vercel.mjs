@@ -32,7 +32,7 @@ async function buildApiFunction() {
     outfile: path.join(funcDir, 'index.js'),
     bundle: true,
     platform: 'node',
-    target: 'node20',
+    target: 'node24',
     format: 'esm',
     sourcemap: true,
     logLevel: 'info',
@@ -50,7 +50,7 @@ async function buildApiFunction() {
     path.join(funcDir, '.vc-config.json'),
     `${JSON.stringify(
       {
-        runtime: 'nodejs20.x',
+        runtime: 'nodejs24.x',
         handler: 'index.js',
         launcherType: 'Nodejs',
         maxDuration: 60,

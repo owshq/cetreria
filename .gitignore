@@ -11,3 +11,4 @@ api/index.js.map
 .DS_Store
 backend/data/document-pdfs/
 frontend/tmp/
+.env*

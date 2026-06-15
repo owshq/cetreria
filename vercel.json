@@ -7,6 +7,7 @@
   "outputDirectory": "dist",
   "functions": {
     "api/index.js": {
+      "runtime": "nodejs24.x",
       "maxDuration": 60,
       "includeFiles": "backend/data/db.json"
     }
