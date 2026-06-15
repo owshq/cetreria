@@ -15,8 +15,13 @@ const frontendPort = Number(process.env.FRONTEND_PORT ?? PORTS.frontend);
 
 export default defineConfig({
   root: __dirname,
+  base: '/',
   envDir: rootDir,
   cacheDir: path.join(rootDir, 'node_modules/.vite'),
+  build: {
+    outDir: path.resolve(rootDir, 'dist'),
+    emptyOutDir: true,
+  },
   plugins: [react()],
   resolve: {
     alias: {

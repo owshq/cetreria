@@ -3,6 +3,8 @@ node_modules/
 dist/
 *.tsbuildinfo
 .env
+.env.local
+.env.*.local
 *.local
 .DS_Store
 backend/data/document-pdfs/
