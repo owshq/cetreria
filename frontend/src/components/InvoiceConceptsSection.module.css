@@ -16,6 +16,15 @@
   gap: 0.75rem;
 }
 
+.sectionTitleActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 .sectionHeading .sectionTitle {
   flex: 1;
   min-width: 0;

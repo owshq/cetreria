@@ -52,6 +52,17 @@
   overscroll-behavior: var(--scroll-overscroll-behavior, contain);
 }
 
+[data-scroll-secondary] {
+  overflow-x: hidden;
+  overflow-y: visible;
+  overscroll-behavior: auto;
+}
+
+[data-scroll-pane] {
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+
 [data-popup-open] [data-scroll-region] {
   overflow: hidden;
   overscroll-behavior: none;

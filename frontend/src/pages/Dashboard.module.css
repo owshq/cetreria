@@ -135,16 +135,17 @@
 }
 
 .dashboardTwoColGrid {
-  display: flex;
-  flex-direction: column;
+  composes: twoColGrid from '../styles/shared.module.css';
   gap: var(--page-section-stack-gap, 1.5rem);
   flex: none;
   flex-shrink: 0;
   min-height: auto;
-  min-width: 0;
-  width: 100%;
-  max-width: 100%;
-  align-items: stretch;
+}
+
+@media (min-width: 1024px) {
+  .dashboardTwoColGrid {
+    align-items: start;
+  }
 }
 
 .dashboardPage .dashboardTwoColGrid .dashboardHoverSection {
@@ -177,38 +178,17 @@
   }
 }
 
-@media (min-width: 1024px) {
-  .dashboardPage {
-    flex: 1;
-    min-height: 0;
-  }
-
-  .dashboardTwoColGrid {
-    flex: 1;
-    min-height: 0;
-    align-items: start;
-  }
-}
-
 .dashboardSectionCardBody {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  flex: none;
+  min-height: auto;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
 
-.dashboardSectionCardBody[data-scroll-region] {
+.dashboardSectionCardBody[data-scroll-secondary] {
   overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.dashboardSectionCardBody [data-scroll-region] {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-y: visible;
 }
 
 .dashboardSectionEmpty {

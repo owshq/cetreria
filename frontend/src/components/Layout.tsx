@@ -15,6 +15,8 @@ import {
   readTopBarHiddenPreference,
   useHideTopBarOnScroll,
 } from '@/hooks/useHideTopBarOnScroll';
+import { useMainScrollWheelDelegation } from '@/hooks/useMainScrollWheelDelegation';
+import { resetScrollTree } from '@/lib/nestedScroll';
 import { TopBarVisibilityProvider } from '@/context/TopBarVisibilityContext';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { readSecondaryNavCollapsedForPath } from '@/hooks/useSecondaryNavCollapsed';
@@ -104,6 +106,16 @@ function LayoutContent() {
     setTopBarHidden,
     !isDesktop,
   );
+  useMainScrollWheelDelegation(scrollRoot, {
+    enabled: !isFillViewportPath(location.pathname),
+    deferTopBarReveal: !isDesktop,
+    topBarHidden: isTopBarHidden,
+  });
+
+  useLayoutEffect(() => {
+    if (!scrollRoot) return;
+    resetScrollTree(scrollRoot);
+  }, [location.key, scrollRoot]);
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -253,7 +265,7 @@ function LayoutContent() {
                       isFillViewportPath(location.pathname) && styles.mainViewportFill,
                     )}
                   >
-                    <Outlet />
+                    <Outlet key={location.pathname} />
                   </ScrollArea>
                 </main>
               </div>
