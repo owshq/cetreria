@@ -1,14 +1,16 @@
 # Tunel publico gratis via trycloudflare.com (requiere npm run dev activo).
 $port = if ($env:CRM_TUNNEL_PORT) { $env:CRM_TUNNEL_PORT } else { "3000" }
-$url = "http://localhost:$port"
+# 127.0.0.1 evita localhost -> ::1 en Windows (alineado con shared/ports.ts).
+$originHost = if ($env:CRM_TUNNEL_HOST) { $env:CRM_TUNNEL_HOST } else { "127.0.0.1" }
+$url = "http://${originHost}:$port"
 # http2 evita reintentos QUIC ("control stream encountered a failure") en Windows/red movil.
 # Override: CRM_TUNNEL_PROTOCOL=quic
 $protocol = if ($env:CRM_TUNNEL_PROTOCOL) { $env:CRM_TUNNEL_PROTOCOL } else { "http2" }
 
-$portOpen = Test-NetConnection -ComputerName localhost -Port $port -WarningAction SilentlyContinue |
+$portOpen = Test-NetConnection -ComputerName $originHost -Port $port -WarningAction SilentlyContinue |
   Select-Object -ExpandProperty TcpTestSucceeded
 if (-not $portOpen) {
-  Write-Error "Nada escuchando en localhost:$port. Arranca antes: npm run dev"
+  Write-Error "Nada escuchando en ${originHost}:$port. Arranca antes: npm run dev"
   exit 1
 }
 
