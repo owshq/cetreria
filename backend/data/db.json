@@ -849,8 +849,8 @@
       "pdfSource": "generated",
       "pdfContentType": "application/pdf",
       "pdfKey": "workspaces/a0000001-0000-4000-8000-000000000001/documents/a0621b68-0ea2-425e-88af-9b2cfa4d7378/8f3a2c1e-4b9d-4a2f-9e18-6d4f7a2b9c01.pdf",
-      "pdfGeneratedAt": "2026-06-03T08:18:48.342Z",
-      "pdfRenderVersion": 6,
+      "pdfGeneratedAt": "2026-06-12T14:18:41.914Z",
+      "pdfRenderVersion": 17,
       "templateId": "classic",
       "templateColor": "#525252",
       "displayName": "F-2026-001-Centro de Cetrería El Águila"
@@ -2548,22 +2548,6 @@
       "createdAt": "2026-06-05T10:53:35.659Z"
     },
     {
-      "id": "4366ecf2-2ab3-4231-ba3c-6f5a304d064b",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
-      "category": "calendar",
-      "action": "calendar.reminder_overdue",
-      "title": "Actividad vencida",
-      "message": "Consultoría - Comercial Distribuidora · Comercial Distribuidora · 5 jun 2026 · 06:00–14:00",
-      "href": "/activities/6693168a-4181-46a9-a998-ff98014a85e9",
-      "entityType": "event",
-      "entityId": "6d6688fa-982c-43ee-8cbc-3544c788db5e",
-      "actorUserId": "system",
-      "actorUserName": "Sistema",
-      "createdAt": "2026-06-12T11:19:46.787Z",
-      "dedupeKey": "reminder:overdue:6d6688fa-982c-43ee-8cbc-3544c788db5e"
-    },
-    {
       "id": "1d334854-2cc4-4fa8-97fc-e6ff9afad7b4",
       "workspaceId": "a0000001-0000-4000-8000-000000000001",
       "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
@@ -2703,7 +2687,7 @@
       "entityId": "4a6b2bd6-3601-4f86-ae88-f9e776bbbc72",
       "actorUserId": "system",
       "actorUserName": "Sistema",
-      "createdAt": "2026-06-12T11:19:46.796Z",
+      "createdAt": "2026-06-15T20:32:43.282Z",
       "dedupeKey": "reminder:overdue:4a6b2bd6-3601-4f86-ae88-f9e776bbbc72"
     },
     {
@@ -2767,7 +2751,7 @@
       "entityId": "db9a452b-56d5-4766-912b-21f6c82663a5",
       "actorUserId": "system",
       "actorUserName": "Sistema",
-      "createdAt": "2026-06-12T11:19:46.799Z",
+      "createdAt": "2026-06-15T20:32:43.289Z",
       "dedupeKey": "reminder:upcoming:db9a452b-56d5-4766-912b-21f6c82663a5"
     },
     {
@@ -2801,22 +2785,6 @@
       "actorUserName": "Administrador",
       "createdAt": "2026-06-11T12:00:14.501Z",
       "dedupeKey": "client.updated:6220c3fa-8a34-4bd0-88cf-4e733677cbb0"
-    },
-    {
-      "id": "868d89d0-0d7a-402b-8f34-9815bc132e33",
-      "workspaceId": "a0000001-0000-4000-8000-000000000001",
-      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
-      "category": "calendar",
-      "action": "calendar.reminder_upcoming",
-      "title": "Próxima actividad",
-      "message": "Consultoría - Almacenes del Norte · Almacenes del Norte · 12 jun 2026 · 06:00–14:00",
-      "href": "/activities/16804eee-5e15-4e6d-92b5-4f19dd6f1cf3",
-      "entityType": "event",
-      "entityId": "31b65a26-f51c-44ee-b125-452c046464ac",
-      "actorUserId": "system",
-      "actorUserName": "Sistema",
-      "createdAt": "2026-06-12T11:19:46.804Z",
-      "dedupeKey": "reminder:upcoming:31b65a26-f51c-44ee-b125-452c046464ac"
     },
     {
       "id": "e2e916e7-7169-4d0a-a6cb-5cd6a0fd68d6",
@@ -2863,7 +2831,7 @@
       "entityId": "be29e76e-8c5a-4ec9-ac8f-73b99d46b7aa",
       "actorUserId": "system",
       "actorUserName": "Sistema",
-      "createdAt": "2026-06-12T11:19:46.770Z",
+      "createdAt": "2026-06-15T20:32:43.269Z",
       "dedupeKey": "reminder:overdue:be29e76e-8c5a-4ec9-ac8f-73b99d46b7aa"
     },
     {
@@ -2961,6 +2929,22 @@
       "actorUserName": "Administrador",
       "createdAt": "2026-06-11T20:38:30.260Z",
       "dedupeKey": "report.generated:614ca11b-4565-4b95-b91d-343c02be7a7f"
+    },
+    {
+      "id": "12514abb-d98f-4a48-b67c-becd2b8e77cd",
+      "workspaceId": "a0000001-0000-4000-8000-000000000001",
+      "userId": "26d3db59-62b5-4db0-9a50-f1eb7f1e0429",
+      "category": "calendar",
+      "action": "calendar.reminder_overdue",
+      "title": "Actividad vencida",
+      "message": "Consultoría - Almacenes del Norte · Almacenes del Norte · 12 jun 2026 · 06:00–14:00",
+      "href": "/activities/16804eee-5e15-4e6d-92b5-4f19dd6f1cf3",
+      "entityType": "event",
+      "entityId": "31b65a26-f51c-44ee-b125-452c046464ac",
+      "actorUserId": "system",
+      "actorUserName": "Sistema",
+      "createdAt": "2026-06-15T20:32:43.296Z",
+      "dedupeKey": "reminder:overdue:31b65a26-f51c-44ee-b125-452c046464ac"
     }
   ],
   "saved_table_views_pages": [

@@ -37,6 +37,9 @@
     "test:resource-access": "node --import tsx --test shared/tests/resourceAccess.test.ts",
     "build": "vite build --config frontend/vite.config.ts && node scripts/bundle-api.mjs",
     "build:vercel": "node scripts/build-vercel.mjs",
+    "test:deploy": "node --import tsx --test --test-concurrency=1 backend/src/routes/workspaceSettingsAuth.smoke.test.ts backend/src/routes/notificationsWsHttp.smoke.test.ts frontend/src/lib/workspaceScopedFetchGate.test.ts frontend/src/lib/notificationsRealtime.test.ts",
+    "ci:demo": "npm run preflight:ci && npm run typecheck:backend && npm test && npm run test:deploy && npm run build",
+    "smoke:demo-deploy": "tsx --tsconfig backend/tsconfig.json scripts/verify-demo-deploy.ts",
     "preview": "cross-env NODE_OPTIONS=--max-http-header-size=32768 vite preview --config frontend/vite.config.ts",
     "tunnel": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/cloudflared-tunnel.ps1"
   },

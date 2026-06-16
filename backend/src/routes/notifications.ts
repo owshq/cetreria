@@ -1,14 +1,8 @@
 import { Router } from 'express';
-import type { Client } from '@shared/types';
-import { DB_NAMES } from '../config.js';
-import { listAllInWorkspace } from '../db/repository.js';
 import { authRequired } from '../middleware/auth.js';
 import { workspaceRequired } from '../middleware/workspace.js';
-import {
-  listNotificationsForUser,
-  markNotificationsRead,
-  syncCalendarReminders,
-} from '../services/notifications.js';
+import { loadNotificationsInbox } from '../services/notificationsInbox.js';
+import { markNotificationsRead } from '../services/notifications.js';
 
 const router = Router();
 
@@ -18,15 +12,7 @@ router.use(workspaceRequired);
 router.get('/', async (req, res) => {
   const workspaceId = req.workspaceId!;
   const userId = req.user!.id;
-
-  const clients = await listAllInWorkspace<Client>(DB_NAMES.clients, workspaceId);
-  const clientsById = new Map(clients.map((client) => [client.id, client]));
-
-  await syncCalendarReminders(workspaceId, userId, clientsById);
-  const notifications = await listNotificationsForUser(workspaceId, userId);
-
-  const unreadCount = notifications.filter((item) => !item.readAt).length;
-  res.json({ notifications, unreadCount });
+  res.json(await loadNotificationsInbox(workspaceId, userId));
 });
 
 router.patch('/read', async (req, res) => {

@@ -14,6 +14,9 @@ import {
   type WorkspaceScheduleShiftBoundaries,
 } from '@shared/types';
 import { workspaceScheduleSettingsService } from '@/api/workspaceScheduleSettings';
+import { authService } from '@/api';
+import { useWorkspace } from '@/context/useWorkspace';
+import { shouldFetchWorkspaceScopedSettings } from '@/lib/workspaceScopedFetchGate';
 
 type WorkspaceScheduleSettingsContextValue = {
   settings: WorkspaceScheduleSettings | null;
@@ -29,16 +32,29 @@ const WorkspaceScheduleSettingsContext =
   createContext<WorkspaceScheduleSettingsContextValue | null>(null);
 
 export function WorkspaceScheduleSettingsProvider({ children }: { children: ReactNode }) {
+  const { currentWorkspace } = useWorkspace();
+  const workspaceId = currentWorkspace?.id ?? null;
   const [settings, setSettings] = useState<WorkspaceScheduleSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() =>
+    shouldFetchWorkspaceScopedSettings(authService.isAuthenticated(), workspaceId),
+  );
 
   const refresh = useCallback(async () => {
+    if (!shouldFetchWorkspaceScopedSettings(authService.isAuthenticated(), workspaceId)) {
+      setSettings(null);
+      return;
+    }
     const data = await workspaceScheduleSettingsService.get();
     setSettings(data);
-  }, []);
+  }, [workspaceId]);
 
   useEffect(() => {
     let cancelled = false;
+    if (!shouldFetchWorkspaceScopedSettings(authService.isAuthenticated(), workspaceId)) {
+      setSettings(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     refresh()
       .catch(() => {
@@ -50,7 +66,7 @@ export function WorkspaceScheduleSettingsProvider({ children }: { children: Reac
     return () => {
       cancelled = true;
     };
-  }, [refresh]);
+  }, [refresh, workspaceId]);
 
   const update = useCallback(async (patch: Partial<WorkspaceScheduleSettings>) => {
     const saved = await workspaceScheduleSettingsService.update(patch);

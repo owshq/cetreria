@@ -11,7 +11,10 @@ import {
   DEFAULT_WORKSPACE_FEATURE_FLAGS,
   type WorkspaceFeatureSettingsView,
 } from '@shared/types';
+import { authService } from '@/api';
 import { workspaceFeatureSettingsService } from '@/api/workspaceFeatureSettings';
+import { useWorkspace } from '@/context/useWorkspace';
+import { shouldFetchWorkspaceScopedSettings } from '@/lib/workspaceScopedFetchGate';
 
 type WorkspaceFeatureSettingsContextValue = {
   settings: WorkspaceFeatureSettingsView | null;
@@ -30,16 +33,29 @@ const WorkspaceFeatureSettingsContext =
   createContext<WorkspaceFeatureSettingsContextValue | null>(null);
 
 export function WorkspaceFeatureSettingsProvider({ children }: { children: ReactNode }) {
+  const { currentWorkspace } = useWorkspace();
+  const workspaceId = currentWorkspace?.id ?? null;
   const [settings, setSettings] = useState<WorkspaceFeatureSettingsView | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() =>
+    shouldFetchWorkspaceScopedSettings(authService.isAuthenticated(), workspaceId),
+  );
 
   const refresh = useCallback(async () => {
+    if (!shouldFetchWorkspaceScopedSettings(authService.isAuthenticated(), workspaceId)) {
+      setSettings(null);
+      return;
+    }
     const data = await workspaceFeatureSettingsService.get();
     setSettings(data);
-  }, []);
+  }, [workspaceId]);
 
   useEffect(() => {
     let cancelled = false;
+    if (!shouldFetchWorkspaceScopedSettings(authService.isAuthenticated(), workspaceId)) {
+      setSettings(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     refresh()
       .catch(() => {
@@ -51,7 +67,7 @@ export function WorkspaceFeatureSettingsProvider({ children }: { children: React
     return () => {
       cancelled = true;
     };
-  }, [refresh]);
+  }, [refresh, workspaceId]);
 
   const update = useCallback(async (patch: Partial<WorkspaceFeatureSettingsView>) => {
     const saved = await workspaceFeatureSettingsService.update(patch);

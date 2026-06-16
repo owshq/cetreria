@@ -28,7 +28,7 @@ function buildFrontend() {
 
 async function buildApiFunction() {
   await esbuild.build({
-    entryPoints: [path.join(root, 'api/index.ts')],
+    entryPoints: [path.join(root, 'backend/src/vercel/apiEntry.ts')],
     outfile: path.join(funcDir, 'index.js'),
     bundle: true,
     platform: 'node',
@@ -42,6 +42,7 @@ async function buildApiFunction() {
     banner: {
       js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);",
     },
+    external: ['@vercel/node'],
   });
 
   fs.copyFileSync(path.join(root, 'backend/data/db.json'), path.join(funcDir, 'seed-db.json'));

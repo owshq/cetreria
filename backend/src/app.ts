@@ -23,6 +23,7 @@ import electronicInvoicingRoutes from './routes/electronicInvoicing.js';
 import reportsRoutes from './routes/reports.js';
 import dashboardRoutes from './routes/dashboard.js';
 import notificationsRoutes from './routes/notifications.js';
+import notificationsWsHttpRoutes from './routes/notificationsWsHttp.js';
 import savedTableViewsRoutes from './routes/savedTableViews.js';
 import tableViewStateRoutes from './routes/tableViewState.js';
 import userInteractionsRoutes from './routes/userInteractions.js';
@@ -66,6 +67,7 @@ export function createApp() {
   app.use('/api/reports', reportsRoutes);
   app.use('/api/dashboard', dashboardRoutes);
   app.use('/api/notifications', notificationsRoutes);
+  app.use('/api/ws/notifications', notificationsWsHttpRoutes);
   app.use('/api/saved-table-views', savedTableViewsRoutes);
   app.use('/api/table-view-state', tableViewStateRoutes);
   app.use('/api/user-interactions', userInteractionsRoutes);

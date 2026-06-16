@@ -20,7 +20,12 @@ npm run dev          # backend + frontend
 npm run build        # build de produccion del frontend
 npm test             # tests principales
 npm run preflight:ci # comprobacion de cableado / fixture CI
+npm run ci:demo      # gate completo pre-deploy (preflight + tests + build)
 ```
+
+## Demo en Vercel
+
+Checklist paso a paso: [docs/demo-deploy-vercel.md](docs/demo-deploy-vercel.md)
 
 ## Que incluye (resumen)
 
