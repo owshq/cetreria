@@ -329,8 +329,12 @@ export default function Documents() {
       setSelectedIds((current) => current.filter((id) => !deleteConfirm.ids.includes(id)));
       setDeleteConfirm(null);
       await loadData();
-    } catch {
-      alert('No se pudieron eliminar los documentos.');
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : 'No se pudieron eliminar los documentos.';
+      alert(message);
     } finally {
       setDeleting(false);
     }

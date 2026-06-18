@@ -444,6 +444,14 @@
   transition: opacity 0.12s ease;
 }
 
+/* Demo/tactil: sin hover el menu de acciones queda invisible e inutilizable. */
+@media (hover: none), (pointer: coarse) {
+  .rowActions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
 .table tbody tr:hover .rowActions,
 .table tbody tr:focus-within .rowActions,
 .rowActionsVisible {
