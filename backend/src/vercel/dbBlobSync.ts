@@ -20,7 +20,10 @@ export async function pullDbFromBlob(localPath: string): Promise<boolean> {
   if (!shouldSyncDbToBlob()) return false;
 
   const pathname = resolveDbBlobPathname();
-  const result = await get(pathname, { access: BLOB_PRIVATE_ACCESS });
+  const result = await get(pathname, {
+    access: BLOB_PRIVATE_ACCESS,
+    useCache: false,
+  });
   if (!result || result.statusCode !== 200 || !result.stream) return false;
 
   const bytes = await readBlobStream(result.stream);

@@ -22,7 +22,10 @@ export function createBlobDocumentStorage(): DocumentStorage {
       });
     },
     async download(key) {
-      const result = await get(normalizeKey(key), { access: BLOB_PRIVATE_ACCESS });
+      const result = await get(normalizeKey(key), {
+        access: BLOB_PRIVATE_ACCESS,
+        useCache: false,
+      });
       if (!result || result.statusCode !== 200 || !result.stream) return null;
       return readBlobStream(result.stream);
     },
