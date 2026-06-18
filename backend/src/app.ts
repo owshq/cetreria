@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { initJsonDb } from './db/store.js';
+import { syncDbFromRemoteBeforeRequest } from './vercel/dbRemoteSync.js';
 import authRoutes from './routes/auth.js';
 import workspacesRoutes from './routes/workspaces.js';
 import usersRoutes from './routes/users.js';
@@ -35,6 +36,16 @@ export function createApp() {
 
   app.use(cors({ origin: true, credentials: true }));
   app.use(express.json());
+
+  app.use(async (_req, _res, next) => {
+    try {
+      await syncDbFromRemoteBeforeRequest();
+      next();
+    } catch (err) {
+      console.error('Error al sincronizar db remota', err);
+      next(err);
+    }
+  });
 
   app.get('/api/health', async (_req, res) => {
     try {

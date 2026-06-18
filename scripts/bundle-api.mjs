@@ -21,7 +21,7 @@ await esbuild.build({
   banner: {
     js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);",
   },
-  external: ['@vercel/node'],
+  external: ['@vercel/node', '@vercel/blob'],
 });
 
 console.log(`API bundle listo: ${outFile}`);

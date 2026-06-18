@@ -17,30 +17,51 @@ Debe pasar sin errores: preflight, typecheck backend, tests, build produccion.
 
 ## 2. Recursos en la nube
 
+### Opcion A — solo Vercel (recomendada para demo)
+
 | Recurso | Para que |
 |---------|----------|
 | **Proyecto Vercel** | Frontend estatico + funcion serverless `/api` |
-| **Bucket S3** | PDFs de documentos + snapshot `db.json` entre invocaciones |
-| **Usuario IAM** | `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject` sobre el bucket |
+| **Vercel Blob store** | PDFs + snapshot `db.json` (LowDB) entre invocaciones |
 
-Region recomendada: `eu-west-1` (coincide con el default del repo).
+En el dashboard: **Storage → Create Blob store → Connect to project**. Vercel inyecta `BLOB_READ_WRITE_TOKEN` automaticamente.
+
+### Opcion B — Vercel + AWS S3 (alternativa)
+
+| Recurso | Para que |
+|---------|----------|
+| **Proyecto Vercel** | Frontend estatico + funcion serverless `/api` |
+| **Bucket S3** | PDFs + snapshot `db.json` |
+| **Usuario IAM** | `s3:GetObject`, `s3:PutObject`, `s3:DeleteObject` |
+
+Region recomendada: `eu-west-1`. Si existe Blob token, **Blob tiene prioridad** sobre S3.
 
 ---
 
 ## 3. Variables de entorno en Vercel (Production)
 
-Configurar en **Project → Settings → Environment Variables**:
+### Opcion A — Vercel Blob
 
 | Variable | Obligatoria | Valor / notas |
 |----------|-------------|---------------|
 | `JWT_SECRET` | **Si** | Secreto largo aleatorio (min. 32 chars). **No** usar el default de dev. |
+| `BLOB_READ_WRITE_TOKEN` | **Si** | Auto al conectar Blob store al proyecto |
+| `DB_BLOB_PATHNAME` | Recomendada | `crm-cetreria/demo-db.json` (snapshot demo) |
+| `VITE_API_URL` | Si | `/api` (misma origin; no URL absoluta) |
+| `VERIFACTU_MODULE_ENABLED` | No | Dejar vacio/false salvo demo fiscal sandbox |
+
+### Opcion B — AWS S3
+
+| Variable | Obligatoria | Valor / notas |
+|----------|-------------|---------------|
+| `JWT_SECRET` | **Si** | Secreto largo aleatorio (min. 32 chars) |
 | `S3_BUCKET` | **Si** | Nombre del bucket |
 | `AWS_ACCESS_KEY_ID` | **Si** | Clave IAM |
 | `AWS_SECRET_ACCESS_KEY` | **Si** | Secreto IAM |
 | `AWS_REGION` | Si | `eu-west-1` |
-| `DB_S3_KEY` | Recomendada | `crm-cetreria/demo-db.json` (snapshot dedicado a la demo) |
-| `VITE_API_URL` | Si | `/api` (misma origin; no URL absoluta) |
-| `VERIFACTU_MODULE_ENABLED` | No | Dejar vacio/false salvo demo fiscal sandbox |
+| `DB_S3_KEY` | Recomendada | `crm-cetreria/demo-db.json` |
+| `VITE_API_URL` | Si | `/api` |
+| `VERIFACTU_MODULE_ENABLED` | No | Dejar vacio/false |
 
 Opcional local: `vercel env pull .env.local`
 
@@ -83,12 +104,12 @@ Abrir la URL de produccion y marcar:
 - [ ] Login **admin** (credenciales demo tras desbloquear candado en login)
 - [ ] Login **operario** (permisos restringidos: sin facturas, si albaranes)
 - [ ] Listar contactos y actividades
-- [ ] Crear albaran → generar PDF → **recargar pagina** → PDF sigue disponible (S3 OK)
+- [ ] Crear albaran → generar PDF → **recargar pagina** → PDF sigue disponible (Blob/S3 OK)
 - [ ] Admin: crear factura → PDF
 - [ ] Panel notificaciones carga (polling ~45 s en prod; no hay WebSocket en Vercel)
 - [ ] Configuracion workspace (apariencia / funcionalidades) guarda y persiste tras recargar
 
-Si el PDF desaparece al recargar: revisar `S3_BUCKET` y credenciales AWS en Vercel.
+Si el PDF desaparece al recargar: revisar Blob store conectado o credenciales S3 en Vercel.
 
 Si `/api/*` devuelve 404: revisar rewrites en `vercel.json` y que exista `api/index.js` tras el build.
 
@@ -98,7 +119,7 @@ Si `/api/*` devuelve 404: revisar rewrites en `vercel.json` y que exista `api/in
 
 - CRM operativo real: contactos, actividades, documentos, roles, workspace.
 - **Veri*Factu**: solo sandbox simulado; produccion AEAT devuelve `PROD_NOT_CONFIGURED`.
-- **Concurrencia**: BD JSON en S3; valido para 1–2 usuarios en demo; no multi-equipo intensivo.
+- **Concurrencia**: BD JSON en Blob/S3; valido para 1–2 usuarios en demo; no multi-equipo intensivo.
 - **Notificaciones**: actualizacion por polling en prod (no tiempo real tipo chat).
 
 ---
@@ -116,12 +137,12 @@ Si `/api/*` devuelve 404: revisar rewrites en `vercel.json` y que exista `api/in
 
 Orden sugerido tras este checklist:
 
-1. **Desplegar** con variables S3 + JWT (esta guia)
+1. **Desplegar** con Blob store (o S3) + JWT (esta guia)
 2. **CI completo** — `npm run ci:demo` en GitHub Actions en cada push
 3. **Consolidar** cambios locales pendientes (notificaciones, settings) → commit → redeploy
 4. **Probar** smoke test en la URL real
 5. **Opcional**: ocultar credenciales en login para demo publica
-6. **Opcional**: reset datos demo (`db.json` seed en S3 o nuevo `DB_S3_KEY`)
+6. **Opcional**: reset datos demo (nuevo `DB_BLOB_PATHNAME` o `DB_S3_KEY`)
 
 ---
 
@@ -176,11 +197,16 @@ npm run smoke:demo-deploy   # smoke API contra DEMO_URL (default cetreria.vercel
 | Login admin en `/login` | OK → redirige a `/home` |
 | Dashboard carga datos | OK (contactos, actividades, documentos) |
 
-### Accion requerida
+### Accion requerida (2026-06-16)
 
-Anadir en Vercel Production:
+Anadir **Blob store** conectado al proyecto (recomendado) **o** variables S3:
 
 ```
+# Opcion A — Vercel Blob (auto)
+BLOB_READ_WRITE_TOKEN=<inyectado por Vercel>
+DB_BLOB_PATHNAME=crm-cetreria/demo-db.json
+
+# Opcion B — AWS S3
 S3_BUCKET=<tu-bucket>
 AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
@@ -188,4 +214,4 @@ AWS_REGION=eu-west-1
 DB_S3_KEY=crm-cetreria/demo-db.json
 ```
 
-Redeploy y repetir `npm run smoke:demo-deploy` hasta que `pdfStorageKey` pase.
+Redeploy y repetir `npm run smoke:demo-deploy` hasta que `pdfKey` en documento pase.

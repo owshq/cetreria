@@ -30,7 +30,7 @@ function primeDocumentsBootstrapCaches(data: DocumentsBootstrap): void {
 export type DocumentUpdate = Partial<Document> & { activityId?: string | null };
 
 export type DocumentPdfView = {
-  driver: 's3' | 'local';
+  driver: 's3' | 'blob' | 'local';
   url: string | null;
 };
 

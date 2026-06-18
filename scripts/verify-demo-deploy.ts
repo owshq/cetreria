@@ -26,7 +26,7 @@ type Document = {
   id: string;
   type: string;
   number: string;
-  pdfStorageKey?: string;
+  pdfKey?: string;
   pdfSource?: string;
 };
 type Bootstrap = { documents: Document[]; clients: Client[] };
@@ -64,7 +64,9 @@ async function login(email: string, password: string): Promise<LoginResponse> {
 async function main() {
   // 0. Auditoria env (desde fuera: vercel env ls)
   console.log('Auditoria Vercel (manual): JWT_SECRET + VITE_API_URL deben existir en Production.');
-  console.log('Auditoria Vercel (manual): S3_BUCKET + AWS_* obligatorios para PDF/db persistentes.\n');
+  console.log(
+    'Auditoria Vercel (manual): BLOB_READ_WRITE_TOKEN (Blob) o S3_BUCKET+AWS_* para persistencia.\n',
+  );
 
   let failed = 0;
 
@@ -315,7 +317,7 @@ async function main() {
     }
   }
 
-  // 11. Auditoria S3 (indirecta via documento)
+  // 11. Persistencia remota (indirecta via pdfKey en documento)
   if (deliveryNoteId) {
     try {
       const res = await request(`/api/documents/${deliveryNoteId}`, {
@@ -323,14 +325,14 @@ async function main() {
         workspaceId,
       });
       const doc = (await res.json()) as Document;
-      const hasStorageKey = Boolean(doc.pdfStorageKey);
+      const hasPdfKey = Boolean(doc.pdfKey);
       check(
-        'Documento con pdfStorageKey (S3/local)',
-        res.ok && hasStorageKey,
-        hasStorageKey ? doc.pdfStorageKey! : 'sin clave — configurar S3 en Vercel',
+        'Documento con pdfKey (Blob/S3/local)',
+        res.ok && hasPdfKey,
+        hasPdfKey ? doc.pdfKey! : 'sin clave — conectar Blob store o S3 en Vercel',
       );
     } catch (err) {
-      check('Documento con pdfStorageKey', false, String(err));
+      check('Documento con pdfKey', false, String(err));
     }
   }
 

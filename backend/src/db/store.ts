@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { JSONFilePreset } from 'lowdb/node';
 import { DB_NAMES, LEGACY_DB_NAMES, config } from '../config.js';
-import { pushDbToS3 } from '../vercel/dbS3Sync.js';
+import { pushDbToRemote } from '../vercel/dbRemoteSync.js';
 
 type DbRecord = { id: string } & Record<string, unknown>;
 
@@ -60,10 +60,10 @@ export function markDbWritten(): void {
   cachedDbMtimeMs = readDbMtimeMs();
 }
 
-/** Persiste db.json en S3 cuando el runtime es Vercel y hay bucket configurado. */
+/** Persiste db.json en Blob/S3 cuando el runtime es Vercel y hay storage remoto. */
 export async function persistDbAfterWrite(): Promise<void> {
   markDbWritten();
-  await pushDbToS3(config.dbPath);
+  await pushDbToRemote(config.dbPath);
 }
 
 export async function getDb(): Promise<LowdbInstance> {
@@ -112,8 +112,13 @@ export async function initJsonDb(): Promise<void> {
   await getDb();
 }
 
-/** Solo tests: libera el singleton para usar otro `DB_PATH`. */
-export function resetDbInstanceForTests(): void {
+/** Solo Vercel: libera singleton tras pull remoto para releer db.json en disco. */
+export function invalidateDbCacheForRemoteSync(): void {
   dbInstance = null;
   cachedDbMtimeMs = null;
+}
+
+/** Solo tests: libera el singleton para usar otro `DB_PATH`. */
+export function resetDbInstanceForTests(): void {
+  invalidateDbCacheForRemoteSync();
 }

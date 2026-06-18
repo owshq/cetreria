@@ -1,4 +1,4 @@
-export type DocumentStorageDriver = 's3' | 'local';
+export type DocumentStorageDriver = 's3' | 'blob' | 'local';
 
 export interface DocumentStorage {
   driver: DocumentStorageDriver;

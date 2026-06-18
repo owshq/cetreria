@@ -3,7 +3,7 @@ import path from 'node:path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createApp } from '../app.js';
 import { bootstrapDb } from '../db/bootstrapDb.js';
-import { pullDbFromS3, pushDbToS3 } from './dbS3Sync.js';
+import { pullDbFromRemote, pushDbToRemote } from './dbRemoteSync.js';
 import { prepareVercelRuntime } from './prepareRuntime.js';
 
 const repoRoot = path.resolve(process.cwd());
@@ -26,11 +26,11 @@ async function ensureApp(): Promise<ReturnType<typeof createApp>> {
       prepareVercelRuntime(resolveSeedDbPath());
       const dbPath = process.env.DB_PATH;
       if (dbPath) {
-        await pullDbFromS3(dbPath);
+        await pullDbFromRemote(dbPath);
       }
       await bootstrapDb();
       if (dbPath) {
-        await pushDbToS3(dbPath);
+        await pushDbToRemote(dbPath);
       }
       app = createApp();
     })();
